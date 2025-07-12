@@ -30,6 +30,9 @@ logger:
   file_logging: true
   file_level: debug
   file_path: "/home/b08x/.local/state/BlueprintsCLI/app.log"
+  context_enabled: true
+  context_detail_level: full  # Options: minimal, standard, full
+  context_cache_size: 1000
 editor:
   default: micro
   auto_save: true

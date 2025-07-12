@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'ruby_llm'
+require_relative 'enhanced_logger'
 
 module BlueprintsCLI
   # Centralized logger module for the BlueprintsCLI application.
@@ -23,7 +24,7 @@ module BlueprintsCLI
       log_file_path = app_config.fetch(:logger, :file_path) || default_log_path
       file_log_level = app_config.fetch(:logger, :file_level)&.to_sym || :debug
 
-      @@instance = TTY::Logger.new do |config|
+      base_logger = TTY::Logger.new do |config|
         # Configure handlers (console and optional file)
         handlers = []
         handlers << configure_console_handler(log_level)
@@ -35,28 +36,41 @@ module BlueprintsCLI
       # Add custom log types after initialization with styling
       # Use try-catch to handle any conflicts with built-in types
       begin
-        @@instance.add_type(:success, { level: :info, symbol: '✅', color: :green })
+        base_logger.add_type(:success, { level: :info, symbol: '✅', color: :green })
       rescue TTY::Logger::Error
         # Type already exists, skip
       end
 
       begin
-        @@instance.add_type(:failure, { level: :error, symbol: '❌', color: :red })
+        base_logger.add_type(:failure, { level: :error, symbol: '❌', color: :red })
       rescue TTY::Logger::Error
         # Type already exists, skip
       end
 
       begin
-        @@instance.add_type(:tip, { level: :info, symbol: '💡', color: :cyan })
+        base_logger.add_type(:tip, { level: :info, symbol: '💡', color: :cyan })
       rescue TTY::Logger::Error
         # Type already exists, skip
       end
 
       begin
-        @@instance.add_type(:step, { level: :info, symbol: '🚀', color: :blue })
+        base_logger.add_type(:step, { level: :info, symbol: '🚀', color: :blue })
       rescue TTY::Logger::Error
         # Type already exists, skip
       end
+
+      # Check context logging configuration options
+      context_enabled = app_config.fetch(:logger, :context_enabled, default: true)
+      context_detail_level = app_config.fetch(:logger, :context_detail_level, default: 'full')&.to_sym || :full
+      context_cache_size = app_config.fetch(:logger, :context_cache_size, default: 1000) || 1000
+      
+      # Wrap the base logger with enhanced context-aware functionality
+      @@instance = EnhancedLogger.new(
+        base_logger, 
+        context_enabled: context_enabled,
+        context_detail_level: context_detail_level,
+        context_cache_size: context_cache_size
+      )
 
       @@instance
     end
