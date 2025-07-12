@@ -161,9 +161,54 @@ logger.info("Processing data")
 # Output: ℹ info Processing data class=MyClass method=process_data file=my_class.rb line=45
 ```
 
+### Enhanced RAG Pipeline Architecture
+The application includes a sophisticated RAG (Retrieval-Augmented Generation) pipeline with advanced NLP capabilities:
+
+#### NLP Processing Components
+- **SpaCy Processor** (`lib/blueprintsCLI/nlp/processors/spacy_processor.rb`) - Advanced linguistic analysis with POS tagging, NER, dependency parsing
+- **Linguistics Processor** (`lib/blueprintsCLI/nlp/processors/linguistics_processor.rb`) - Morphological analysis and WordNet integration
+- **Pipeline Builder** (`lib/blueprintsCLI/nlp/pipeline_builder.rb`) - Builder pattern for constructing NLP processing pipelines
+- **Enhanced RAG Service** (`lib/blueprintsCLI/nlp/enhanced_rag_service.rb`) - Orchestrates full NLP pipeline with caching and optimization
+
+#### Embedding Provider System
+- **Provider Abstraction** (`lib/blueprintsCLI/providers/embedding_provider.rb`) - Base class for embedding providers
+- **Informers Provider** (`lib/blueprintsCLI/providers/informers_provider.rb`) - Local embedding generation using Informers gem
+- **RubyLLM Provider** (`lib/blueprintsCLI/providers/ruby_llm_provider.rb`) - Cloud-based embeddings via RubyLLM
+- **Embedding Service** (`lib/blueprintsCLI/services/informers_embedding_service.rb`) - Singleton service with provider fallback
+
+#### Caching and Performance
+- **Redis Ohm Models** (`lib/blueprintsCLI/models/cache_models.rb`) - Intelligent caching with LRU eviction
+- **Algorithmic Data Structures** - Uses Trie, KD-Tree, Priority Queue, Red-Black Tree from algorithms gem
+- **Performance Monitoring** - Built-in metrics collection and optimization
+
+#### Important Implementation Notes
+- **Enhanced RAG features are currently disabled** for stability testing (see database.rb comments)
+- **Graceful degradation** when advanced NLP libraries (SpaCy models, WordNet) are unavailable
+- **RubyLLM API usage** - Use `RubyLLM.embed(text)` and extract vectors with `result.vectors`
+- **Error handling** - All embedding operations include fallback to zero vectors on failure
+
+### RubyLLM Integration
+Critical API usage patterns for embedding generation:
+
+```ruby
+# Correct usage
+embedding_result = RubyLLM.embed(content)
+embedding_vector = embedding_result.vectors
+
+# Error handling
+begin
+  embedding_result = RubyLLM.embed(content)
+  embedding_vector = embedding_result.vectors
+rescue RubyLLM::Error => e
+  logger.warn("Embedding failed: #{e.message}")
+  embedding_vector = Array.new(768, 0.0) # Fallback
+end
+```
+
 ### Architecture Patterns
 - Commands use Thor for CLI interface with dynamic discovery
 - Business logic separated into Action classes inheriting from Sublayer::Actions::Base
 - Service layer for complex operations like YARD documentation generation
 - Database interface abstraction with pgvector for semantic search
 - Unified configuration management with TTY::Config supporting validation and environment mapping
+- Enhanced RAG pipeline with provider abstraction and algorithmic optimizations

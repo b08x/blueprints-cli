@@ -413,7 +413,8 @@ module BlueprintsCLI
       begin
         @config.read if @config.exist?
       rescue TTY::Config::ReadError => e
-        BlueprintsCLI.logger.warn("Failed to read configuration file: #{e.message}")
+        # Can't use BlueprintsCLI.logger here as it may not be initialized yet
+        warn "Failed to read configuration file: #{e.message}"
       end
 
       # Set default values
@@ -615,7 +616,8 @@ module BlueprintsCLI
       api_key = ai_api_key(provider)
       return unless api_key.nil? || api_key.empty?
 
-      BlueprintsCLI.logger.warn("No API key found for AI provider '#{provider}'. Set the appropriate environment variable.")
+      # Can't use BlueprintsCLI.logger here as it may not be initialized yet
+      warn "No API key found for AI provider '#{provider}'. Set the appropriate environment variable."
     end
 
     # Validate logger section
@@ -673,7 +675,8 @@ module BlueprintsCLI
         config.log_assume_model_exists = fetch(:ai, :rubyllm, :log_assume_model_exists)
       end
     rescue StandardError => e
-      BlueprintsCLI.logger.failure("Error configuring RubyLLM: #{e.message}")
+      # Can't use BlueprintsCLI.logger here as it may not be initialized yet
+      warn "Error configuring RubyLLM: #{e.message}"
     end
 
     # Configure legacy OpenAI gem with settings from unified config system
@@ -690,7 +693,8 @@ module BlueprintsCLI
         config.log_errors = fetch(:ai, :openai, :log_errors, default: true)
       end
     rescue StandardError => e
-      BlueprintsCLI.logger.failure("Error configuring OpenAI gem: #{e.message}")
+      # Can't use BlueprintsCLI.logger here as it may not be initialized yet
+      warn "Error configuring OpenAI gem: #{e.message}"
     end
   end
 end
