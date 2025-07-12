@@ -50,6 +50,8 @@ module BlueprintsCLI
           handle_search
         when 'export'
           handle_export
+        when 'generate'
+          handle_generate
         when 'config'
           handle_config
         when 'help', nil
@@ -217,6 +219,58 @@ module BlueprintsCLI
         ).call
       end
 
+      # Generates code based on natural language input using blueprint context
+      #
+      # @param [String] prompt The natural language description of code to generate
+      # @option options [String] :output_dir ("./generated") The output directory
+      # @option options [Integer] :limit (5) Number of blueprints to use as context
+      # @option options [Boolean] :force (false) Whether to overwrite existing files
+      # @return [Boolean] Returns false if no prompt is provided
+      def handle_generate
+        prompt = @args.join(' ')
+
+        if prompt.empty?
+          puts '❌ Please provide a description of what you want to generate'.colorize(:red)
+          puts 'Usage: blueprint generate <description>'
+          return false
+        end
+
+        output_dir = @options['output_dir'] || @options['output'] || './generated'
+        limit = (@options['limit'] || 5).to_i
+        force = @options['force'] || false
+
+        puts "🚀 Generating code based on: #{prompt}".colorize(:blue)
+        puts "📁 Output directory: #{output_dir}".colorize(:cyan)
+        puts "🔍 Using #{limit} relevant blueprints as context".colorize(:cyan)
+
+        result = BlueprintsCLI::Actions::Generate.new(
+          prompt: prompt,
+          output_dir: output_dir,
+          limit: limit,
+          force: force
+        ).call
+
+        if result[:success]
+          puts "\n✅ Code generation completed successfully!".colorize(:green)
+          puts "📊 Generated #{result[:generated_files].length} files".colorize(:green)
+
+          result[:generated_files].each do |file_result|
+            if file_result[:success]
+              puts "  ✅ #{file_result[:name]} (#{file_result[:language]})".colorize(:green)
+            else
+              puts "  ❌ #{file_result[:name]} - #{file_result[:error]}".colorize(:red)
+            end
+          end
+
+          unless result[:relevant_blueprints].empty?
+            puts "\n📚 Used blueprints for context: #{result[:relevant_blueprints].join(', ')}".colorize(:cyan)
+          end
+        else
+          puts "❌ Code generation failed: #{result[:error]}".colorize(:red)
+          false
+        end
+      end
+
       # Manages blueprint configuration
       #
       # @param [String] subcommand The configuration subcommand (default: 'show')
@@ -248,6 +302,9 @@ module BlueprintsCLI
             blueprint view <id>                 View specific blueprint
             blueprint search <query>            Search blueprints by content
 
+          🤖 Code Generation:
+            blueprint generate <description>    Generate code from natural language
+
           🔧 Configuration:
             blueprint config [show|setup]      Manage configuration
 
@@ -255,8 +312,10 @@ module BlueprintsCLI
             --format FORMAT                     Output format (table, json, summary, detailed)
             --interactive                       Interactive mode with prompts
             --output FILE                       Output file path
+            --output_dir DIR                    Output directory for generated files
             --analyze                          Include AI analysis and suggestions
             --force                            Skip confirmation prompts (use with caution)
+            --limit N                          Number of blueprints to use as context (default: 5)
             --auto_describe=false              Disable auto-description generation
             --auto_categorize=false            Disable auto-categorization
 
@@ -272,6 +331,9 @@ module BlueprintsCLI
             blueprint delete                        # Interactive selection
             blueprint search "ruby class"
             blueprint export 123 my_blueprint.rb
+            blueprint generate "Create a Ruby web server using Sinatra"
+            blueprint generate "Python data analysis script" --output_dir ./analysis
+            blueprint generate "React component for user login" --limit 3 --force
 
         HELP
       end

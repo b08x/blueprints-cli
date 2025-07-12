@@ -182,6 +182,7 @@ module BlueprintsCLI
           menu.choice "Delete blueprint", "delete"
           menu.choice "Search blueprints", "search"
           menu.choice "Export blueprint", "export"
+          menu.choice "🤖 Generate code from description", "generate"
           menu.choice "Configuration", "config"
           menu.choice "Back to main menu", :back
         end
@@ -206,6 +207,8 @@ module BlueprintsCLI
             handle_blueprint_search
           when "export"
             handle_blueprint_export
+          when "generate"
+            handle_blueprint_generate
           when "config"
             handle_blueprint_config
           end
@@ -353,6 +356,27 @@ module BlueprintsCLI
 
         blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new({})
         blueprint_command.execute('export', *args)
+      end
+
+      # Handles code generation from natural language description.
+      #
+      # @return [void]
+      def handle_blueprint_generate
+        description = @prompt.ask("🤖 Describe what you want to generate:")
+        return if description.nil? || description.empty?
+
+        output_dir = @prompt.ask("📁 Output directory:", default: "./generated")
+        limit = @prompt.ask("🔢 Number of blueprints to use as context:", default: "5").to_i
+        force = @prompt.yes?("⚡ Overwrite existing files?")
+
+        options = {
+          'output_dir' => output_dir,
+          'limit' => limit,
+          'force' => force
+        }
+
+        blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new(options)
+        blueprint_command.execute('generate', description)
       end
 
       # Handles blueprint configuration options.
