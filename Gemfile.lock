@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    blueprintsCLI (0.0.1)
+    blueprintsCLI (0.1.0)
       sublayer (~> 0.2.9)
       thor (~> 1.2)
 
@@ -186,6 +186,9 @@ GEM
     rubocop-ast (1.45.1)
       parser (>= 3.3.7.2)
       prism (~> 1.4)
+    rubocop-factory_bot (2.27.1)
+      lint_roller (~> 1.1)
+      rubocop (~> 1.72, >= 1.72.1)
     rubocop-minitest (0.38.1)
       lint_roller (~> 1.1)
       rubocop (>= 1.75.0, < 2.0)
@@ -360,6 +363,7 @@ DEPENDENCIES
   rdoc
   rspec (~> 3.10)
   rubocop
+  rubocop-factory_bot
   rubocop-minitest
   rubocop-packaging
   rubocop-performance

@@ -162,6 +162,8 @@ module BlueprintsCLI
           handle_config_command
         when 'docs'
           handle_docs_command
+        when 'setup'
+          handle_setup_command
         when 'logs'
           handle_logs_command
         else
@@ -453,6 +455,34 @@ module BlueprintsCLI
           rescue StandardError => e
             BlueprintsCLI.logger.failure("Error executing docs help: #{e.message}")
           end
+        end
+
+        :continue
+      end
+
+      # Handles the setup command submenu and operations.
+      #
+      # @return [Symbol] :continue to keep the menu running
+      def handle_setup_command
+        debug_log("Entering handle_setup_command")
+
+        subcommand = @prompt.select("🔧 Setup - Choose operation:".colorize(:blue)) do |menu|
+          menu.choice "🚀 Run complete setup wizard", "wizard"
+          menu.choice "🤖 Setup AI providers only", "providers"
+          menu.choice "🗄️ Setup database only", "database"
+          menu.choice "📊 Setup AI models only", "models"
+          menu.choice "✅ Verify current setup", "verify"
+          menu.choice "❓ Help", "help"
+          menu.choice "Back to main menu", :back
+        end
+
+        return :continue if subcommand == :back
+
+        begin
+          setup_command = BlueprintsCLI::Commands::SetupCommand.new({})
+          setup_command.execute(subcommand)
+        rescue StandardError => e
+          BlueprintsCLI.logger.failure("Error executing setup command: #{e.message}")
         end
 
         :continue

@@ -1,0 +1,159 @@
+inherit_from: .rubocop_todo.yml
+
+plugins:
+  - rubocop-factory_bot
+  - rubocop-rspec
+  - rubocop-sequel
+  - rubocop-performance
+  - rubocop-rake
+  - rubocop-packaging
+# The behavior of RuboCop can be controlled via the .rubocop.yml
+# configuration file. It makes it possible to enable/disable
+# certain cops (checks) and to alter their behavior if they accept
+# any parameters. The file can be placed either in your home
+# directory or in some project directory.
+#
+# RuboCop will start looking for the configuration file in the directory
+# where the inspected file is and continue its way up to the root directory.
+#
+# See https://docs.rubocop.org/rubocop/configuration
+
+# Exclude files/directories that shouldn't be linted
+AllCops:
+  Exclude:
+    - 'bin/**/*'
+    - 'db/schema.rb'
+    - 'vendor/**/*'
+    - 'node_modules/**/*'
+    - 'tmp/**/*'
+    - '.git/**/*'
+    - 'generated/**/*'
+    - 'log/**/*'
+  # Consider enabling NewCops to catch new violations with RuboCop updates.
+  NewCops: enable
+  # Set the target Ruby version for more accurate analysis.
+  TargetRubyVersion: 3.1 # Example for Ruby 3.1
+
+
+# -----------------
+# Style Cops
+# -----------------
+
+# Enforce consistent string literal usage.
+Style/StringLiterals:
+  EnforcedStyle: single_quotes # Or 'single_quotes'
+
+# Enforce parentheses for method definitions.
+Style/MethodDefParentheses:
+  EnforcedStyle: require_parentheses # Or 'prefer_parentheses'
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  EnforcedStyle: always # Enforce frozen string literal comment for all files.
+
+Style/FetchEnvVar:
+  Enabled: true
+
+# -----------------
+# Layout Cops
+# -----------------
+Layout/ArrayAlignment:
+  EnforcedStyle: with_fixed_indentation
+
+Layout/BlockEndNewline:
+  Enabled: true
+
+Layout/ClassStructure:
+  ExpectedOrder:
+    - public_attribute_macros
+    - initializer
+  Categories:
+    attribute_macros:
+      - attr_reader
+      - attr_writer
+      - attr_accessor
+
+Layout/ClosingHeredocIndentation:
+  Enabled: true
+
+# Disallow trailing whitespace.
+Layout/TrailingWhitespace:
+  Enabled: true
+
+Layout/CommentIndentation:
+  Enabled: true
+
+Layout/ElseAlignment:
+  Enabled: true
+
+Layout/EmptyComment:
+  Enabled: true
+
+Layout/EmptyLineAfterMagicComment:
+  Enabled: true
+
+Layout/EmptyLineAfterMultilineCondition:
+  Enabled: true
+
+Layout/EmptyLineBetweenDefs:
+  Enabled: true
+
+# Control maximum line length.
+Layout/LineLength:
+  Enabled: true
+  Max: 100 # Or adjust based on team preference.
+
+# Disallow the use of unless without an else clause.
+Lint/UselessAssignment:
+  Enabled: true
+
+# -----------------
+# Lint Cops
+# -----------------
+
+# Detect unused method arguments.
+Lint/UnusedMethodArgument:
+  Enabled: true
+  IgnoreEmptyMethods: true
+
+# -----------------
+# Metrics Cops
+# -----------------
+
+# Control method length.
+Metrics/MethodLength:
+  Max: 20 # Adjust as needed based on project complexity.
+
+# Control class length.
+Metrics/ClassLength:
+  Max: 100 # Adjust as needed based on project complexity.
+
+Metrics/BlockLength:
+  Max: 10 # Adjust as needed based on project complexity.
+
+Naming/AccessorMethodName:
+  Enabled: true
+
+Naming/BlockParameterName:
+  Enabled: true
+
+Naming/ClassAndModuleCamelCase:
+  Enabled: true
+
+Naming/ConstantName:
+  Enabled: true
+
+Naming/FileName:
+  Enabled: true
+
+Naming/InclusiveLanguage:
+  Enabled: true
+
+Security/IoMethods:
+  Enabled: true
+  
+Security/YAMLLoad:
+  Enabled: true
+
+Bundler/OrderedGems:
+  Enabled: true
