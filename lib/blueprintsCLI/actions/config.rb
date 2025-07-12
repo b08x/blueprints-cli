@@ -340,52 +340,7 @@ module BlueprintsCLI
         puts '=' * 50
         puts ''
 
-        # Check for existing config files
-        old_config_path = File.join(__dir__, '..', 'config', 'blueprints.yml')
-        old_sublayer_path = File.join(__dir__, '..', 'config', 'sublayer.yml')
-
-        migrated_any = false
-
-        # Migrate old blueprints.yml
-        if File.exist?(old_config_path)
-          puts '📄 Found existing blueprints.yml configuration'
-          begin
-            old_config = YAML.load_file(old_config_path)
-            migrate_blueprints_config(old_config)
-            migrated_any = true
-            puts '✅ Migrated blueprints.yml configuration'
-          rescue StandardError => e
-            BlueprintsCLI.logger.failure("Failed to migrate blueprints.yml: #{e.message}")
-          end
-        end
-
-        # Migrate old sublayer.yml
-        if File.exist?(old_sublayer_path)
-          puts '📄 Found existing sublayer.yml configuration'
-          begin
-            old_sublayer = YAML.load_file(old_sublayer_path)
-            migrate_sublayer_config(old_sublayer)
-            migrated_any = true
-            puts '✅ Migrated sublayer.yml configuration'
-          rescue StandardError => e
-            BlueprintsCLI.logger.failure("Failed to migrate sublayer.yml: #{e.message}")
-          end
-        end
-
-        if migrated_any
-          # Save the migrated configuration
-          if @config.write(force: true, create: true)
-            BlueprintsCLI.logger.success('Migration completed successfully!', file: @config.config_file_path)
-            puts "\n💡 You can now delete the old configuration files:"
-            puts "   rm #{old_config_path}" if File.exist?(old_config_path)
-            puts "   rm #{old_sublayer_path}" if File.exist?(old_sublayer_path)
-          else
-            BlueprintsCLI.logger.failure('Failed to save migrated configuration')
-            return false
-          end
-        else
-          puts 'ℹ️  No existing configuration files found to migrate'
-        end
+        puts 'ℹ️  Migration is no longer needed - using unified configuration system'
 
         true
       end
@@ -408,84 +363,6 @@ module BlueprintsCLI
         HELP
       end
 
-      ##
-      # Migrate old blueprints.yml configuration to new format
-      #
-      # @param old_config [Hash] The old configuration hash
-      def migrate_blueprints_config(old_config)
-        # Database configuration
-        if old_config['database'] && old_config['database']['url']
-          @config.set(:blueprints, :database, :url,
-                      value: old_config['database']['url'])
-        end
-
-        # Editor configuration
-        @config.set(:blueprints, :editor, value: old_config['editor']) if old_config['editor']
-        if old_config.key?('auto_save_edits')
-          @config.set(:blueprints, :auto_save_edits,
-                      value: old_config['auto_save_edits'])
-        end
-
-        # Feature flags
-        if old_config['features']
-          if old_config['features'].key?('auto_description')
-            @config.set(:blueprints, :features, :auto_description,
-                        value: old_config['features']['auto_description'])
-          end
-          if old_config['features'].key?('auto_categorize')
-            @config.set(:blueprints, :features, :auto_categorize,
-                        value: old_config['features']['auto_categorize'])
-          end
-          if old_config['features'].key?('improvement_analysis')
-            @config.set(:blueprints, :features, :improvement_analysis,
-                        value: old_config['features']['improvement_analysis'])
-          end
-        end
-
-        # Search configuration
-        if old_config['search']
-          if old_config['search']['default_limit']
-            @config.set(:blueprints, :search, :default_limit,
-                        value: old_config['search']['default_limit'])
-          end
-          if old_config['search'].key?('semantic_search')
-            @config.set(:blueprints, :search, :semantic_search,
-                        value: old_config['search']['semantic_search'])
-          end
-        end
-
-        # Performance configuration
-        if old_config['performance']
-          if old_config['performance']['batch_size']
-            @config.set(:blueprints, :performance, :batch_size,
-                        value: old_config['performance']['batch_size'])
-          end
-          if old_config['performance']['connection_pool_size']
-            @config.set(:blueprints, :performance, :connection_pool_size,
-                        value: old_config['performance']['connection_pool_size'])
-          end
-        end
-
-        # AI configuration (if present in old format)
-        return unless old_config['ai']
-
-        @config.set(:ai, :sublayer, :provider, value: old_config['ai']['provider']) if old_config['ai']['provider']
-        @config.set(:ai, :sublayer, :model, value: old_config['ai']['model']) if old_config['ai']['model']
-      end
-
-      ##
-      # Migrate old sublayer.yml configuration to new format
-      #
-      # @param old_sublayer [Hash] The old sublayer configuration hash
-      def migrate_sublayer_config(old_sublayer)
-        @config.set(:ai, :sublayer, :project_name, value: old_sublayer[:project_name]) if old_sublayer[:project_name]
-        if old_sublayer[:project_template]
-          @config.set(:ai, :sublayer, :project_template,
-                      value: old_sublayer[:project_template])
-        end
-        @config.set(:ai, :sublayer, :provider, value: old_sublayer[:ai_provider]) if old_sublayer[:ai_provider]
-        @config.set(:ai, :sublayer, :model, value: old_sublayer[:ai_model]) if old_sublayer[:ai_model]
-      end
 
       ##
       # Displays the status of relevant environment variables.

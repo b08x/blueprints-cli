@@ -1,6 +1,92 @@
 ---
-blueprints:
-  test_value: test
+# BlueprintsCLI Configuration
+# This is the main configuration file for the BlueprintsCLI application
+
+# Database Configuration
+database:
+  url: "postgresql://postgres:blueprints@ninjabot:5433/blueprints_development"
+  pool_size: 5
+
+# AI Provider Configuration
 ai:
+  # Sublayer Framework Configuration
   sublayer:
-    provider: Gemini
+    provider: "Gemini"  # Options: Gemini, OpenAI, Anthropic, DeepSeek
+    model: "gemini-2.0-flash"
+    project_name: "BlueprintsCLI"
+    template: "default"
+    project_template: "CLI"
+  
+  # RubyLLM Provider Configuration
+  rubyllm:
+    # Default Models
+    default_model: "gemini-2.0-flash"
+    default_embedding_model: "text-embedding-004" 
+    default_image_model: "imagen-3.0-generate-002"
+    
+    # Connection Settings
+    request_timeout: 120
+    max_retries: 3
+    retry_interval: 0.5
+    retry_backoff_factor: 2
+    retry_interval_randomness: 0.5
+    
+    # Logging Settings
+    log_file: null  # Set to file path for file logging, null for STDOUT
+    log_level: "info"  # debug, info, warn
+    log_assume_model_exists: false
+    
+    # Custom API Base URL (e.g., for OpenRouter)
+    openai_api_base: "https://openrouter.ai/api/v1"
+  
+  # Legacy OpenAI Gem Configuration
+  openai:
+    log_errors: true  # Enable in development, disable in production
+  
+  # Embedding model for vector search
+  embedding_model: "text-embedding-004"
+
+# Logger Configuration
+logger:
+  level: "debug"             # Console log level: debug, info, warn, error, fatal
+  file_logging: true         # Enable file logging
+  file_level: "debug"        # File log level when file_logging is true
+  file_path: "/home/b08x/.local/state/BlueprintsCLI/app.log"  # Log file location
+
+# Editor Configuration
+editor: 
+  default: "micro"           # Default editor (uses EDITOR env var if not set)
+  auto_save: true           # Auto-save edits
+  temp_dir: "/tmp"          # Temporary directory for editing
+
+# UI Configuration  
+ui:
+  colors: true              # Enable colored output
+  interactive: true         # Enable interactive prompts
+  pager: "most"            # Pager for long output
+  auto_pager: true         # Automatically use pager for long output
+
+# Feature Flags
+features:
+  auto_description: true     # Auto-generate descriptions for new blueprints
+  auto_categorize: true      # Auto-generate categories for new blueprints  
+  improvement_analysis: true # Enable AI improvement suggestions
+
+# Search Configuration
+search:
+  default_limit: 10          # Default number of search results
+  semantic_search: true      # Use vector similarity search
+  text_search_fallback: true # Fall back to text search if semantic fails
+
+# Export Configuration
+export:
+  include_metadata: false    # Include blueprint metadata in exports
+  auto_detect_extension: true # Auto-detect file extension from content
+
+# Performance Configuration
+performance:
+  batch_size: 100           # Batch size for bulk operations
+  connection_pool_size: 5   # Database connection pool size
+
+# Development and Debugging
+debug: false                # Enable debug mode (overridden by DEBUG env var)

@@ -154,8 +154,8 @@ module BlueprintsCLI
           content_parts << suggestions_box
         end
 
-        # Code Box with syntax highlighting
-        code_box = UI::PreviewBoxes.highlighted_code_box(
+        # Code Box with plain text (syntax highlighting removed due to readability issues)
+        code_box = UI::PreviewBoxes.code_box(
           blueprint[:code],
           title: '💻 Blueprint Code'
         )
@@ -175,7 +175,7 @@ module BlueprintsCLI
         metadata_lines << "Name: #{blueprint[:name]}"
         metadata_lines << "Created: #{blueprint[:created_at]}"
         metadata_lines << "Updated: #{blueprint[:updated_at]}"
-        
+
         # Categories
         if blueprint[:categories] && blueprint[:categories].any?
           category_names = blueprint[:categories].map { |cat| cat[:title] }
@@ -183,7 +183,7 @@ module BlueprintsCLI
         else
           metadata_lines << 'Categories: None'
         end
-        
+
         metadata_lines.join("\n")
       end
 
@@ -194,7 +194,7 @@ module BlueprintsCLI
       # @return [String] Formatted suggestions content
       def build_suggestions_content(suggestions)
         content_lines = []
-        
+
         if suggestions[:improvements]
           content_lines << '💡 Improvements:'
           suggestions[:improvements].each do |improvement|
@@ -207,7 +207,7 @@ module BlueprintsCLI
           content_lines << '📊 Quality Assessment:'
           content_lines << suggestions[:quality_assessment]
         end
-        
+
         content_lines.join("\n")
       end
 

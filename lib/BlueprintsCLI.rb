@@ -6,6 +6,16 @@
 lib_dir = File.expand_path(File.join(__dir__, '..', 'lib'))
 $LOAD_PATH.unshift lib_dir unless $LOAD_PATH.include?(lib_dir)
 
+require 'dotenv/load'
+
+# Attempts to load the .env file, overwriting existing environment variables.
+# If an error occurs, it displays an error message.
+begin
+  Dotenv.load('.env', overwrite: true)
+rescue StandardError => e
+  puts "Error loading .env file: #{e.message}"
+end
+
 require 'colorize'
 require 'fileutils'
 require 'git'
@@ -34,6 +44,9 @@ require_relative 'blueprintsCLI/version'
 require_relative 'blueprintsCLI/configuration'
 require_relative 'blueprintsCLI/logger'
 require_relative 'blueprintsCLI/database'
+
+require_relative 'blueprintsCLI/providers/sublayer/ollama'
+require_relative 'blueprintsCLI/providers/sublayer/openrouter'
 
 Dir[File.join(__dir__, 'blueprintsCLI', 'commands', '*.rb')].each { |file| require file }
 Dir[File.join(__dir__, 'blueprintsCLI', 'generators', '*.rb')].each { |file| require file }

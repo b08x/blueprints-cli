@@ -229,13 +229,13 @@ module BlueprintsCLI
         end.join("\n")
         modified_preview += "\n..." if modified_lines.length > 5
 
-        # Create side-by-side preview boxes with syntax highlighting
-        original_box = UI::PreviewBoxes.highlighted_code_box(
+        # Create side-by-side preview boxes with plain text (syntax highlighting removed)
+        original_box = UI::PreviewBoxes.code_box(
           original_preview,
           title: '📜 Original Code'
         )
 
-        modified_box = UI::PreviewBoxes.highlighted_code_box(
+        modified_box = UI::PreviewBoxes.code_box(
           modified_preview,
           title: '✏️ Modified Code'
         )

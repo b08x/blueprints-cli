@@ -11,8 +11,8 @@ module BlueprintsCLI
   # database (requiring the `pgvector` extension for search) and leverages the
   # Google Gemini API to generate text embeddings for semantic search capabilities.
   #
-  # Configuration is loaded from `config/blueprints.yml`, environment variables
-  # (`BLUEPRINT_DATABASE_URL`, `GEMINI_API_KEY`), or sensible defaults.
+  # Configuration is loaded from the unified configuration system via
+  # `BlueprintsCLI::Configuration`, environment variables, or sensible defaults.
   #
   class BlueprintDatabase
     include BlueprintsCLI::Interfaces::DatabaseInterface

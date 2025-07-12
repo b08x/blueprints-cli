@@ -191,9 +191,18 @@ module BlueprintsCLI
         return unless tty_prompt_available?
 
         prompt = TTY::Prompt.new
+        first_iteration = true
 
         loop do
-          puts "\n" + '=' * 80
+          # Only clear screen on first iteration, add spacing on subsequent ones
+          if first_iteration
+            clear_screen_smart
+            first_iteration = false
+          else
+            add_spacing(2)
+          end
+          
+          puts '=' * 80
           puts '📚 Blueprint Browser'.colorize(:blue)
           puts "Found #{blueprints.length} blueprints"
           puts '=' * 80
@@ -218,7 +227,6 @@ module BlueprintsCLI
           when :summary
             display_summary(blueprints)
             prompt.keypress('Press any key to continue...')
-            print TTY::Cursor.clear_screen
           when :submit
             handle_submit_action(prompt)
           when :exit
@@ -277,13 +285,11 @@ module BlueprintsCLI
             format: :detailed
           ).call
           prompt.keypress('Press any key to continue...')
-          print TTY::Cursor.clear_screen
         when :edit
           BlueprintsCLI::Actions::Edit.new(
             id: blueprint[:id]
           ).call
           prompt.keypress('Press any key to continue...')
-          print TTY::Cursor.clear_screen
         when :export
           filename = prompt.ask('💾 Export filename:', default: generate_export_filename(blueprint))
           BlueprintsCLI::Actions::Export.new(
@@ -291,7 +297,6 @@ module BlueprintsCLI
             output_path: filename
           ).call
           prompt.keypress('Press any key to continue...')
-          print TTY::Cursor.clear_screen
         when :analyze
           BlueprintsCLI::Actions::View.new(
             id: blueprint[:id],
@@ -299,13 +304,11 @@ module BlueprintsCLI
             with_suggestions: true
           ).call
           prompt.keypress('Press any key to continue...')
-          print TTY::Cursor.clear_screen
         when :copy_id
           puts "📋 Blueprint ID: #{blueprint[:id]}".colorize(:green)
           # Try to copy to clipboard if available
           copy_to_clipboard(blueprint[:id].to_s)
           prompt.keypress('Press any key to continue...')
-          print TTY::Cursor.clear_screen
         when :back
           # Return to blueprint list
           nil
@@ -328,7 +331,6 @@ module BlueprintsCLI
         ).call
 
         prompt.keypress('Press any key to continue...')
-        print TTY::Cursor.clear_screen
       end
 
       ##
@@ -358,7 +360,6 @@ module BlueprintsCLI
         end
 
         prompt.keypress('Press any key to continue...')
-        print TTY::Cursor.clear_screen
       end
 
       ##
@@ -466,6 +467,23 @@ module BlueprintsCLI
       # @return [Boolean] true if TTY::Prompt is defined and available
       def tty_prompt_available?
         defined?(TTY::Prompt)
+      end
+
+      ##
+      # Smart screen clearing that only clears when necessary
+      #
+      # @return [void]
+      def clear_screen_smart
+        print TTY::Cursor.clear_screen if defined?(TTY::Cursor)
+      end
+
+      ##
+      # Adds spacing without clearing the screen
+      #
+      # @param lines [Integer] number of lines to add (default: 2)
+      # @return [void]
+      def add_spacing(lines = 2)
+        puts "\n" * lines
       end
     end
   end

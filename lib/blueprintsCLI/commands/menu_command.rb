@@ -2,6 +2,7 @@
 
 require 'tty-box'
 require 'tty-cursor'
+require 'tty-pager'
 
 module BlueprintsCLI
   module Commands
@@ -31,10 +32,10 @@ module BlueprintsCLI
       #
       # @return [void]
       def start
+        # Clear screen only once at the start
+        clear_screen_smart
+        
         loop do
-          # Clear the screen at the beginning of each loop iteration
-          print TTY::Cursor.clear_screen
-          
           choice = main_menu
 
           # Debug logging
@@ -65,6 +66,29 @@ module BlueprintsCLI
         puts "🔍 DEBUG: #{message}".colorize(:magenta) if @debug
       end
 
+      # Smart screen clearing that only clears when necessary
+      #
+      # @return [void]
+      def clear_screen_smart
+        print TTY::Cursor.clear_screen
+      end
+
+      # Adds spacing without clearing the screen
+      #
+      # @param lines [Integer] number of lines to add (default: 2)
+      # @return [void]
+      def add_spacing(lines = 2)
+        puts "\n" * lines
+      end
+
+      # Clears only the current line and moves cursor to beginning
+      #
+      # @return [void]
+      def clear_current_line
+        print TTY::Cursor.clear_line if defined?(TTY::Cursor)
+        print "\r"
+      end
+
       # Retrieves the list of available commands from the BlueprintsCLI::Commands module.
       # Excludes base classes and the MenuCommand itself.
       #
@@ -91,6 +115,9 @@ module BlueprintsCLI
       def main_menu
         debug_log("Building main menu with commands: #{@commands.map { |cmd| cmd[:name] }}")
 
+        # Add some spacing between iterations instead of clearing
+        add_spacing(2)
+
         # Display the application banner using TTY::Box
         banner = TTY::Box.frame(
           "🚀 BlueprintsCLI 🚀\n\nYour Blueprint Management Hub",
@@ -106,6 +133,7 @@ module BlueprintsCLI
             debug_log("Adding menu choice: '#{cmd[:name].capitalize} - #{cmd[:description]}' -> #{cmd[:name].inspect}")
             menu.choice "#{cmd[:name].capitalize} - #{cmd[:description]}", cmd[:name]
           end
+          menu.choice "📋 View Logs", "logs"
           menu.choice "Exit", :exit
         end
 
@@ -132,6 +160,8 @@ module BlueprintsCLI
           handle_blueprint_command
         when 'config'
           handle_config_command
+        when 'logs'
+          handle_logs_command
         else
           puts "❌ Unknown command: #{command_name}".colorize(:red)
           :continue
@@ -364,6 +394,63 @@ module BlueprintsCLI
         end
 
         :continue
+      end
+
+      # Handles the logs command using tty-pager to display log files.
+      #
+      # @return [Symbol] :continue to keep the menu running
+      def handle_logs_command
+        debug_log("Entering handle_logs_command")
+
+        begin
+          # Get the default log path from the logger
+          log_path = BlueprintsCLI::Logger.send(:default_log_path)
+          
+          unless File.exist?(log_path)
+            puts "📋 No log file found at #{log_path}".colorize(:yellow)
+            return :continue
+          end
+
+          # Display log file info
+          file_size = File.size(log_path)
+          file_mtime = File.mtime(log_path)
+          puts "\n📋 Log File: #{log_path}".colorize(:cyan)
+          puts "📊 Size: #{format_file_size(file_size)}".colorize(:blue)
+          puts "📅 Last Modified: #{file_mtime.strftime('%Y-%m-%d %H:%M:%S')}".colorize(:blue)
+          puts
+
+          # Use tty-pager to display the log file
+          TTY::Pager.page(path: log_path) do |pager|
+            # The pager will automatically handle the file content
+          end
+
+        rescue StandardError => e
+          BlueprintsCLI.logger.failure("Error viewing logs: #{e.message}")
+          puts "❌ Error viewing logs: #{e.message}".colorize(:red)
+        end
+
+        :continue
+      end
+
+      # Format file size in human-readable format
+      #
+      # @param size [Integer] file size in bytes
+      # @return [String] formatted file size
+      def format_file_size(size)
+        units = %w[B KB MB GB TB]
+        unit_index = 0
+        size_float = size.to_f
+        
+        while size_float >= 1024 && unit_index < units.length - 1
+          size_float /= 1024
+          unit_index += 1
+        end
+        
+        if unit_index == 0
+          "#{size_float.to_i} #{units[unit_index]}"
+        else
+          "#{'%.1f' % size_float} #{units[unit_index]}"
+        end
       end
     end
   end
