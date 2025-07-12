@@ -47,7 +47,11 @@ module BlueprintsCLI
 
         puts "✏️  Editing blueprint: #{blueprint[:name]}".colorize(:blue)
         puts "Original description: #{blueprint[:description]}"
-        puts "Categories: #{blueprint[:categories].map { |c| c[:title] }.join(', ')}" if blueprint[:categories].any?
+        if blueprint[:categories].any?
+          puts "Categories: #{blueprint[:categories].map do |c|
+            c[:title]
+          end.join(', ')}"
+        end
 
         # Step 2: Open editor with current code
         temp_file = create_temp_file(blueprint)

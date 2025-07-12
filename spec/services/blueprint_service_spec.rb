@@ -56,7 +56,10 @@ RSpec.describe BlueprintService do
 
     it 'reuses existing categories' do
       existing_category = create(:category, name: 'Ruby')
-      expect { service.create(valid_params) }.to change(Category, :count).by(1) # Only "Service" is new
+      # Only "Service" is new
+      expect do
+        service.create(valid_params)
+      end.to change(Category, :count).by(1)
       blueprint_hash = service.create(valid_params)
       blueprint = Blueprint[blueprint_hash[:id]]
       expect(blueprint.categories.count).to eq(2)

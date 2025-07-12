@@ -132,6 +132,35 @@ Both approaches route to the same underlying command classes but provide differe
 - Ruby LSP and Solargraph for development tooling
 - AI-powered documentation generation via DocsCommand
 
+### Enhanced Logging System
+BlueprintsCLI now features an enhanced logging system that automatically captures context information:
+
+#### Features
+- **Automatic Context Capture**: Logs automatically include class name, method name, file, and line number
+- **Configurable Detail Levels**: Choose between minimal, standard, or full context detail
+- **Performance Optimized**: Context extraction is cached and optimized for performance
+- **Backward Compatible**: All existing logging calls continue to work unchanged
+
+#### Configuration Options (config.yml)
+```yaml
+logger:
+  context_enabled: true                    # Enable/disable context capture
+  context_detail_level: full              # Options: minimal, standard, full
+  context_cache_size: 1000                # Cache size for performance optimization
+```
+
+#### Context Detail Levels
+- **minimal**: Just class and method names
+- **standard**: Class, method, and file name
+- **full**: Class, method, file name, line number, and full path
+
+#### Usage
+The enhanced logging works automatically with existing logging calls:
+```ruby
+logger.info("Processing data")
+# Output: ℹ info Processing data class=MyClass method=process_data file=my_class.rb line=45
+```
+
 ### Architecture Patterns
 - Commands use Thor for CLI interface with dynamic discovery
 - Business logic separated into Action classes inheriting from Sublayer::Actions::Base

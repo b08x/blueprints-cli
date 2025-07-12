@@ -63,10 +63,21 @@ module BlueprintsCLI
       protected
 
       ##
-      # Provides access to the BlueprintsCLI logger instance.
+      # Provides access to the BlueprintsCLI logger instance with automatic context.
+      # The enhanced logger will automatically capture the calling class and method.
       #
-      # @return [Logger] the configured logger instance
+      # @return [EnhancedLogger] the configured enhanced logger instance
       def logger
+        @context_logger ||= create_context_logger
+      end
+
+      private
+
+      ##
+      # Creates a context-aware logger that includes class and method information.
+      #
+      # @return [EnhancedLogger] logger with context information
+      def create_context_logger
         BlueprintsCLI.logger
       end
 

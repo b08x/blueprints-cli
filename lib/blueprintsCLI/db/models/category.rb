@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/models/category.rb
-
 require 'sequel'
 
 # Represents a category that can be used to tag and organize blueprints.

@@ -8,6 +8,7 @@ group :development, :test do
   gem 'rdoc'
   gem 'rspec', '~> 3.10'
   gem 'rubocop', require: false
+  gem 'rubocop-factory_bot'
   gem 'rubocop-minitest'
   gem 'rubocop-packaging'
   gem 'rubocop-performance'

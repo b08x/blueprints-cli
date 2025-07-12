@@ -90,7 +90,6 @@ module BlueprintsCLI
         results
       end
 
-      ##
       # Generates code using AI with relevant blueprints as context
       #
       # @param relevant_blueprints [Array<Hash>] The blueprints to use as context
@@ -330,7 +329,8 @@ module BlueprintsCLI
         BlueprintsCLI.logger.debug("API key present: #{!api_key.nil? && !api_key.empty?}")
 
         unless api_key
-          raise RubyLLM::ConfigurationError, "No API key found for #{provider}. Please configure your AI settings."
+          raise RubyLLM::ConfigurationError,
+                "No API key found for #{provider}. Please configure your AI settings."
         end
 
         # Create RubyLLM client
@@ -352,9 +352,7 @@ module BlueprintsCLI
         chat.on_end_message do |message|
           BlueprintsCLI.logger.debug('Completion method returned successfully')
           # NOTE: message might be nil if an error occurred during the request
-          if message&.output_tokens
-            BlueprintsCLI.logger.debug("Used #{message.input_tokens + message.output_tokens} tokens")
-          end
+          BlueprintsCLI.logger.debug("Used #{message.input_tokens + message.output_tokens} tokens") if message&.output_tokens
         end
 
         BlueprintsCLI.logger.debug('Extracting content from response...')

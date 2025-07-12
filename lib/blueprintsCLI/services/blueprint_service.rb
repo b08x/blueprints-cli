@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/services/blueprint_service.rb
-
 require_relative '../models/blueprint'
 require_relative '../models/category'
 require 'ruby_llm'

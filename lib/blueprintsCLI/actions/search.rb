@@ -160,7 +160,8 @@ module BlueprintsCLI
 
         if @semantic && results.first && results.first.key?(:distance)
           # Show similarity scores for semantic search
-          printf "%-5s %-30s %-40s %-20s %-10s\n", 'ID', 'Name', 'Description', 'Categories', 'Score'
+          printf "%-5s %-30s %-40s %-20s %-10s\n", 'ID', 'Name', 'Description', 'Categories',
+                 'Score'
           puts '-' * 120
 
           results.each do |blueprint|

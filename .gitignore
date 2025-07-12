@@ -17,3 +17,7 @@
 
 /vendor/
 /generated/
+
+/.claude/
+/.qodo/
+/.ruby-lsp/

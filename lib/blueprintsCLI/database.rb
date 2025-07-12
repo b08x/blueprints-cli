@@ -363,9 +363,7 @@ module BlueprintsCLI
       required_tables = %i[blueprints categories blueprints_categories]
 
       required_tables.each do |table|
-        unless @db.table_exists?(table)
-          raise "Missing required table: #{table}. Please ensure the blueprints database is properly set up."
-        end
+        raise "Missing required table: #{table}. Please ensure the blueprints database is properly set up." unless @db.table_exists?(table)
       end
 
       # Check for vector extension
