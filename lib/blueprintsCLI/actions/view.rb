@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'tty-box'
+require_relative '../ui/preview_boxes'
 
 module BlueprintsCLI
   module Actions
@@ -153,12 +154,10 @@ module BlueprintsCLI
           content_parts << suggestions_box
         end
 
-        # Code Box
-        code_box = TTY::Box.frame(
+        # Code Box with syntax highlighting
+        code_box = UI::PreviewBoxes.highlighted_code_box(
           blueprint[:code],
-          title: { top_left: '💻 Blueprint Code' },
-          style: { border: { fg: :green } },
-          padding: 1
+          title: '💻 Blueprint Code'
         )
         content_parts << code_box
 

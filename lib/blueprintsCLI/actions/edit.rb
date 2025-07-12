@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'tty-box'
+require_relative '../ui/preview_boxes'
 
 module BlueprintsCLI
   module Actions
@@ -228,21 +229,15 @@ module BlueprintsCLI
         end.join("\n")
         modified_preview += "\n..." if modified_lines.length > 5
 
-        # Create side-by-side preview boxes
-        original_box = TTY::Box.frame(
+        # Create side-by-side preview boxes with syntax highlighting
+        original_box = UI::PreviewBoxes.highlighted_code_box(
           original_preview,
-          title: { top_left: '📜 Original Code' },
-          style: { border: { fg: :red } },
-          width: 60,
-          padding: 1
+          title: '📜 Original Code'
         )
 
-        modified_box = TTY::Box.frame(
+        modified_box = UI::PreviewBoxes.highlighted_code_box(
           modified_preview,
-          title: { top_left: '✏️ Modified Code' },
-          style: { border: { fg: :green } },
-          width: 60,
-          padding: 1
+          title: '✏️ Modified Code'
         )
 
         # Display boxes side by side (simplified version)
