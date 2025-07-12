@@ -56,7 +56,10 @@ module BlueprintsCLI
         
         # Set width option if not provided and content fits nicely
         box_options = options.dup
-        box_options[:width] = content_width if !options.key?(:width) && content_width < terminal_width
+        if !options.key?(:width) && content_width < terminal_width
+          box_options[:width] = 
+            content_width
+        end
         
         create_box(highlighted_content, title: title, style: :code, **box_options)
       end
@@ -140,7 +143,8 @@ module BlueprintsCLI
         box_width = [(terminal_width / 2) - 4, 40].max  # Minimum 40 chars per box
         
         left_box = create_box(left_content, title: left_title, style: left_style, width: box_width)
-        right_box = create_box(right_content, title: right_title, style: right_style, width: box_width)
+        right_box = create_box(right_content, title: right_title, style: right_style, 
+                                              width: box_width)
 
         "#{left_box}\n#{right_box}"
       end

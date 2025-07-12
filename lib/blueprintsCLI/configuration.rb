@@ -151,7 +151,10 @@ module BlueprintsCLI
         errors << e.message
       end
 
-      raise ValidationError, "Configuration validation failed:\n#{errors.join("\n")}" unless errors.empty?
+      unless errors.empty?
+        raise ValidationError,
+              "Configuration validation failed:\n#{errors.join("\n")}"
+      end
 
       true
     end
@@ -217,7 +220,8 @@ module BlueprintsCLI
       config_hash[:deepseek_api_key] = ai_api_key(:deepseek) if ai_api_key(:deepseek)
 
       # Add custom API base if configured
-      config_hash[:openai_api_base] = fetch(:ai, :ruby_llm, :openai_api_base) if fetch(:ai, :ruby_llm, :openai_api_base)
+      config_hash[:openai_api_base] = fetch(:ai, :ruby_llm, :openai_api_base) if fetch(:ai,
+                                                                                       :ruby_llm, :openai_api_base)
 
       config_hash
     end
@@ -271,7 +275,8 @@ module BlueprintsCLI
       colors = prompt.yes?('Enable colored output?', default: fetch(:ui, :colors, default: true))
       set(:ui, :colors, value: colors)
 
-      interactive_mode = prompt.yes?('Enable interactive prompts?', default: fetch(:ui, :interactive, default: true))
+      interactive_mode = prompt.yes?('Enable interactive prompts?',
+                                     default: fetch(:ui, :interactive, default: true))
       set(:ui, :interactive, value: interactive_mode)
 
       pager = prompt.ask('Pager command:', default: fetch(:ui, :pager) || 'most')
@@ -484,7 +489,10 @@ module BlueprintsCLI
     def setup_validations
       # Database URL validation
       @config.validate(:blueprints, :database, :url) do |key, value|
-        raise ValidationError, "#{key} must be a non-empty string" unless value.is_a?(String) && !value.empty?
+        unless value.is_a?(String) && !value.empty?
+          raise ValidationError,
+                "#{key} must be a non-empty string"
+        end
 
         unless value.start_with?('postgres://') || value.start_with?('postgresql://')
           raise ValidationError, "#{key} must be a PostgreSQL URL (postgres:// or postgresql://)"
@@ -502,11 +510,17 @@ module BlueprintsCLI
 
       # Numeric validations
       @config.validate(:blueprints, :search, :default_limit) do |key, value|
-        raise ValidationError, "#{key} must be a positive integer" unless value.is_a?(Integer) && value.positive?
+        unless value.is_a?(Integer) && value.positive?
+          raise ValidationError,
+                "#{key} must be a positive integer"
+        end
       end
 
       @config.validate(:blueprints, :performance, :batch_size) do |key, value|
-        raise ValidationError, "#{key} must be a positive integer" unless value.is_a?(Integer) && value.positive?
+        unless value.is_a?(Integer) && value.positive?
+          raise ValidationError,
+                "#{key} must be a positive integer"
+        end
       end
 
       # AI provider validation
@@ -527,17 +541,26 @@ module BlueprintsCLI
 
       # RubyLLM timeout validation
       @config.validate(:ai, :rubyllm, :request_timeout) do |key, value|
-        raise ValidationError, "#{key} must be a positive integer" unless value.is_a?(Integer) && value.positive?
+        unless value.is_a?(Integer) && value.positive?
+          raise ValidationError,
+                "#{key} must be a positive integer"
+        end
       end
 
       # RubyLLM retry validation
       @config.validate(:ai, :rubyllm, :max_retries) do |key, value|
-        raise ValidationError, "#{key} must be a non-negative integer" unless value.is_a?(Integer) && value >= 0
+        unless value.is_a?(Integer) && value >= 0
+          raise ValidationError,
+                "#{key} must be a non-negative integer"
+        end
       end
 
       # RubyLLM retry interval validation
       @config.validate(:ai, :rubyllm, :retry_interval) do |key, value|
-        raise ValidationError, "#{key} must be a non-negative number" unless value.is_a?(Numeric) && value >= 0
+        unless value.is_a?(Numeric) && value >= 0
+          raise ValidationError,
+                "#{key} must be a non-negative number"
+        end
       end
 
       # RubyLLM log level validation

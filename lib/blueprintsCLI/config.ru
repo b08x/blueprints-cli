@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# config.ru
-
 require 'rack'
 require 'sequel'
 require 'json'

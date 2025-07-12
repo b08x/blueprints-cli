@@ -160,6 +160,8 @@ module BlueprintsCLI
           handle_blueprint_command
         when 'config'
           handle_config_command
+        when 'docs'
+          handle_docs_command
         when 'logs'
           handle_logs_command
         else
@@ -415,6 +417,42 @@ module BlueprintsCLI
           config_command.execute(subcommand)
         rescue StandardError => e
           BlueprintsCLI.logger.failure("Error executing config command: #{e.message}")
+        end
+
+        :continue
+      end
+
+      # Handles the docs command submenu and operations.
+      #
+      # @return [Symbol] :continue to keep the menu running
+      def handle_docs_command
+        debug_log("Entering handle_docs_command")
+
+        subcommand = @prompt.select("📖 Documentation - Choose operation:".colorize(:blue)) do |menu|
+          menu.choice "🏗️ Generate YARD docs for file", "generate"
+          menu.choice "❓ Help", "help"
+          menu.choice "Back to main menu", :back
+        end
+
+        return :continue if subcommand == :back
+
+        case subcommand
+        when "generate"
+          file_path = @prompt.ask("Enter the Ruby file path to document:", default: "./")
+          
+          begin
+            docs_command = BlueprintsCLI::Commands::DocsCommand.new({})
+            docs_command.execute("generate", file_path)
+          rescue StandardError => e
+            BlueprintsCLI.logger.failure("Error executing docs command: #{e.message}")
+          end
+        when "help"
+          begin
+            docs_command = BlueprintsCLI::Commands::DocsCommand.new({})
+            docs_command.execute("help")
+          rescue StandardError => e
+            BlueprintsCLI.logger.failure("Error executing docs help: #{e.message}")
+          end
         end
 
         :continue

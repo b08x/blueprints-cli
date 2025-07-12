@@ -262,9 +262,7 @@ module BlueprintsCLI
             end
           end
 
-          unless result[:relevant_blueprints].empty?
-            puts "\n📚 Used blueprints for context: #{result[:relevant_blueprints].join(', ')}".colorize(:cyan)
-          end
+          puts "\n📚 Used blueprints for context: #{result[:relevant_blueprints].join(', ')}".colorize(:cyan) unless result[:relevant_blueprints].empty?
         else
           puts "❌ Code generation failed: #{result[:error]}".colorize(:red)
           false

@@ -163,7 +163,9 @@ module BlueprintsCLI
 
         # Category analysis
         all_categories = blueprints.flat_map { |b| b[:categories].map { |c| c[:name] } }
-        category_counts = all_categories.each_with_object(Hash.new(0)) { |cat, hash| hash[cat] += 1 }
+        category_counts = all_categories.each_with_object(Hash.new(0)) do |cat, hash|
+          hash[cat] += 1
+        end
 
         if category_counts.any?
           puts "\nTop categories:"

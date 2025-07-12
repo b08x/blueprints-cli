@@ -101,7 +101,9 @@ module BlueprintsCLI
 
               puts "  #{key}: #{value}"
             end
-            puts "  Available API Keys: #{ruby_llm_config.keys.select { |k| k.to_s.end_with?('_api_key') }.join(', ')}"
+            puts "  Available API Keys: #{ruby_llm_config.keys.select do |k|
+              k.to_s.end_with?('_api_key')
+            end.join(', ')}"
           else
             puts '  No Ruby LLM configuration found'
           end
@@ -115,8 +117,10 @@ module BlueprintsCLI
 
           # Feature Flags
           puts 'Feature Flags:'.colorize(:cyan)
-          puts "  Auto-description: #{@config.fetch(:blueprints, :features, :auto_description, default: 'Not set')}"
-          puts "  Auto-categorization: #{@config.fetch(:blueprints, :features, :auto_categorize, default: 'Not set')}"
+          puts "  Auto-description: #{@config.fetch(:blueprints, :features, :auto_description,
+                                                    default: 'Not set')}"
+          puts "  Auto-categorization: #{@config.fetch(:blueprints, :features, :auto_categorize,
+                                                       default: 'Not set')}"
           puts "  Improvement analysis: #{@config.fetch(:blueprints, :features, :improvement_analysis,
                                                         default: 'Not set')}"
           puts ''
@@ -130,13 +134,16 @@ module BlueprintsCLI
 
           # Search Configuration
           puts 'Search Configuration:'.colorize(:cyan)
-          puts "  Default limit: #{@config.fetch(:blueprints, :search, :default_limit, default: 'Not set')}"
-          puts "  Semantic search: #{@config.fetch(:blueprints, :search, :semantic_search, default: 'Not set')}"
+          puts "  Default limit: #{@config.fetch(:blueprints, :search, :default_limit,
+                                                 default: 'Not set')}"
+          puts "  Semantic search: #{@config.fetch(:blueprints, :search, :semantic_search,
+                                                   default: 'Not set')}"
           puts ''
 
           # Performance Configuration
           puts 'Performance Configuration:'.colorize(:cyan)
-          puts "  Batch size: #{@config.fetch(:blueprints, :performance, :batch_size, default: 'Not set')}"
+          puts "  Batch size: #{@config.fetch(:blueprints, :performance, :batch_size,
+                                              default: 'Not set')}"
           puts "  Connection pool size: #{@config.fetch(:blueprints, :performance, :connection_pool_size,
                                                         default: 'Not set')}"
         else
@@ -196,7 +203,8 @@ module BlueprintsCLI
 
         # Editor configuration
         puts "\n✏️  Editor Configuration".colorize(:cyan)
-        current_editor = @config.fetch(:blueprints, :editor, default: ENV['EDITOR'] || ENV['VISUAL'] || 'vim')
+        current_editor = @config.fetch(:blueprints, :editor,
+                                       default: ENV['EDITOR'] || ENV['VISUAL'] || 'vim')
         editor = prompt_for_input('Preferred editor', current_editor)
         @config.set(:blueprints, :editor, value: editor)
 
@@ -214,7 +222,8 @@ module BlueprintsCLI
         auto_cat = prompt_for_boolean('Auto-generate categories', current_auto_cat)
         @config.set(:blueprints, :features, :auto_categorize, value: auto_cat)
 
-        current_improvement = @config.fetch(:blueprints, :features, :improvement_analysis, default: true)
+        current_improvement = @config.fetch(:blueprints, :features, :improvement_analysis,
+                                            default: true)
         improvement = prompt_for_boolean('Enable AI improvement analysis', current_improvement)
         @config.set(:blueprints, :features, :improvement_analysis, value: improvement)
 
@@ -229,7 +238,8 @@ module BlueprintsCLI
         @config.set(:logger, :file_logging, value: file_logging)
 
         if file_logging
-          current_file_path = @config.fetch(:logger, :file_path, default: @config.send(:default_log_path))
+          current_file_path = @config.fetch(:logger, :file_path,
+                                            default: @config.send(:default_log_path))
           file_path = prompt_for_input('Log file path', current_file_path)
           @config.set(:logger, :file_path, value: file_path)
         end
@@ -239,7 +249,8 @@ module BlueprintsCLI
         save_success = @config.write(force: true, create: true)
 
         if save_success
-          BlueprintsCLI.logger.success('Configuration saved successfully!', file: @config.config_file_path)
+          BlueprintsCLI.logger.success('Configuration saved successfully!',
+                                       file: @config.config_file_path)
           BlueprintsCLI.logger.tip("Run 'blueprint config test' to validate the configuration")
         else
           BlueprintsCLI.logger.failure('Failed to save configuration')
