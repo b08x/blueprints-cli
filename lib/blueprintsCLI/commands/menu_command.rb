@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'tty-box'
+require 'tty-cursor'
+
 module BlueprintsCLI
   module Commands
     # MenuCommand provides an interactive command menu system for BlueprintsCLI.
@@ -29,6 +32,9 @@ module BlueprintsCLI
       # @return [void]
       def start
         loop do
+          # Clear the screen at the beginning of each loop iteration
+          print TTY::Cursor.clear_screen
+          
           choice = main_menu
 
           # Debug logging
@@ -85,7 +91,17 @@ module BlueprintsCLI
       def main_menu
         debug_log("Building main menu with commands: #{@commands.map { |cmd| cmd[:name] }}")
 
-        result = @prompt.select("🚀 BlueprintsCLI - Select a command:".colorize(:cyan)) do |menu|
+        # Display the application banner using TTY::Box
+        banner = TTY::Box.frame(
+          "🚀 BlueprintsCLI 🚀\n\nYour Blueprint Management Hub",
+          padding: 1,
+          align: :center,
+          title: { top_left: 'v1.0' },
+          style: { border: { fg: :cyan } }
+        )
+        puts banner
+
+        result = @prompt.select("Select a command:".colorize(:cyan)) do |menu|
           @commands.each do |cmd|
             debug_log("Adding menu choice: '#{cmd[:name].capitalize} - #{cmd[:description]}' -> #{cmd[:name].inspect}")
             menu.choice "#{cmd[:name].capitalize} - #{cmd[:description]}", cmd[:name]

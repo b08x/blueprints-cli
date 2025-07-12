@@ -39,6 +39,7 @@ Dir[File.join(__dir__, 'blueprintsCLI', 'commands', '*.rb')].each { |file| requi
 Dir[File.join(__dir__, 'blueprintsCLI', 'generators', '*.rb')].each { |file| require file }
 Dir[File.join(__dir__, 'blueprintsCLI', 'actions', '*.rb')].each { |file| require file }
 Dir[File.join(__dir__, 'blueprintsCLI', 'agents', '*.rb')].each { |file| require file }
+Dir[File.join(__dir__, 'blueprintsCLI', 'ui', '*.rb')].each { |file| require file }
 
 require_relative 'blueprintsCLI/cli'
 

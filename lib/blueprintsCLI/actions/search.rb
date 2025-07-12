@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'tty-box'
+
 module BlueprintsCLI
   module Actions
     ##
@@ -147,9 +149,14 @@ module BlueprintsCLI
       #
       # @param [Array<Hash>] results The search results to display
       def display_search_results(results)
-        puts "\n" + '=' * 120
-        puts "🔍 Search Results for: '#{@query}'".colorize(:blue)
-        puts '=' * 120
+        # Display header using TTY::Box
+        header_box = TTY::Box.frame(
+          "🔍 Search Results for: '#{@query}'",
+          width: 120,
+          align: :center,
+          style: { border: { fg: :blue } }
+        )
+        puts "\n#{header_box}"
 
         if @semantic && results.first && results.first.key?(:distance)
           # Show similarity scores for semantic search

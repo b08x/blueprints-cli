@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'ruby_llm'
+require 'tty-box'
+require 'tty-prompt'
 
 module BlueprintsCLI
   module Services
@@ -169,9 +171,12 @@ module BlueprintsCLI
 
       # Initializes the YardocService.
       # @param file_path [String] The path to the Ruby file to document.
-      def initialize(file_path)
+      # @param preview [Boolean] Whether to show preview before writing (default: true)
+      def initialize(file_path, preview: true)
         @file_path = file_path
         @chat = RubyLLM.chat
+        @preview = preview
+        @prompt = TTY::Prompt.new if preview
       end
 
       # Generates YARD documentation for the file.
@@ -185,14 +190,27 @@ module BlueprintsCLI
         end
 
         file_content = File.read(@file_path)
-        prompt = PROMPT_TEMPLATE.gsub('{{RUBY_CODE}}', file_content)
+        
+        # Show before preview if enabled
+        if @preview
+          show_before_preview(file_content)
+        end
+
+        llm_prompt = PROMPT_TEMPLATE.gsub('{{RUBY_CODE}}', file_content)
 
         begin
-          response_message = @chat.ask(prompt)
+          response_message = @chat.ask(llm_prompt)
           
           if response_message && response_message.content && !response_message.content.strip.empty?
-            File.write(@file_path, response_message.content)
-            puts "Successfully generated documentation for #{@file_path}"
+            documented_content = response_message.content
+            
+            # Show after preview and confirm if preview enabled
+            if @preview
+              return false unless show_after_preview_and_confirm(file_content, documented_content)
+            end
+            
+            File.write(@file_path, documented_content)
+            show_success_message
             true
           else
             puts "Error: Received empty response from LLM."
@@ -202,6 +220,71 @@ module BlueprintsCLI
           puts "Error generating documentation: #{e.message}"
           false
         end
+      end
+
+      private
+
+      # Shows a preview of the original code before documentation generation
+      def show_before_preview(file_content)
+        preview_content = file_content.lines.first(15).join
+        preview_content += "\n..." if file_content.lines.length > 15
+
+        before_box = TTY::Box.frame(
+          preview_content,
+          title: { top_left: '📜 Original Code' },
+          style: { border: { fg: :blue } },
+          padding: 1
+        )
+        
+        puts before_box
+        @prompt.keypress('Press any key to start YARD generation...')
+        print TTY::Cursor.clear_screen if defined?(TTY::Cursor)
+      end
+
+      # Shows before/after preview and asks for confirmation
+      def show_after_preview_and_confirm(original_content, documented_content)
+        # Show original preview
+        original_preview = original_content.lines.first(10).join
+        original_preview += "\n..." if original_content.lines.length > 10
+
+        original_box = TTY::Box.frame(
+          original_preview,
+          title: { top_left: '📜 Before (Original)' },
+          style: { border: { fg: :blue } },
+          width: 80,
+          padding: 1
+        )
+
+        # Show documented preview
+        documented_preview = documented_content.lines.first(15).join
+        documented_preview += "\n..." if documented_content.lines.length > 15
+
+        documented_box = TTY::Box.frame(
+          documented_preview,
+          title: { top_left: '📚 After (With YARD Documentation)' },
+          style: { border: { fg: :green } },
+          width: 80,
+          padding: 1
+        )
+
+        # Display both boxes
+        puts original_box
+        puts documented_box
+
+        # Ask for confirmation
+        @prompt.yes?('Apply YARD documentation to file?')
+      end
+
+      # Shows success message with styled box
+      def show_success_message
+        success_box = TTY::Box.frame(
+          "Successfully generated YARD documentation for:\n#{@file_path}",
+          title: { top_left: '✅ Documentation Generated' },
+          style: { border: { fg: :green } },
+          padding: 1,
+          align: :center
+        )
+        puts success_box
       end
     end
   end

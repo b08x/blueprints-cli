@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'tty-box'
+require 'tty-cursor'
+
 module BlueprintsCLI
   module Actions
     ##
@@ -105,7 +108,15 @@ module BlueprintsCLI
       #   2     Another Blueprint              Description of another blueprint                       Category3
       #   ========================================================================================================================
       def display_table(blueprints)
-        puts "\n" + '=' * 120
+        # Display header using TTY::Box
+        header_box = TTY::Box.frame(
+          "📚 Blueprint Collection",
+          width: 120,
+          align: :center,
+          style: { border: { fg: :blue } }
+        )
+        puts "\n#{header_box}"
+
         printf "%-5s %-30s %-50s %-25s\n", 'ID', 'Name', 'Description', 'Categories'
         puts '=' * 120
 
@@ -207,6 +218,7 @@ module BlueprintsCLI
           when :summary
             display_summary(blueprints)
             prompt.keypress('Press any key to continue...')
+            print TTY::Cursor.clear_screen
           when :submit
             handle_submit_action(prompt)
           when :exit
@@ -265,11 +277,13 @@ module BlueprintsCLI
             format: :detailed
           ).call
           prompt.keypress('Press any key to continue...')
+          print TTY::Cursor.clear_screen
         when :edit
           BlueprintsCLI::Actions::Edit.new(
             id: blueprint[:id]
           ).call
           prompt.keypress('Press any key to continue...')
+          print TTY::Cursor.clear_screen
         when :export
           filename = prompt.ask('💾 Export filename:', default: generate_export_filename(blueprint))
           BlueprintsCLI::Actions::Export.new(
@@ -277,6 +291,7 @@ module BlueprintsCLI
             output_path: filename
           ).call
           prompt.keypress('Press any key to continue...')
+          print TTY::Cursor.clear_screen
         when :analyze
           BlueprintsCLI::Actions::View.new(
             id: blueprint[:id],
@@ -284,11 +299,13 @@ module BlueprintsCLI
             with_suggestions: true
           ).call
           prompt.keypress('Press any key to continue...')
+          print TTY::Cursor.clear_screen
         when :copy_id
           puts "📋 Blueprint ID: #{blueprint[:id]}".colorize(:green)
           # Try to copy to clipboard if available
           copy_to_clipboard(blueprint[:id].to_s)
           prompt.keypress('Press any key to continue...')
+          print TTY::Cursor.clear_screen
         when :back
           # Return to blueprint list
           nil
@@ -311,6 +328,7 @@ module BlueprintsCLI
         ).call
 
         prompt.keypress('Press any key to continue...')
+        print TTY::Cursor.clear_screen
       end
 
       ##
@@ -340,6 +358,7 @@ module BlueprintsCLI
         end
 
         prompt.keypress('Press any key to continue...')
+        print TTY::Cursor.clear_screen
       end
 
       ##
