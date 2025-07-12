@@ -2,6 +2,27 @@
 
 require 'tty-config'
 require 'fileutils'
+require 'ruby_llm'
+
+OpenAI.configure do |config|
+  config.access_token = ENV.fetch('OPENAI_ACCESS_TOKEN')
+  config.uri_base = ENV.fetch('OPENAI_BASE_URI')
+  config.log_errors = true # Highly recommended in development, so you can see what errors OpenAI is returning. Not recommended in production because it could leak private data to your logs.
+end
+
+RubyLLM.configure do |config|
+  config.openai_api_key = ENV.fetch('OPENAI_API_KEY', nil)
+  config.gemini_api_key = ENV.fetch('GEMINI_API_KEY', nil)
+  config.openai_api_base = ENV.fetch('OPENAI_API_BASE', nil)
+  config.default_model = 'gemini-2.0-flash'
+  config.default_embedding_model = 'text-embedding-004'
+  config.default_image_model = 'imagen-3.0-generate-002'
+  config.request_timeout = 120
+  config.max_retries = 3
+  config.retry_interval = 0.5
+  config.retry_backoff_factor = 2
+  config.retry_interval_randomness = 0.5
+end
 
 module BlueprintsCLI
   # Unified configuration management using TTY::Config
