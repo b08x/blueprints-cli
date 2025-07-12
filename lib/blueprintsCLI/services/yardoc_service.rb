@@ -206,7 +206,8 @@ module BlueprintsCLI
 
         begin
           # Set up spinner for AI generation feedback
-          spinner = TTY::Spinner.new("[:spinner] Generating YARD documentation with AI...", format: :dots)
+          spinner = TTY::Spinner.new("[:spinner] Generating YARD documentation with AI...", 
+                                     format: :dots)
           
           # Set up callback for streaming response feedback
           @chat.on_new_message do
@@ -256,7 +257,7 @@ module BlueprintsCLI
         
         puts before_box
         @prompt.keypress('Press any key to start YARD generation...')
-        print TTY::Cursor.clear_screen if defined?(TTY::Cursor)
+        print TTY::Cursor.clear_screen_down if defined?(TTY::Cursor)
       end
 
       # Shows before/after preview and asks for confirmation

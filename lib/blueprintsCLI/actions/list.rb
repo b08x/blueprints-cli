@@ -486,7 +486,7 @@ module BlueprintsCLI
       #
       # @return [void]
       def clear_screen_smart
-        print TTY::Cursor.clear_screen if defined?(TTY::Cursor)
+        print TTY::Cursor.clear_screen_down if defined?(TTY::Cursor)
       end
 
       ##
