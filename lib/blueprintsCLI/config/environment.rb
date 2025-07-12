@@ -5,11 +5,11 @@
 require 'bundler/setup'
 Bundler.require
 
-# Set up database connection
-require 'yaml'
+# Set up database connection using unified configuration
 ENV['RACK_ENV'] ||= 'development'
-DB_CONFIG = YAML.load_file(File.join(File.dirname(__FILE__), 'database.yml'))
-DB = Sequel.connect(DB_CONFIG[ENV['RACK_ENV']])
+require_relative '../configuration'
+config = BlueprintsCLI::Configuration.new
+DB = Sequel.connect(config.database_url)
 
 # Load initializers
 require_relative 'initializers/sublayer'

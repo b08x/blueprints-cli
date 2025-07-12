@@ -31,6 +31,7 @@ require 'yaml'
 
 require_relative 'blueprintsCLI/version'
 require_relative 'blueprintsCLI/config'
+require_relative 'blueprintsCLI/configuration'
 
 Dir[File.join(__dir__, 'blueprintsCLI', 'commands', '*.rb')].each { |file| require file }
 Dir[File.join(__dir__, 'blueprintsCLI', 'generators', '*.rb')].each { |file| require file }
@@ -42,6 +43,16 @@ require_relative 'blueprintsCLI/cli'
 module BlueprintsCLI
   class Error < StandardError; end
   Config.load
+
+  # Global configuration instance using the new TTY::Config system
+  def self.configuration
+    @configuration ||= Configuration.new
+  end
+
+  # Access to the legacy logger for backward compatibility
+  def self.logger
+    @logger ||= Logger.instance
+  end
 
   def self.root
     File.dirname __dir__

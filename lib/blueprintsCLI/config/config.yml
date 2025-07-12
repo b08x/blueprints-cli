@@ -1,0 +1,6 @@
+---
+blueprints:
+  test_value: test
+ai:
+  sublayer:
+    provider: Gemini

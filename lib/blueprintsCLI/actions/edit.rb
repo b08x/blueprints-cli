@@ -153,25 +153,12 @@ module BlueprintsCLI
         system("#{editor} #{temp_file}")
       end
 
-      # Determines the user's preferred editor.
-      #
-      # It checks for an 'editor' key in `config/blueprints.yml` first,
-      # then falls back to the `EDITOR` or `VISUAL` environment variables,
-      # and finally defaults to 'vim'.
+      # Determines the user's preferred editor using the unified configuration system.
       #
       # @return [String] The name of the editor command.
       # @private
       def get_editor_preference
-        # Check configuration file
-        config_file = File.join(__dir__, '..', 'config', 'blueprints.yml')
-        if File.exist?(config_file)
-          config = YAML.load_file(config_file)
-          editor = config.dig('editor')
-          return editor if editor
-        end
-
-        # Fall back to environment variables
-        ENV['EDITOR'] || ENV['VISUAL'] || 'vim'
+        BlueprintsCLI.configuration.fetch(:blueprints, :editor)
       end
 
       # Prompts the user to confirm the destructive edit operation.

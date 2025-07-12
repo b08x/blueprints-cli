@@ -317,33 +317,23 @@ module BlueprintsCLI
     private
 
     #
-    # Loads the database URL from a config file or environment variables.
+    # Loads the database URL from the unified configuration system.
     #
     # @!visibility private
     # @return [String] The database connection URL.
     #
     def load_database_url
-      # Check configuration file first
-      config_file = File.join(__dir__, '..', 'config', 'blueprints.yml')
-      if File.exist?(config_file)
-        config = YAML.load_file(config_file)
-        return config['database']['url'] if config['database']&.[]('url')
-      end
-
-      # Fall back to environment variables
-      ENV['BLUEPRINT_DATABASE_URL'] ||
-        ENV['DATABASE_URL'] ||
-        'postgres://localhost/blueprints_development'
+      BlueprintsCLI.configuration.database_url
     end
 
     #
-    # Loads the Gemini API key from environment variables.
+    # Loads the Gemini API key from the unified configuration system.
     #
     # @!visibility private
     # @return [String, nil] The API key.
     #
     def load_gemini_api_key
-      ENV['GEMINI_API_KEY'] || ENV.fetch('GOOGLE_API_KEY', nil)
+      BlueprintsCLI.configuration.ai_api_key('gemini')
     end
 
     #
