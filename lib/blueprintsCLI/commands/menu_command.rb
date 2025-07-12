@@ -164,7 +164,7 @@ module BlueprintsCLI
             handle_blueprint_config
           end
         rescue StandardError => e
-          puts "❌ Error executing blueprint command: #{e.message}".colorize(:red)
+          BlueprintsCLI.logger.failure("Error executing blueprint command: #{e.message}")
         end
 
         :continue
@@ -344,7 +344,7 @@ module BlueprintsCLI
           config_command = BlueprintsCLI::Commands::ConfigCommand.new({})
           config_command.execute(subcommand)
         rescue StandardError => e
-          puts "❌ Error executing config command: #{e.message}".colorize(:red)
+          BlueprintsCLI.logger.failure("Error executing config command: #{e.message}")
         end
 
         :continue

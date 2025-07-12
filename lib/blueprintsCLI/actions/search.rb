@@ -58,8 +58,8 @@ module BlueprintsCLI
 
         true
       rescue StandardError => e
-        puts "❌ Error searching blueprints: #{e.message}".colorize(:red)
-        puts e.backtrace.first(3).join("\n") if ENV['DEBUG']
+        BlueprintsCLI.logger.failure("Error searching blueprints: #{e.message}")
+        BlueprintsCLI.logger.debug(e) if ENV['DEBUG']
         false
       end
 

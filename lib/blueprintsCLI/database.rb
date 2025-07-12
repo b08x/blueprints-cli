@@ -91,7 +91,7 @@ module BlueprintsCLI
         get_blueprint(blueprint_id)
       end
     rescue StandardError => e
-      puts "❌ Error creating blueprint: #{e.message}".colorize(:red)
+      BlueprintsCLI.logger.failure("Error creating blueprint: #{e.message}")
       nil
     end
 
@@ -212,7 +212,7 @@ module BlueprintsCLI
         deleted_count > 0
       end
     rescue StandardError => e
-      puts "❌ Error deleting blueprint: #{e.message}".colorize(:red)
+      BlueprintsCLI.logger.failure("Error deleting blueprint: #{e.message}")
       false
     end
 
@@ -261,7 +261,7 @@ module BlueprintsCLI
         get_blueprint(id)
       end
     rescue StandardError => e
-      puts "❌ Error updating blueprint: #{e.message}".colorize(:red)
+      BlueprintsCLI.logger.failure("Error updating blueprint: #{e.message}")
       nil
     end
 
@@ -436,12 +436,12 @@ module BlueprintsCLI
           nil
         end
       else
-        puts "❌ Error generating embedding: #{response.code} #{response.message}".colorize(:red)
-        puts response.body if ENV['DEBUG']
+        BlueprintsCLI.logger.failure("Error generating embedding: #{response.code} #{response.message}")
+        BlueprintsCLI.logger.debug(response.body) if ENV['DEBUG']
         nil
       end
     rescue StandardError => e
-      puts "❌ Error calling Gemini API: #{e.message}".colorize(:red)
+      BlueprintsCLI.logger.failure("Error calling Gemini API: #{e.message}")
       nil
     end
 

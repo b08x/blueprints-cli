@@ -75,8 +75,8 @@ module BlueprintsCLI
           false
         end
       rescue StandardError => e
-        puts "❌ Error exporting blueprint: #{e.message}".colorize(:red)
-        puts e.backtrace.first(3).join("\n") if ENV['DEBUG']
+        BlueprintsCLI.logger.failure("Error exporting blueprint: #{e.message}")
+        BlueprintsCLI.logger.debug(e) if ENV['DEBUG']
         false
       end
 
@@ -191,7 +191,7 @@ module BlueprintsCLI
           File.write(@output_path, content)
           true
         rescue StandardError => e
-          puts "❌ Failed to write file: #{e.message}".colorize(:red)
+          BlueprintsCLI.logger.failure("Failed to write file: #{e.message}")
           false
         end
       end

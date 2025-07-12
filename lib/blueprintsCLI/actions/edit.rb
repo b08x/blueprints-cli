@@ -53,7 +53,7 @@ module BlueprintsCLI
           # Step 3: Launch editor
           editor_success = launch_editor(temp_file)
           unless editor_success
-            puts '❌ Editor failed or was cancelled'.colorize(:red)
+            BlueprintsCLI.logger.failure('Editor failed or was cancelled')
             return false
           end
 
@@ -81,8 +81,8 @@ module BlueprintsCLI
           File.delete(temp_file) if File.exist?(temp_file)
         end
       rescue StandardError => e
-        puts "❌ Error during edit operation: #{e.message}".colorize(:red)
-        puts e.backtrace.first(3).join("\n") if ENV['DEBUG']
+        BlueprintsCLI.logger.failure("Error during edit operation: #{e.message}")
+        BlueprintsCLI.logger.debug(e) if ENV['DEBUG']
         false
       end
 

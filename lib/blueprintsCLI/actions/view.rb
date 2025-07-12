@@ -78,8 +78,8 @@ module BlueprintsCLI
 
         true
       rescue StandardError => e
-        puts "❌ Error viewing blueprint: #{e.message}".colorize(:red)
-        puts e.backtrace.first(3).join("\n") if ENV['DEBUG']
+        BlueprintsCLI.logger.failure("Error viewing blueprint: #{e.message}")
+        BlueprintsCLI.logger.debug(e) if ENV['DEBUG']
         false
       end
 
@@ -223,7 +223,7 @@ module BlueprintsCLI
 
           suggestions[:improvements] = improvements if improvements
         rescue StandardError => e
-          puts "⚠️ Could not generate AI suggestions: #{e.message}".colorize(:yellow)
+          BlueprintsCLI.logger.warn("Could not generate AI suggestions: #{e.message}")
         end
 
         suggestions

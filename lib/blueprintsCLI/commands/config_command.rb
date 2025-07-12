@@ -101,8 +101,8 @@ module BlueprintsCLI
             false
           end
         rescue StandardError => e
-          puts "❌ Error during configuration setup: #{e.message}".colorize(:red)
-          puts "   File: #{e.backtrace.first}" if ENV['DEBUG']
+          BlueprintsCLI.logger.failure("Error during configuration setup: #{e.message}")
+          BlueprintsCLI.logger.debug(e) if ENV['DEBUG']
           false
         end
       end
@@ -141,7 +141,7 @@ module BlueprintsCLI
 
           true
         rescue StandardError => e
-          puts "❌ Error reading configuration: #{e.message}".colorize(:red)
+          BlueprintsCLI.logger.failure("Error reading configuration: #{e.message}")
           false
         end
       end
@@ -197,7 +197,7 @@ module BlueprintsCLI
           puts '✅ Configuration updated successfully!'.colorize(:green)
           true
         rescue StandardError => e
-          puts "❌ Error editing configuration: #{e.message}".colorize(:red)
+          BlueprintsCLI.logger.failure("Error editing configuration: #{e.message}")
           false
         end
       end
@@ -229,7 +229,7 @@ module BlueprintsCLI
             puts "💡 Run 'config setup' to create a new configuration.".colorize(:cyan)
             true
           rescue StandardError => e
-            puts "❌ Error deleting configuration file: #{e.message}".colorize(:red)
+            BlueprintsCLI.logger.failure("Error deleting configuration file: #{e.message}")
             false
           end
         else
@@ -272,7 +272,7 @@ module BlueprintsCLI
           puts "❌ Configuration validation failed: #{e.message}".colorize(:red)
           false
         rescue StandardError => e
-          puts "❌ Error during validation: #{e.message}".colorize(:red)
+          BlueprintsCLI.logger.failure("Error during validation: #{e.message}")
           false
         end
       end

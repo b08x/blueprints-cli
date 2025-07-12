@@ -65,8 +65,8 @@ module BlueprintsCLI
           false
         end
       rescue StandardError => e
-        puts "❌ Error submitting blueprint: #{e.message}".colorize(:red)
-        puts e.backtrace.first(3).join("\n") if ENV['DEBUG']
+        BlueprintsCLI.logger.failure("Error submitting blueprint: #{e.message}")
+        BlueprintsCLI.logger.debug(e) if ENV['DEBUG']
         false
       end
 
@@ -127,8 +127,8 @@ module BlueprintsCLI
         end
 
         if errors.any?
-          puts '❌ Validation errors:'.colorize(:red)
-          errors.each { |error| puts "   - #{error}".colorize(:red) }
+          BlueprintsCLI.logger.failure('Validation errors:')
+          errors.each { |error| BlueprintsCLI.logger.error("   - #{error}") }
           return false
         end
 

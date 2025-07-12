@@ -72,8 +72,8 @@ module BlueprintsCLI
           false
         end
       rescue StandardError => e
-        puts "❌ Error deleting blueprint: #{e.message}".colorize(:red)
-        puts e.backtrace.first(3).join("\n") if ENV['DEBUG']
+        BlueprintsCLI.logger.failure("Error deleting blueprint: #{e.message}")
+        BlueprintsCLI.logger.debug(e) if ENV['DEBUG']
         false
       end
 
