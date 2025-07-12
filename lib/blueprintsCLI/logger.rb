@@ -61,12 +61,13 @@ module BlueprintsCLI
 
       # Check context logging configuration options
       context_enabled = app_config.fetch(:logger, :context_enabled, default: true)
-      context_detail_level = app_config.fetch(:logger, :context_detail_level, default: 'full')&.to_sym || :full
+      context_detail_level = app_config.fetch(:logger, :context_detail_level,
+                                              default: 'full')&.to_sym || :full
       context_cache_size = app_config.fetch(:logger, :context_cache_size, default: 1000) || 1000
-      
+
       # Wrap the base logger with enhanced context-aware functionality
       @@instance = EnhancedLogger.new(
-        base_logger, 
+        base_logger,
         context_enabled: context_enabled,
         context_detail_level: context_detail_level,
         context_cache_size: context_cache_size

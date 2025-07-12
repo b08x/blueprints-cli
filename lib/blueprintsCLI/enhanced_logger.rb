@@ -30,7 +30,8 @@ module BlueprintsCLI
     # @param context_enabled [Boolean] Whether to automatically capture context
     # @param context_detail_level [Symbol] Level of detail for context (:minimal, :standard, :full)
     # @param context_cache_size [Integer] Maximum size of the context cache
-    def initialize(base_logger, context_enabled: true, context_detail_level: :full, context_cache_size: 1000)
+    def initialize(base_logger, context_enabled: true, context_detail_level: :full,
+                   context_cache_size: 1000)
       @base_logger = base_logger
       @context_enabled = context_enabled
       @context_detail_level = context_detail_level
@@ -48,9 +49,7 @@ module BlueprintsCLI
     # Enable or disable automatic context capture
     #
     # @param enabled [Boolean] Whether to capture context automatically
-    def context_enabled=(enabled)
-      @context_enabled = enabled
-    end
+    attr_writer :context_enabled
 
     # Check if context capture is enabled
     #
@@ -96,7 +95,7 @@ module BlueprintsCLI
 
       # Extract method name from the caller
       method_name = extract_method_name(skip_frames + 1)
-      
+
       # Extract class name by examining the call stack
       class_name = extract_class_name(skip_frames + 1)
 
@@ -108,7 +107,7 @@ module BlueprintsCLI
         manage_cache_size
         @context_cache[cache_key] = context
       end
-      
+
       context && context.any? ? context : nil
     end
 
@@ -128,7 +127,7 @@ module BlueprintsCLI
 
     # Extract class name by walking up the call stack
     #
-    # @param skip_frames [Integer] Number of frames to skip  
+    # @param skip_frames [Integer] Number of frames to skip
     # @return [String, nil] The class name or nil if not found
     def extract_class_name(skip_frames)
       # Look through several frames to find a class context
@@ -138,24 +137,24 @@ module BlueprintsCLI
 
         # Try to determine class from the file path and method context
         file_path = location.path
-        
+
         # Skip internal Ruby/gem files
         next if file_path.include?('/gems/') || file_path.include?('/ruby/')
-        
+
         # Look for BlueprintsCLI classes in the path
-        if file_path.include?('blueprintsCLI')
-          # Extract class name from file path
-          relative_path = file_path.split('blueprintsCLI').last
-          if relative_path&.include?('commands')
-            # Handle command classes
-            return extract_command_class_name(relative_path)
-          elsif relative_path&.include?('actions')
-            # Handle action classes  
-            return extract_action_class_name(relative_path)
-          elsif relative_path&.include?('services')
-            # Handle service classes
-            return extract_service_class_name(relative_path)
-          end
+        next unless file_path.include?('blueprintsCLI')
+
+        # Extract class name from file path
+        relative_path = file_path.split('blueprintsCLI').last
+        if relative_path&.include?('commands')
+          # Handle command classes
+          return extract_command_class_name(relative_path)
+        elsif relative_path&.include?('actions')
+          # Handle action classes
+          return extract_action_class_name(relative_path)
+        elsif relative_path&.include?('services')
+          # Handle service classes
+          return extract_service_class_name(relative_path)
         end
       end
 
@@ -167,12 +166,12 @@ module BlueprintsCLI
     # @param path [String] Relative path within blueprintsCLI
     # @return [String, nil] The command class name
     def extract_command_class_name(path)
-      if path.include?('commands') && path.end_with?('.rb')
-        filename = File.basename(path, '.rb')
-        # Convert snake_case to CamelCase and add Command suffix
-        class_base = filename.split('_').map(&:capitalize).join
-        "BlueprintsCLI::Commands::#{class_base}" unless class_base == 'BaseCommand'
-      end
+      return unless path.include?('commands') && path.end_with?('.rb')
+
+      filename = File.basename(path, '.rb')
+      # Convert snake_case to CamelCase and add Command suffix
+      class_base = filename.split('_').map(&:capitalize).join
+      "BlueprintsCLI::Commands::#{class_base}" unless class_base == 'BaseCommand'
     end
 
     # Extract action class name from file path
@@ -180,23 +179,23 @@ module BlueprintsCLI
     # @param path [String] Relative path within blueprintsCLI
     # @return [String, nil] The action class name
     def extract_action_class_name(path)
-      if path.include?('actions') && path.end_with?('.rb')
-        filename = File.basename(path, '.rb')
-        class_base = filename.split('_').map(&:capitalize).join
-        "BlueprintsCLI::Actions::#{class_base}"
-      end
+      return unless path.include?('actions') && path.end_with?('.rb')
+
+      filename = File.basename(path, '.rb')
+      class_base = filename.split('_').map(&:capitalize).join
+      "BlueprintsCLI::Actions::#{class_base}"
     end
 
     # Extract service class name from file path
     #
-    # @param path [String] Relative path within blueprintsCLI  
+    # @param path [String] Relative path within blueprintsCLI
     # @return [String, nil] The service class name
     def extract_service_class_name(path)
-      if path.include?('services') && path.end_with?('.rb')
-        filename = File.basename(path, '.rb')
-        class_base = filename.split('_').map(&:capitalize).join
-        "BlueprintsCLI::Services::#{class_base}"
-      end
+      return unless path.include?('services') && path.end_with?('.rb')
+
+      filename = File.basename(path, '.rb')
+      class_base = filename.split('_').map(&:capitalize).join
+      "BlueprintsCLI::Services::#{class_base}"
     end
 
     # Build context hash based on configured detail level

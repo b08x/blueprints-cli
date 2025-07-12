@@ -6,7 +6,7 @@
 ENV['RACK_ENV'] = 'test'
 
 # Load the application environment
-require_relative '../config/environment'
+require 'blueprintsCLI/config/environment'
 
 # Load RSpec and Rack::Test
 require 'rspec'
@@ -30,7 +30,7 @@ RSpec.configure do |config|
   config.before(:suite) do
     # Run migrations before the test suite starts
     Sequel.extension :migration
-    Sequel::Migrator.run(DB, 'db/migrate')
+    Sequel::Migrator.run(DB, 'lib/blueprintsCLI/db/migrate')
   end
 
   config.around(:each) do |example|

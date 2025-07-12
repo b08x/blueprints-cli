@@ -431,7 +431,7 @@ module BlueprintsCLI
         @logger.warn('Using fallback default models...')
 
         primary_provider = @setup_data[:primary_provider]
-        provider_config = @setup_data[:providers][primary_provider]
+        @setup_data[:providers][primary_provider]
 
         case primary_provider
         when :openai, :openrouter

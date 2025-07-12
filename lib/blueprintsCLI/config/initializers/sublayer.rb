@@ -16,11 +16,20 @@ end
 
 # Configure RubyLLM using the unified configuration system
 ruby_llm_config = blueprints_config.ruby_llm_config
-RubyLLM.configure(ruby_llm_config) unless ruby_llm_config.empty?
+unless ruby_llm_config.empty?
+  RubyLLM.configure do |config|
+    ruby_llm_config.each { |key, value| config.send("#{key}=", value) }
+  end
+end
 
 # Set up RubyLLM provider to match Sublayer for consistency
-RubyLLM.provider = Sublayer.configuration.ai_provider.new(
-  model: Sublayer.configuration.ai_model
-)
+begin
+  RubyLLM.provider = Sublayer.configuration.ai_provider.new(
+    model: Sublayer.configuration.ai_model
+  )
+rescue => e
+  # Continue without RubyLLM provider setup if it fails
+  puts "Warning: Could not set up RubyLLM provider: #{e.message}"
+end
 
 puts "Sublayer and RubyLLM configured to use #{Sublayer.configuration.ai_provider} with model #{Sublayer.configuration.ai_model}"

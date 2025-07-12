@@ -59,13 +59,13 @@ module BlueprintsCLI
       def get_template_url(template_type)
         case template_type
         when :local_default
-          "postgresql://postgres:password@localhost:5432/blueprints"
+          'postgresql://postgres:password@localhost:5432/blueprints'
         when :docker_default
           BlueprintsCLI.configuration.build_database_url
         when :remote_example
-          "postgresql://username:password@hostname:5432/database_name"
+          'postgresql://username:password@hostname:5432/database_name'
         else
-          ""
+          ''
         end
       end
 
@@ -93,7 +93,7 @@ module BlueprintsCLI
       # Handle Docker PostgreSQL setup
       #
       # @param template [Hash] Docker template configuration
-      def handle_docker_setup(template)
+      def handle_docker_setup(_template)
         @logger.info('Setting up Docker PostgreSQL...')
 
         # Check if Docker is available
@@ -263,7 +263,7 @@ module BlueprintsCLI
       # Display available database templates
       def display_database_templates
         puts 'Available database configurations:'
-        DATABASE_TEMPLATES.each do |key, template|
+        DATABASE_TEMPLATES.each do |_key, template|
           puts "\n  #{template[:name]}:"
           puts "    #{template[:description]}"
           puts "    Requirements: #{template[:requirements].join(', ')}"
