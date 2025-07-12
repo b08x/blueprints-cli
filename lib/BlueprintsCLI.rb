@@ -30,8 +30,9 @@ require 'uri'
 require 'yaml'
 
 require_relative 'blueprintsCLI/version'
-require_relative 'blueprintsCLI/config'
 require_relative 'blueprintsCLI/configuration'
+require_relative 'blueprintsCLI/logger'
+require_relative 'blueprintsCLI/database'
 
 Dir[File.join(__dir__, 'blueprintsCLI', 'commands', '*.rb')].each { |file| require file }
 Dir[File.join(__dir__, 'blueprintsCLI', 'generators', '*.rb')].each { |file| require file }
@@ -42,7 +43,6 @@ require_relative 'blueprintsCLI/cli'
 
 module BlueprintsCLI
   class Error < StandardError; end
-  Config.load
 
   # Global configuration instance using the new TTY::Config system
   def self.configuration

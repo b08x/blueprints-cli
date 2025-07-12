@@ -29,7 +29,7 @@ module BlueprintsCLI
         @query = query
         @limit = limit
         @semantic = semantic
-        @db = BlueprintsCLI::Wrappers::BlueprintDatabase.new
+        @db = BlueprintsCLI::BlueprintDatabase.new
       end
 
       ##

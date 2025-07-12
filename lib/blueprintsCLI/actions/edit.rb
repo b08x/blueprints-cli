@@ -18,7 +18,7 @@ module BlueprintsCLI
       # @param id [String, Integer] The unique identifier of the blueprint to edit.
       def initialize(id:)
         @id = id
-        @db = BlueprintsCLI::Wrappers::BlueprintDatabase.new
+        @db = BlueprintsCLI::BlueprintDatabase.new
       end
 
       # Executes the blueprint editing workflow.

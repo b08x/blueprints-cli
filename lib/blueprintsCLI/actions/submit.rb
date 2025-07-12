@@ -30,7 +30,7 @@ module BlueprintsCLI
         @categories = categories || []
         @auto_describe = auto_describe
         @auto_categorize = auto_categorize
-        @db = BlueprintsCLI::Wrappers::BlueprintDatabase.new
+        @db = BlueprintsCLI::BlueprintDatabase.new
       end
 
       ##

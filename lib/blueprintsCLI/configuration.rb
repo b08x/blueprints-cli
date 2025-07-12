@@ -5,10 +5,10 @@ require 'fileutils'
 
 module BlueprintsCLI
   # Unified configuration management using TTY::Config
-  # 
+  #
   # Handles configuration for:
   # - BlueprintsCLI application settings
-  # - Sublayer AI provider configuration  
+  # - Sublayer AI provider configuration
   # - Ruby LLM provider settings
   # - Logger configuration
   #
@@ -22,19 +22,19 @@ module BlueprintsCLI
   class Configuration
     # Error raised when configuration validation fails
     ValidationError = Class.new(StandardError)
-    
+
     # Error raised when required configuration is missing
     MissingConfigError = Class.new(StandardError)
 
     # Default configuration file name
     DEFAULT_FILENAME = 'config'
-    
+
     # Default configuration file extension
     DEFAULT_EXTENSION = '.yml'
-    
+
     # Environment variable prefix for auto-mapping
     ENV_PREFIX = 'BLUEPRINTS'
-    
+
     # The TTY::Config instance
     attr_reader :config
 
@@ -73,7 +73,7 @@ module BlueprintsCLI
     #   config.set(:blueprints, :database, :url, value: 'postgres://...')
     def set(*keys, value:)
       @config.set(*keys, value: value)
-      # Note: We don't validate on set because it may cause issues during initial setup
+      # NOTE: We don't validate on set because it may cause issues during initial setup
       value
     end
 
@@ -128,29 +128,27 @@ module BlueprintsCLI
     # @return [Array<String>] Array of validation error messages (empty if valid)
     def validate!
       errors = []
-      
+
       begin
         validate_blueprints!
       rescue ValidationError => e
         errors << e.message
       end
-      
-      begin  
+
+      begin
         validate_ai!
       rescue ValidationError => e
         errors << e.message
       end
-      
+
       begin
         validate_logger!
       rescue ValidationError => e
         errors << e.message
       end
-      
-      unless errors.empty?
-        raise ValidationError, "Configuration validation failed:\n#{errors.join("\n")}"
-      end
-      
+
+      raise ValidationError, "Configuration validation failed:\n#{errors.join("\n")}" unless errors.empty?
+
       true
     end
 
@@ -204,23 +202,21 @@ module BlueprintsCLI
       }
     end
 
-    # Get Ruby LLM configuration hash  
+    # Get Ruby LLM configuration hash
     #
     # @return [Hash] Ruby LLM configuration
     def ruby_llm_config
       config_hash = {}
-      
+
       # Add API keys that are available
       config_hash[:openai_api_key] = ai_api_key(:openai) if ai_api_key(:openai)
       config_hash[:anthropic_api_key] = ai_api_key(:anthropic) if ai_api_key(:anthropic)
       config_hash[:google_api_key] = ai_api_key(:gemini) if ai_api_key(:gemini)
       config_hash[:deepseek_api_key] = ai_api_key(:deepseek) if ai_api_key(:deepseek)
-      
+
       # Add custom API base if configured
-      if fetch(:ai, :ruby_llm, :openai_api_base)
-        config_hash[:openai_api_base] = fetch(:ai, :ruby_llm, :openai_api_base)
-      end
-      
+      config_hash[:openai_api_base] = fetch(:ai, :ruby_llm, :openai_api_base) if fetch(:ai, :ruby_llm, :openai_api_base)
+
       config_hash
     end
 
@@ -233,7 +229,7 @@ module BlueprintsCLI
       @config.env_prefix = ENV_PREFIX
       @config.env_separator = '_'
       @config.autoload_env
-      
+
       # Add default search paths
       default_paths = [
         File.join(Dir.home, '.config', 'BlueprintsCLI'),
@@ -241,7 +237,7 @@ module BlueprintsCLI
         File.join(__dir__, 'config'),
         Dir.pwd
       ]
-      
+
       (default_paths + config_paths).each do |path|
         @config.append_path(path) if Dir.exist?(path)
       end
@@ -255,10 +251,10 @@ module BlueprintsCLI
       rescue TTY::Config::ReadError => e
         BlueprintsCLI.logger.warn("Failed to read configuration file: #{e.message}")
       end
-      
+
       # Set default values
       set_defaults
-      
+
       # Map common environment variables
       setup_env_mappings
     end
@@ -266,7 +262,8 @@ module BlueprintsCLI
     # Set default configuration values
     def set_defaults
       # Blueprints defaults
-      @config.set_if_empty(:blueprints, :database, :url, value: 'postgres://localhost/blueprints_development')
+      @config.set_if_empty(:blueprints, :database, :url,
+                           value: 'postgresql://postgres:blueprints@ninjabot:5433/blueprints_development')
       @config.set_if_empty(:blueprints, :features, :auto_description, value: true)
       @config.set_if_empty(:blueprints, :features, :auto_categorize, value: true)
       @config.set_if_empty(:blueprints, :features, :improvement_analysis, value: true)
@@ -281,14 +278,14 @@ module BlueprintsCLI
       @config.set_if_empty(:blueprints, :ui, :colors, value: true)
       @config.set_if_empty(:blueprints, :ui, :interactive, value: true)
       @config.set_if_empty(:blueprints, :ui, :pager, value: true)
-      
+
       # AI defaults
       @config.set_if_empty(:ai, :sublayer, :project_name, value: 'blueprintsCLI')
-      @config.set_if_empty(:ai, :sublayer, :project_template, value: 'CLI')  
+      @config.set_if_empty(:ai, :sublayer, :project_template, value: 'CLI')
       @config.set_if_empty(:ai, :sublayer, :provider, value: 'Gemini')
       @config.set_if_empty(:ai, :sublayer, :model, value: 'gemini-2.0-flash')
       @config.set_if_empty(:ai, :embedding_model, value: 'text-embedding-004')
-      
+
       # Logger defaults
       @config.set_if_empty(:logger, :level, value: 'info')
       @config.set_if_empty(:logger, :file_logging, value: false)
@@ -301,11 +298,11 @@ module BlueprintsCLI
       # Database
       @config.set_from_env(:blueprints, :database, :url) { 'BLUEPRINT_DATABASE_URL' }
       @config.set_from_env(:blueprints, :database, :url) { 'DATABASE_URL' }
-      
+
       # Editor
       @config.set_from_env(:blueprints, :editor) { 'EDITOR' }
       @config.set_from_env(:blueprints, :editor) { 'VISUAL' }
-      
+
       # Debug mode
       @config.set_from_env(:blueprints, :debug) { 'DEBUG' }
       @config.set_from_env(:blueprints, :debug) { 'BLUEPRINTS_DEBUG' }
@@ -315,41 +312,31 @@ module BlueprintsCLI
     def setup_validations
       # Database URL validation
       @config.validate(:blueprints, :database, :url) do |key, value|
-        unless value.is_a?(String) && !value.empty?
-          raise ValidationError, "#{key} must be a non-empty string"
-        end
-        
+        raise ValidationError, "#{key} must be a non-empty string" unless value.is_a?(String) && !value.empty?
+
         unless value.start_with?('postgres://') || value.start_with?('postgresql://')
           raise ValidationError, "#{key} must be a PostgreSQL URL (postgres:// or postgresql://)"
         end
       end
-      
+
       # Feature flags validation
       @config.validate(:blueprints, :features, :auto_description) do |key, value|
-        unless [true, false].include?(value)
-          raise ValidationError, "#{key} must be true or false"
-        end
+        raise ValidationError, "#{key} must be true or false" unless [true, false].include?(value)
       end
-      
+
       @config.validate(:blueprints, :features, :auto_categorize) do |key, value|
-        unless [true, false].include?(value)
-          raise ValidationError, "#{key} must be true or false"
-        end
+        raise ValidationError, "#{key} must be true or false" unless [true, false].include?(value)
       end
-      
+
       # Numeric validations
       @config.validate(:blueprints, :search, :default_limit) do |key, value|
-        unless value.is_a?(Integer) && value > 0
-          raise ValidationError, "#{key} must be a positive integer"
-        end
+        raise ValidationError, "#{key} must be a positive integer" unless value.is_a?(Integer) && value > 0
       end
-      
+
       @config.validate(:blueprints, :performance, :batch_size) do |key, value|
-        unless value.is_a?(Integer) && value > 0
-          raise ValidationError, "#{key} must be a positive integer"
-        end
+        raise ValidationError, "#{key} must be a positive integer" unless value.is_a?(Integer) && value > 0
       end
-      
+
       # AI provider validation
       @config.validate(:ai, :sublayer, :provider) do |key, value|
         valid_providers = %w[Gemini OpenAI Anthropic DeepSeek]
@@ -357,7 +344,7 @@ module BlueprintsCLI
           raise ValidationError, "#{key} must be one of: #{valid_providers.join(', ')}"
         end
       end
-      
+
       # Logger level validation
       @config.validate(:logger, :level) do |key, value|
         valid_levels = %w[debug info warn error fatal]
@@ -371,29 +358,25 @@ module BlueprintsCLI
     def validate_blueprints!
       database_url = fetch(:blueprints, :database, :url)
       # Only validate if we're not using the default fallback
-      if database_url.nil? || (database_url.empty? && !ENV['BLUEPRINT_DATABASE_URL'] && !ENV['DATABASE_URL'])
-        raise ValidationError, "Database URL is required"
-      end
+      return unless database_url.nil? || (database_url.empty? && !ENV['BLUEPRINT_DATABASE_URL'] && !ENV['DATABASE_URL'])
+
+      raise ValidationError, 'Database URL is required'
     end
 
-    # Validate AI section  
+    # Validate AI section
     def validate_ai!
       provider = fetch(:ai, :sublayer, :provider)
       model = fetch(:ai, :sublayer, :model)
-      
-      if provider.nil? || provider.empty?
-        raise ValidationError, "AI provider is required"
-      end
-      
-      if model.nil? || model.empty?
-        raise ValidationError, "AI model is required"
-      end
-      
+
+      raise ValidationError, 'AI provider is required' if provider.nil? || provider.empty?
+
+      raise ValidationError, 'AI model is required' if model.nil? || model.empty?
+
       # Check if API key is available for the provider
       api_key = ai_api_key(provider)
-      if api_key.nil? || api_key.empty?
-        BlueprintsCLI.logger.warn("No API key found for AI provider '#{provider}'. Set the appropriate environment variable.")
-      end
+      return unless api_key.nil? || api_key.empty?
+
+      BlueprintsCLI.logger.warn("No API key found for AI provider '#{provider}'. Set the appropriate environment variable.")
     end
 
     # Validate logger section
@@ -402,10 +385,10 @@ module BlueprintsCLI
       if level && !%w[debug info warn error fatal].include?(level.to_s.downcase)
         raise ValidationError, "Invalid logger level: #{level}"
       end
-      
-      if fetch(:logger, :file_logging) && fetch(:logger, :file_path).nil?
-        raise ValidationError, "Logger file path is required when file logging is enabled"
-      end
+
+      return unless fetch(:logger, :file_logging) && fetch(:logger, :file_path).nil?
+
+      raise ValidationError, 'Logger file path is required when file logging is enabled'
     end
 
     # Get default log file path

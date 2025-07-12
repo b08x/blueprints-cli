@@ -30,7 +30,7 @@ module BlueprintsCLI
         @id = id
         @output_path = output_path
         @include_metadata = include_metadata
-        @db = BlueprintsCLI::Wrappers::BlueprintDatabase.new
+        @db = BlueprintsCLI::BlueprintDatabase.new
       end
 
       ##

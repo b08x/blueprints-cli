@@ -2,10 +2,11 @@
 
 development:
   adapter: postgres
-  host: localhost
+  host: ninjabot
+  port: 5433
   database: blueprints_development
   user: postgres
-  password:
+  password: blueprints
 
 test:
   adapter: postgres

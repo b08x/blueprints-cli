@@ -32,7 +32,7 @@ module BlueprintsCLI
         @format = format
         @interactive = interactive
         @limit = limit
-        @db = BlueprintsCLI::Wrappers::BlueprintDatabase.new
+        @db = BlueprintsCLI::BlueprintDatabase.new
       end
 
       ##

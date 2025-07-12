@@ -24,7 +24,7 @@ module BlueprintsCLI
       def initialize(id: nil, force: false)
         @id = id
         @force = force
-        @db = BlueprintsCLI::Wrappers::BlueprintDatabase.new
+        @db = BlueprintsCLI::BlueprintDatabase.new
       end
 
       # Executes the blueprint deletion process

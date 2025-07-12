@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'db/interface'
+
 module BlueprintsCLI
   # Provides a direct database interface for managing "blueprints" (code snippets).
   #

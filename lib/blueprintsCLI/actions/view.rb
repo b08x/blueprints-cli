@@ -32,7 +32,7 @@ module BlueprintsCLI
         @id = id
         @format = format
         @with_suggestions = with_suggestions
-        @db = BlueprintsCLI::Wrappers::BlueprintDatabase.new
+        @db = BlueprintsCLI::BlueprintDatabase.new
       end
 
       ##

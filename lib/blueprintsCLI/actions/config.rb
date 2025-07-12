@@ -15,7 +15,6 @@ module BlueprintsCLI
     # @example Run the interactive setup
     #   BlueprintsCLI::Actions::Config.new(subcommand: 'setup').call
     class Config < Sublayer::Actions::Base
-
       ##
       # Initializes the configuration action.
       #
@@ -23,6 +22,7 @@ module BlueprintsCLI
       #   Defaults to 'show'. Supported values: 'show', 'view', 'setup',
       #   'init', 'edit', 'test', 'validate', 'reset'.
       def initialize(subcommand: 'show')
+        super
         @subcommand = subcommand
         @config = BlueprintsCLI::Configuration.new
       end
@@ -98,6 +98,7 @@ module BlueprintsCLI
           if ruby_llm_config.any?
             ruby_llm_config.each do |key, value|
               next if key.to_s.end_with?('_api_key')
+
               puts "  #{key}: #{value}"
             end
             puts "  Available API Keys: #{ruby_llm_config.keys.select { |k| k.to_s.end_with?('_api_key') }.join(', ')}"
@@ -116,7 +117,8 @@ module BlueprintsCLI
           puts 'Feature Flags:'.colorize(:cyan)
           puts "  Auto-description: #{@config.fetch(:blueprints, :features, :auto_description, default: 'Not set')}"
           puts "  Auto-categorization: #{@config.fetch(:blueprints, :features, :auto_categorize, default: 'Not set')}"
-          puts "  Improvement analysis: #{@config.fetch(:blueprints, :features, :improvement_analysis, default: 'Not set')}"
+          puts "  Improvement analysis: #{@config.fetch(:blueprints, :features, :improvement_analysis,
+                                                        default: 'Not set')}"
           puts ''
 
           # Logger Configuration
@@ -135,7 +137,8 @@ module BlueprintsCLI
           # Performance Configuration
           puts 'Performance Configuration:'.colorize(:cyan)
           puts "  Batch size: #{@config.fetch(:blueprints, :performance, :batch_size, default: 'Not set')}"
-          puts "  Connection pool size: #{@config.fetch(:blueprints, :performance, :connection_pool_size, default: 'Not set')}"
+          puts "  Connection pool size: #{@config.fetch(:blueprints, :performance, :connection_pool_size,
+                                                        default: 'Not set')}"
         else
           BlueprintsCLI.logger.failure('No configuration found')
           BlueprintsCLI.logger.tip("Run 'blueprint config setup' to create configuration")
@@ -308,7 +311,7 @@ module BlueprintsCLI
       #   exist initially. Returns `false` if the user cancels the operation.
       def reset_configuration
         config_file = @config.config_file_path
-        
+
         if config_file && File.exist?(config_file)
           print '⚠️  This will delete the existing configuration. Continue? (y/N): '
           response = STDIN.gets.chomp.downcase
@@ -340,17 +343,17 @@ module BlueprintsCLI
         # Check for existing config files
         old_config_path = File.join(__dir__, '..', 'config', 'blueprints.yml')
         old_sublayer_path = File.join(__dir__, '..', 'config', 'sublayer.yml')
-        
+
         migrated_any = false
 
         # Migrate old blueprints.yml
         if File.exist?(old_config_path)
-          puts "📄 Found existing blueprints.yml configuration"
+          puts '📄 Found existing blueprints.yml configuration'
           begin
             old_config = YAML.load_file(old_config_path)
             migrate_blueprints_config(old_config)
             migrated_any = true
-            puts "✅ Migrated blueprints.yml configuration"
+            puts '✅ Migrated blueprints.yml configuration'
           rescue StandardError => e
             BlueprintsCLI.logger.failure("Failed to migrate blueprints.yml: #{e.message}")
           end
@@ -358,12 +361,12 @@ module BlueprintsCLI
 
         # Migrate old sublayer.yml
         if File.exist?(old_sublayer_path)
-          puts "📄 Found existing sublayer.yml configuration"
+          puts '📄 Found existing sublayer.yml configuration'
           begin
             old_sublayer = YAML.load_file(old_sublayer_path)
             migrate_sublayer_config(old_sublayer)
             migrated_any = true
-            puts "✅ Migrated sublayer.yml configuration"
+            puts '✅ Migrated sublayer.yml configuration'
           rescue StandardError => e
             BlueprintsCLI.logger.failure("Failed to migrate sublayer.yml: #{e.message}")
           end
@@ -381,7 +384,7 @@ module BlueprintsCLI
             return false
           end
         else
-          puts "ℹ️  No existing configuration files found to migrate"
+          puts 'ℹ️  No existing configuration files found to migrate'
         end
 
         true
@@ -395,7 +398,7 @@ module BlueprintsCLI
           Blueprint Configuration Commands:
 
           blueprint config show      Show current configuration
-          blueprint config setup     Interactive configuration setup  
+          blueprint config setup     Interactive configuration setup#{'  '}
           blueprint config test      Test configuration connectivity and validation
           blueprint config migrate   Migrate old configuration files to new format
           blueprint config reset     Reset configuration to defaults
@@ -411,38 +414,63 @@ module BlueprintsCLI
       # @param old_config [Hash] The old configuration hash
       def migrate_blueprints_config(old_config)
         # Database configuration
-        if old_config['database']
-          @config.set(:blueprints, :database, :url, value: old_config['database']['url']) if old_config['database']['url']
+        if old_config['database'] && old_config['database']['url']
+          @config.set(:blueprints, :database, :url,
+                      value: old_config['database']['url'])
         end
 
         # Editor configuration
         @config.set(:blueprints, :editor, value: old_config['editor']) if old_config['editor']
-        @config.set(:blueprints, :auto_save_edits, value: old_config['auto_save_edits']) if old_config.key?('auto_save_edits')
+        if old_config.key?('auto_save_edits')
+          @config.set(:blueprints, :auto_save_edits,
+                      value: old_config['auto_save_edits'])
+        end
 
         # Feature flags
         if old_config['features']
-          @config.set(:blueprints, :features, :auto_description, value: old_config['features']['auto_description']) if old_config['features'].key?('auto_description')
-          @config.set(:blueprints, :features, :auto_categorize, value: old_config['features']['auto_categorize']) if old_config['features'].key?('auto_categorize')
-          @config.set(:blueprints, :features, :improvement_analysis, value: old_config['features']['improvement_analysis']) if old_config['features'].key?('improvement_analysis')
+          if old_config['features'].key?('auto_description')
+            @config.set(:blueprints, :features, :auto_description,
+                        value: old_config['features']['auto_description'])
+          end
+          if old_config['features'].key?('auto_categorize')
+            @config.set(:blueprints, :features, :auto_categorize,
+                        value: old_config['features']['auto_categorize'])
+          end
+          if old_config['features'].key?('improvement_analysis')
+            @config.set(:blueprints, :features, :improvement_analysis,
+                        value: old_config['features']['improvement_analysis'])
+          end
         end
 
         # Search configuration
         if old_config['search']
-          @config.set(:blueprints, :search, :default_limit, value: old_config['search']['default_limit']) if old_config['search']['default_limit']
-          @config.set(:blueprints, :search, :semantic_search, value: old_config['search']['semantic_search']) if old_config['search'].key?('semantic_search')
+          if old_config['search']['default_limit']
+            @config.set(:blueprints, :search, :default_limit,
+                        value: old_config['search']['default_limit'])
+          end
+          if old_config['search'].key?('semantic_search')
+            @config.set(:blueprints, :search, :semantic_search,
+                        value: old_config['search']['semantic_search'])
+          end
         end
 
         # Performance configuration
         if old_config['performance']
-          @config.set(:blueprints, :performance, :batch_size, value: old_config['performance']['batch_size']) if old_config['performance']['batch_size']
-          @config.set(:blueprints, :performance, :connection_pool_size, value: old_config['performance']['connection_pool_size']) if old_config['performance']['connection_pool_size']
+          if old_config['performance']['batch_size']
+            @config.set(:blueprints, :performance, :batch_size,
+                        value: old_config['performance']['batch_size'])
+          end
+          if old_config['performance']['connection_pool_size']
+            @config.set(:blueprints, :performance, :connection_pool_size,
+                        value: old_config['performance']['connection_pool_size'])
+          end
         end
 
         # AI configuration (if present in old format)
-        if old_config['ai']
-          @config.set(:ai, :sublayer, :provider, value: old_config['ai']['provider']) if old_config['ai']['provider']
-          @config.set(:ai, :sublayer, :model, value: old_config['ai']['model']) if old_config['ai']['model']
-        end
+        return unless old_config['ai']
+
+        @config.set(:ai, :sublayer, :provider, value: old_config['ai']['provider']) if old_config['ai']['provider']
+        @config.set(:ai, :sublayer, :model, value: old_config['ai']['model']) if old_config['ai']['model']
       end
 
       ##
@@ -451,7 +479,10 @@ module BlueprintsCLI
       # @param old_sublayer [Hash] The old sublayer configuration hash
       def migrate_sublayer_config(old_sublayer)
         @config.set(:ai, :sublayer, :project_name, value: old_sublayer[:project_name]) if old_sublayer[:project_name]
-        @config.set(:ai, :sublayer, :project_template, value: old_sublayer[:project_template]) if old_sublayer[:project_template]
+        if old_sublayer[:project_template]
+          @config.set(:ai, :sublayer, :project_template,
+                      value: old_sublayer[:project_template])
+        end
         @config.set(:ai, :sublayer, :provider, value: old_sublayer[:ai_provider]) if old_sublayer[:ai_provider]
         @config.set(:ai, :sublayer, :model, value: old_sublayer[:ai_model]) if old_sublayer[:ai_model]
       end
@@ -477,7 +508,11 @@ module BlueprintsCLI
         }
 
         env_vars.each do |key, value|
-          status = value ? (key.include?('KEY') ? 'Set (hidden)' : value) : 'Not set'
+          status = if value
+                     key.include?('KEY') ? 'Set (hidden)' : value
+                   else
+                     'Not set'
+                   end
           puts "  #{key}: #{status}"
         end
         puts ''
@@ -490,12 +525,12 @@ module BlueprintsCLI
       def test_database_connection
         require 'sequel'
         db_url = @config.database_url
-        
+
         if db_url.nil? || db_url.empty?
           BlueprintsCLI.logger.failure('No database URL configured')
           return false
         end
-        
+
         db = Sequel.connect(db_url)
         db.test_connection
         BlueprintsCLI.logger.success('Database connection successful')
@@ -514,10 +549,10 @@ module BlueprintsCLI
       def test_ai_connections
         success_count = 0
         total_tests = 0
-        
+
         # Test Sublayer configuration
         sublayer_provider = @config.fetch(:ai, :sublayer, :provider, default: '').downcase
-        if !sublayer_provider.empty?
+        unless sublayer_provider.empty?
           total_tests += 1
           api_key = @config.ai_api_key(sublayer_provider)
           if api_key
@@ -527,11 +562,11 @@ module BlueprintsCLI
             BlueprintsCLI.logger.failure("Sublayer AI API key not found for #{sublayer_provider}")
           end
         end
-        
+
         # Test Ruby LLM configuration
         ruby_llm_config = @config.ruby_llm_config
         api_keys = ruby_llm_config.select { |k, v| k.to_s.end_with?('_api_key') && v }
-        
+
         if api_keys.any?
           api_keys.each do |key, _|
             provider = key.to_s.gsub('_api_key', '')
@@ -542,7 +577,7 @@ module BlueprintsCLI
         else
           BlueprintsCLI.logger.warn('No Ruby LLM API keys configured')
         end
-        
+
         if total_tests == 0
           BlueprintsCLI.logger.warn('No AI providers configured')
           false
@@ -557,12 +592,12 @@ module BlueprintsCLI
       # @return [Boolean] `true` if the editor command is found, `false` otherwise.
       def test_editor
         editor = @config.fetch(:blueprints, :editor, default: 'vim')
-        
+
         if editor.nil? || editor.empty?
           BlueprintsCLI.logger.failure('No editor configured')
           return false
         end
-        
+
         if system("which #{editor} > /dev/null 2>&1")
           BlueprintsCLI.logger.success("Editor '#{editor}' found")
           true
@@ -571,7 +606,7 @@ module BlueprintsCLI
           false
         end
       end
-      
+
       ##
       # Tests the logger configuration.
       #
@@ -579,19 +614,19 @@ module BlueprintsCLI
       def test_logger_config
         level = @config.fetch(:logger, :level, default: 'info')
         valid_levels = %w[debug info warn error fatal]
-        
+
         unless valid_levels.include?(level.to_s.downcase)
           BlueprintsCLI.logger.failure("Invalid logger level: #{level}")
           return false
         end
-        
+
         if @config.fetch(:logger, :file_logging, default: false)
           file_path = @config.fetch(:logger, :file_path)
           if file_path.nil? || file_path.empty?
             BlueprintsCLI.logger.failure('File logging enabled but no file path configured')
             return false
           end
-          
+
           # Check if directory is writable
           dir = File.dirname(File.expand_path(file_path))
           unless File.directory?(dir) || File.writable?(File.dirname(dir))
@@ -599,7 +634,7 @@ module BlueprintsCLI
             return false
           end
         end
-        
+
         BlueprintsCLI.logger.success('Logger configuration is valid')
         true
       rescue StandardError => e

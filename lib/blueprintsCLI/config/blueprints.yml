@@ -7,9 +7,6 @@
 database:
   url: "postgresql://postgres:blueprints@ninjabot:5433/blueprints_development"
 
-# Legacy API URL (deprecated - now using direct database access)
-api_url: "http://ninjabot:81"
-
 # AI Configuration
 # For generating descriptions, categories, and embeddings
 ai:
