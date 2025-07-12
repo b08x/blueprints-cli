@@ -1,0 +1,6 @@
+---
+:project_name: blueprintsCLI
+:project_template: CLI
+:ai_provider: Gemini
+:ai_model: gemini-2.0-flash
+

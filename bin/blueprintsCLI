@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+lib_dir = File.expand_path(File.join(__dir__, '..', 'lib'))
+$LOAD_PATH.unshift lib_dir unless $LOAD_PATH.include?(lib_dir)
+
+require 'bundler/setup'
+require 'BlueprintsCLI'
+
+# This script serves as the entry point for the blueprintsCLI command-line interface.
+# It initializes the CLI and starts it with the provided arguments.
+
+# Load the CLI class from the blueprintsCLI gem
+
+BlueprintsCLI::CLI.start(ARGV)
