@@ -65,10 +65,10 @@ module BlueprintsCLI
           embed_options = {}
           embed_options[:model] = options[:model] if options[:model]
 
-          result = RubyLLM.embed(text: text, **embed_options)
+          result = RubyLLM.embed(text, **embed_options)
 
-          # RubyLLM returns the embedding array directly
-          embedding = Array(result)
+          # Extract the vector array from RubyLLM result
+          embedding = result.vectors
 
           log("Generated embedding via RubyLLM: #{embedding.size} dimensions")
           @last_error = nil

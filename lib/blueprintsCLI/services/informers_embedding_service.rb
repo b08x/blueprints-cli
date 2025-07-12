@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'singleton'
 require_relative '../providers/embedding_provider'
 require_relative '../providers/informers_provider'
 require_relative '../providers/ruby_llm_provider'

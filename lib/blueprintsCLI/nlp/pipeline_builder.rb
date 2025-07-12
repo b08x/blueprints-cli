@@ -23,7 +23,7 @@ module BlueprintsCLI
         }
         @performance_metrics = RBTreeMap.new
         @result_cache = Trie.new
-        @processor_priority = PriorityQueue.new { |x, y| x[:priority] <=> y[:priority] }
+        @processor_priority = PriorityQueue.new
       end
 
       # Add SpaCy processor to pipeline

@@ -1,7 +1,14 @@
 # frozen_string_literal: true
 
 require_relative 'base_processor'
-require 'spacy'
+
+begin
+  require 'ruby-spacy'
+  SPACY_AVAILABLE = true
+rescue LoadError
+  SPACY_AVAILABLE = false
+  puts "Warning: ruby-spacy gem not available. SpaCy processor will be disabled."
+end
 
 module BlueprintsCLI
   module NLP
@@ -14,8 +21,14 @@ module BlueprintsCLI
         def initialize(model_name: 'en_core_web_sm')
           super()
           @model_name = model_name
-          @nlp_model = load_spacy_model
-          build_linguistic_trie
+          
+          if SPACY_AVAILABLE
+            @nlp_model = load_spacy_model
+            build_linguistic_trie
+          else
+            @nlp_model = nil
+            puts "SpaCy processor initialized in fallback mode"
+          end
         end
 
         # Main processing method using SpaCy pipeline
@@ -27,6 +40,11 @@ module BlueprintsCLI
             cache_key = generate_cache_key(text)
             if cached_result = get_cached_result(cache_key)
               return cached_result
+            end
+
+            # Return fallback if SpaCy not available
+            unless SPACY_AVAILABLE && @nlp_model
+              return fallback_processing(text)
             end
 
             # Process with SpaCy
@@ -209,11 +227,56 @@ module BlueprintsCLI
         private
 
         def load_spacy_model
-          Spacy::Language.new(@model_name)
-        rescue StandardError
-          # Fallback to basic English model
-          puts "Warning: Could not load #{@model_name}, falling back to basic model"
-          Spacy::Language.new('en_core_web_sm')
+          return nil unless SPACY_AVAILABLE
+          
+          begin
+            Spacy::Language.new(@model_name)
+          rescue StandardError => e
+            # Fallback to basic English model
+            puts "Warning: Could not load #{@model_name}, falling back to basic model"
+            begin
+              Spacy::Language.new('en_core_web_sm')
+            rescue StandardError => e2
+              puts "Warning: Could not load any SpaCy model: #{e2.message}"
+              nil
+            end
+          end
+        end
+
+        def fallback_processing(text)
+          {
+            tokens: basic_tokenize(text),
+            entities: [],
+            pos_tags: [],
+            dependencies: [],
+            sentences: [text],
+            noun_phrases: [],
+            keywords: extract_basic_keywords(text),
+            fallback: true
+          }
+        end
+
+        def basic_tokenize(text)
+          text.split(/\s+/).map do |word|
+            {
+              text: word,
+              lemma: word.downcase,
+              pos: 'UNKNOWN',
+              is_alpha: word.match?(/\A[a-zA-Z]+\z/),
+              is_stop: false
+            }
+          end
+        end
+
+        def extract_basic_keywords(text)
+          words = text.downcase.scan(/\b\w+\b/)
+          word_freq = words.tally
+          
+          # Simple keyword extraction based on frequency and length
+          word_freq.select { |word, freq| word.length > 3 && freq > 0 }
+                   .map { |word, freq| { text: word, lemma: word, pos: 'UNKNOWN', score: freq.to_f / words.length } }
+                   .sort_by { |kw| -kw[:score] }
+                   .first(10)
         end
 
         def build_linguistic_trie

@@ -1,8 +1,23 @@
 # frozen_string_literal: true
 
 require_relative 'base_processor'
-require 'linguistics'
-require 'rwordnet'
+
+begin
+  require 'linguistics'
+  LINGUISTICS_AVAILABLE = true
+rescue LoadError
+  LINGUISTICS_AVAILABLE = false
+  puts "Warning: linguistics gem not available. Linguistics processor will be disabled."
+end
+
+begin
+  require 'rwordnet'
+  require 'wordnet'
+  WORDNET_AVAILABLE = true
+rescue LoadError
+  WORDNET_AVAILABLE = false
+  puts "Warning: rwordnet gem not available. WordNet features will be disabled."
+end
 
 module BlueprintsCLI
   module NLP
@@ -10,14 +25,30 @@ module BlueprintsCLI
       # Linguistics gem processor for morphological analysis and WordNet integration
       # Provides inflection, pluralization, stemming, and semantic relationships
       class LinguisticsProcessor < BaseProcessor
-        include Linguistics
+        include Linguistics if LINGUISTICS_AVAILABLE
 
         attr_reader :wordnet
 
         def initialize
           super
-          setup_linguistics
-          @wordnet = WordNet::Database.new
+          
+          if LINGUISTICS_AVAILABLE
+            setup_linguistics
+          else
+            puts "Linguistics processor initialized in fallback mode"
+          end
+          
+          if WORDNET_AVAILABLE
+            begin
+              @wordnet = WordNet::WordNetDB.instance
+            rescue StandardError => e
+              puts "Warning: Could not initialize WordNet: #{e.message}"
+              @wordnet = nil
+            end
+          else
+            @wordnet = nil
+          end
+          
           build_morphology_trie
         end
 
@@ -30,6 +61,11 @@ module BlueprintsCLI
             cache_key = generate_cache_key(text)
             if cached_result = get_cached_result(cache_key)
               return cached_result
+            end
+
+            # Return fallback if libraries not available
+            unless LINGUISTICS_AVAILABLE || WORDNET_AVAILABLE
+              return fallback_processing(text)
             end
 
             # Tokenize and analyze
@@ -265,7 +301,36 @@ module BlueprintsCLI
 
         def setup_linguistics
           # Enable English language processing
-          Linguistics.use(:en)
+          Linguistics.use(:en) if LINGUISTICS_AVAILABLE
+        end
+
+        def fallback_processing(text)
+          words = basic_tokenize(text)
+          {
+            morphology: [],
+            inflections: [],
+            semantic_relations: [],
+            word_forms: {},
+            concepts: [],
+            sentiment_words: [],
+            complexity_metrics: {
+              vocabulary_richness: calculate_basic_richness(words),
+              avg_word_length: words.map(&:length).sum.to_f / words.length,
+              lexical_diversity: words.uniq.length.to_f / words.length
+            },
+            fallback: true
+          }
+        end
+
+        def basic_tokenize(text)
+          text.downcase.scan(/\b\w+\b/).select { |word| word.length > 2 }
+        end
+
+        def calculate_basic_richness(words)
+          unique_words = words.uniq.length
+          total_words = words.length
+          return 0.0 if total_words == 0
+          unique_words.to_f / total_words
         end
 
         def build_morphology_trie

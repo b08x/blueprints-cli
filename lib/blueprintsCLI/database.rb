@@ -3,9 +3,10 @@
 require 'ruby_llm'
 require 'pgvector'
 require_relative 'db/interface'
-require_relative 'nlp/enhanced_rag_service'
-require_relative 'models/cache_models'
-require_relative 'services/informers_embedding_service'
+# Temporarily comment out enhanced RAG for testing
+# require_relative 'nlp/enhanced_rag_service'
+# require_relative 'models/cache_models'
+# require_relative 'services/informers_embedding_service'
 
 module BlueprintsCLI
   # Provides a direct database interface for managing "blueprints" (code snippets).
@@ -48,13 +49,14 @@ module BlueprintsCLI
     def initialize(database_url: nil, rag_config: {})
       @database_url = database_url || load_database_url
       @db = connect_to_database
-      @cache_manager = Models::CacheManager.new
-      @rag_service = NLP::EnhancedRagService.new(rag_config)
+      # Temporarily disable enhanced RAG for testing
+      # @cache_manager = Models::CacheManager.new
+      # @rag_service = NLP::EnhancedRagService.new(rag_config)
 
       validate_database_schema
 
-      # Rebuild search index on initialization
-      rebuild_search_index
+      # Temporarily disable search index rebuilding
+      # rebuild_search_index
     end
 
     #
@@ -93,10 +95,23 @@ module BlueprintsCLI
         }
 
         # Process through enhanced RAG pipeline
-        rag_result = @rag_service.process_blueprint(blueprint_data)
+        # rag_result = @rag_service.process_blueprint(blueprint_data)
 
-        # Extract embedding from RAG result or fallback to RubyLLM
-        embedding_vector = rag_result[:embeddings] || generate_fallback_embedding(blueprint_data)
+        # Use traditional embedding generation (enhanced RAG disabled)
+        content_to_embed = { name: name, description: description }.to_json
+        begin
+          embedding_result = RubyLLM.embed(content_to_embed)
+          # Extract the actual vector array from the result
+          embedding_vector = embedding_result.vectors
+        rescue RubyLLM::Error => e
+          # Fallback to a zero vector if embedding fails
+          BlueprintsCLI.logger.warn("RubyLLM embedding failed: #{e.message}, using zero vector")
+          embedding_vector = Array.new(768, 0.0)
+        rescue => e
+          # Handle other errors
+          BlueprintsCLI.logger.warn("Embedding generation failed: #{e.message}, using zero vector")
+          embedding_vector = Array.new(768, 0.0)
+        end
 
         # Insert blueprint record with enhanced metadata
         blueprint_id = @db[:blueprints].insert(
@@ -104,25 +119,23 @@ module BlueprintsCLI
           name: name,
           description: description,
           embedding: Pgvector.encode(embedding_vector),
-          nlp_metadata: rag_result.to_json,
+          # nlp_metadata: rag_result.to_json,
           created_at: Time.now,
           updated_at: Time.now
         )
 
-        # Store in cache for future access
-        @cache_manager.store(:pipeline, blueprint_data.to_json, @rag_service.config, rag_result)
+        # Store in cache for future access (disabled for now)
+        # @cache_manager.store(:pipeline, blueprint_data.to_json, @rag_service.config, rag_result)
 
         # Handle categories if provided
         insert_blueprint_categories(blueprint_id, categories) if categories.any?
 
-        # Update search index
-        blueprint_data.merge(id: blueprint_id)
-        @rag_service.update_search_index(blueprint_id, rag_result)
+        # Update search index (disabled for now)
+        # blueprint_data.merge(id: blueprint_id)
+        # @rag_service.update_search_index(blueprint_id, rag_result)
 
-        # Return the enhanced blueprint
-        enhanced_blueprint = get_blueprint(blueprint_id)
-        enhanced_blueprint[:rag_analysis] = rag_result if enhanced_blueprint
-        enhanced_blueprint
+        # Return the blueprint
+        get_blueprint(blueprint_id)
       end
     rescue StandardError => e
       BlueprintsCLI.logger.failure("Error creating blueprint: #{e.message}")
@@ -312,8 +325,17 @@ module BlueprintsCLI
         new_name = name || current[:name]
         new_description = description || current[:description]
         content_to_embed = { name: new_name, description: new_description }.to_json
-        embedding_vector = RubyLLM.embed(text: content_to_embed)
-        updates[:embedding] = Pgvector.encode(embedding_vector)
+        begin
+          embedding_result = RubyLLM.embed(content_to_embed)
+          embedding_vector = embedding_result.vectors
+          updates[:embedding] = Pgvector.encode(embedding_vector)
+        rescue RubyLLM::Error => e
+          BlueprintsCLI.logger.warn("Update embedding failed: #{e.message}")
+          # Skip embedding update on failure
+        rescue => e
+          BlueprintsCLI.logger.warn("Update embedding generation failed: #{e.message}")
+          # Skip embedding update on failure
+        end
       end
 
       @db.transaction do
@@ -566,9 +588,18 @@ module BlueprintsCLI
     # Traditional vector search fallback
     def traditional_vector_search(query, limit)
       # Generate embedding for the search query
-      query_embedding_vector = RubyLLM.embed(text: query)
-      return [] unless query_embedding_vector
+      begin
+        query_embedding_result = RubyLLM.embed(query)
+        query_embedding_vector = query_embedding_result.vectors
+      rescue RubyLLM::Error => e
+        BlueprintsCLI.logger.warn("Search embedding failed: #{e.message}")
+        return []
+      rescue => e
+        BlueprintsCLI.logger.warn("Search embedding generation failed: #{e.message}")
+        return []
+      end
 
+      return [] unless query_embedding_vector&.any?
       query_embedding = Pgvector.encode(query_embedding_vector)
 
       # Perform vector similarity search using pgvector
@@ -595,7 +626,12 @@ module BlueprintsCLI
         description: blueprint_data[:description]
       }.to_json
 
-      RubyLLM.embed(text: content_to_embed)
+      embedding_result = RubyLLM.embed(content_to_embed)
+      embedding_result.vectors
+    rescue RubyLLM::Error => e
+      BlueprintsCLI.logger.warn("RubyLLM fallback embedding failed: #{e.message}")
+      # Return zero vector as last resort
+      Array.new(768, 0.0)
     rescue StandardError => e
       BlueprintsCLI.logger.warn("Error generating fallback embedding: #{e.message}")
       # Return zero vector as last resort
