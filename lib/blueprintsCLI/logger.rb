@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'ruby_llm'
+
 module BlueprintsCLI
   # Centralized logger module for the BlueprintsCLI application.
   # Encapsulates TTY::Logger configuration and provides a singleton instance.
@@ -57,6 +59,29 @@ module BlueprintsCLI
       end
 
       @@instance
+    end
+
+    # Logs a structured, user-friendly error for AI-related exceptions.
+    #
+    # @param error [StandardError] The exception to log.
+    def self.ai_error(error)
+      instance.failure("AI Error: #{error.message}")
+      case error
+      when RubyLLM::AuthenticationError
+        instance.tip("Check your API key and provider settings in `config.yml`.")
+      when RubyLLM::ConfigurationError
+        instance.tip("Review your AI configuration in `config.yml` for missing or invalid values.")
+      when RubyLLM::RateLimitError
+        instance.tip("You have exceeded your API quota. Please check your plan and usage limits.")
+      when RubyLLM::APIConnectionError
+        instance.tip("Could not connect to the AI provider. Check your network connection.")
+      when RubyLLM::InvalidRequestError
+        instance.warn("The request to the AI provider was invalid. This may be a bug.")
+        instance.debug(error.backtrace.join("\n")) if ENV['DEBUG']
+      else
+        instance.warn("An unexpected error occurred while communicating with the AI provider.")
+        instance.debug(error.backtrace.join("\n")) if ENV['DEBUG']
+      end
     end
 
     # Reset the singleton instance (useful for testing)

@@ -40,7 +40,7 @@ module BlueprintsCLI
 
       def handle_generate(file_path)
         if file_path.nil?
-          puts "Please provide a file path.".colorize(:red)
+          puts 'Please provide a file path.'.colorize(:red)
           show_help
           return false
         end

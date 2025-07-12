@@ -193,28 +193,22 @@ module BlueprintsCLI
         start_time = Time.now
 
         begin
-          # Create RubyLLM chat instance with configured model
           chat = create_chat_instance
-
-          # Send the analysis prompt
           response = chat.ask(build_prompt)
-
           end_time = Time.now
           response_time = end_time - start_time
-
-          # Parse improvements from response
           improvements = parse_improvements(response.content)
-
-          # Build metadata
           metadata = build_metadata(response, response_time)
 
-          # Return hybrid response object
           ImprovementResponse.new(
             improvements: improvements,
             metadata: metadata,
             raw_response: response
           )
+        rescue ParseError, RubyLLM::Error => e
+          handle_error(e, start_time)
         rescue StandardError => e
+          BlueprintsCLI.logger.failure("An unexpected error occurred during improvement generation: #{e.message}")
           handle_error(e, start_time)
         end
       end
@@ -386,7 +380,11 @@ module BlueprintsCLI
         response_time = end_time - start_time
 
         # Log the error
-        BlueprintsCLI.logger.warn("Improvement generation failed: #{error.message}")
+        if error.is_a?(RubyLLM::Error)
+          BlueprintsCLI::Logger.ai_error(error)
+        else
+          BlueprintsCLI.logger.warn("Improvement generation failed: #{error.message}")
+        end
         BlueprintsCLI.logger.debug(error.backtrace.join("\n")) if ENV['DEBUG']
 
         # Return empty response with error metadata

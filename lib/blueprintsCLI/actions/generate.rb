@@ -98,17 +98,11 @@ module BlueprintsCLI
       def generate_code_with_context(relevant_blueprints)
         BlueprintsCLI.logger.info('Generating code with AI...')
 
-        # Build context from relevant blueprints
         context = build_blueprint_context(relevant_blueprints)
-
-        # Create a prompt for code generation
         generation_prompt = build_generation_prompt(context)
 
         begin
-          # Use RubyLLM directly for code generation
           generated_content = generate_with_ai(generation_prompt)
-
-          # Parse the generated content to extract files
           files = parse_generated_content(generated_content)
 
           {
@@ -120,8 +114,11 @@ module BlueprintsCLI
               timestamp: Time.now
             }
           }
+        rescue RubyLLM::Error => e
+          BlueprintsCLI::Logger.ai_error(e)
+          { success: false, error: "AI Generation Failed: #{e.message}" }
         rescue StandardError => e
-          BlueprintsCLI.logger.failure("AI generation failed: #{e.message}")
+          BlueprintsCLI.logger.failure("An unexpected error occurred during AI generation: #{e.message}")
           { success: false, error: e.message }
         end
       end
@@ -332,7 +329,9 @@ module BlueprintsCLI
         api_key = config.ai_api_key(provider)
         BlueprintsCLI.logger.debug("API key present: #{!api_key.nil? && !api_key.empty?}")
 
-        raise "No API key found for #{provider}. Please configure your AI settings." unless api_key
+        unless api_key
+          raise RubyLLM::ConfigurationError, "No API key found for #{provider}. Please configure your AI settings."
+        end
 
         # Create RubyLLM client
         llm_config = {
