@@ -138,6 +138,7 @@ module BlueprintsCLI
           description_content,
           title: { top_left: '📝 Description' },
           style: { border: { fg: :cyan } },
+          width: 120,
           padding: 1
         )
         content_parts << description_box
@@ -149,6 +150,7 @@ module BlueprintsCLI
             suggestions_content,
             title: { top_left: '🤖 AI Analysis & Suggestions' },
             style: { border: { fg: :magenta } },
+            width: 140,
             padding: 1
           )
           content_parts << suggestions_box
@@ -198,14 +200,20 @@ module BlueprintsCLI
         if suggestions[:improvements]
           content_lines << '💡 Improvements:'
           suggestions[:improvements].each do |improvement|
-            content_lines << "  • #{improvement}"
+            # Wrap long improvement text to fit in box (130 chars for width 140 box)
+            wrapped_improvement = wrap_text(improvement, 130)
+            # Indent continuation lines
+            wrapped_lines = wrapped_improvement.split("\n")
+            content_lines << "  • #{wrapped_lines.first}"
+            wrapped_lines[1..-1].each { |line| content_lines << "    #{line}" }
           end
           content_lines << ''
         end
 
         if suggestions[:quality_assessment]
           content_lines << '📊 Quality Assessment:'
-          content_lines << suggestions[:quality_assessment]
+          wrapped_assessment = wrap_text(suggestions[:quality_assessment], 130)
+          content_lines << wrapped_assessment
         end
 
         content_lines.join("\n")
@@ -292,6 +300,15 @@ module BlueprintsCLI
       #
       # @return [Boolean] true if TTY::Pager is defined and available, false otherwise
       #
+      # Simple text wrapping helper
+      #
+      # @param text [String] Text to wrap
+      # @param width [Integer] Maximum line width
+      # @return [String] Wrapped text
+      def wrap_text(text, width = 80)
+        text.gsub(/(.{1,#{width}})(\s+|$)/, "\\1\n").strip
+      end
+
       # @example Internal usage
       #   if tty_pager_available?
       #     TTY::Pager.page(content)

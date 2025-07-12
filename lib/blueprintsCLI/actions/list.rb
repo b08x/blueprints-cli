@@ -230,7 +230,11 @@ module BlueprintsCLI
             display_summary(blueprints)
             prompt.keypress('Press any key to continue...')
           when :submit
-            handle_submit_action(prompt)
+            submission_success = handle_submit_action(prompt)
+            # Refresh blueprints if submission was successful
+            if submission_success
+              blueprints = BlueprintsCLI.database.all_blueprints
+            end
           when :exit
             puts '👋 Goodbye!'.colorize(:green)
             break
@@ -348,20 +352,26 @@ module BlueprintsCLI
                                         { name: '✏️  Text input', value: :text }
                                       ])
 
+        success = false
         if submit_choice == :file
           file_path = prompt.ask('📁 Enter file path:')
           if file_path && File.exist?(file_path)
             code = File.read(file_path)
-            BlueprintsCLI::Actions::Submit.new(code: code).call
+            success = BlueprintsCLI::Actions::Submit.new(code: code).call
           else
             puts "❌ File not found: #{file_path}".colorize(:red)
           end
         else
           code = prompt.multiline('✏️  Enter code (Ctrl+D to finish):')
-          BlueprintsCLI::Actions::Submit.new(code: code.join("\n")).call if code && !code.join("\n").strip.empty?
+          if code && !code.join("\n").strip.empty?
+            success = BlueprintsCLI::Actions::Submit.new(code: code.join("\n")).call
+          end
         end
 
         prompt.keypress('Press any key to continue...')
+        
+        # Return success status to indicate if blueprints need to be refreshed
+        success
       end
 
       ##

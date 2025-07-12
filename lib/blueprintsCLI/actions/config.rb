@@ -178,7 +178,7 @@ module BlueprintsCLI
 
         # Database configuration
         puts '📊 Database Configuration'.colorize(:cyan)
-        current_db = config.dig('database', 'url') || 'postgres://localhost/blueprints_development'
+        current_db = config.dig('database', 'url') || BlueprintsCLI.configuration.database_url
         db_url = prompt_for_input('Database URL', current_db)
 
         config['database'] = { 'url' => db_url }

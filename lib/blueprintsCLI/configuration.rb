@@ -175,7 +175,21 @@ module BlueprintsCLI
     def database_url
       fetch(:blueprints, :database, :url) ||
         ENV['BLUEPRINT_DATABASE_URL'] ||
-        ENV['DATABASE_URL']
+        ENV['DATABASE_URL'] ||
+        build_database_url
+    end
+
+    # Build database URL from individual components
+    #
+    # @return [String] Constructed database URL
+    def build_database_url
+      host = ENV['DB_HOST'] || 'localhost'
+      port = ENV['DB_PORT'] || '5432'
+      user = ENV['DB_USER'] || 'postgres'
+      password = ENV['DB_PASSWORD'] || 'blueprints'
+      database = ENV['DB_NAME'] || 'blueprints'
+
+      "postgresql://#{user}:#{password}@#{host}:#{port}/#{database}"
     end
 
     # Get AI provider API key for given provider
@@ -187,7 +201,8 @@ module BlueprintsCLI
       when 'gemini', 'google'
         ENV['GEMINI_API_KEY'] || ENV['GOOGLE_API_KEY']
       when 'openai'
-        ENV['OPENAI_API_KEY']
+        # Support both OpenRouter and direct OpenAI
+        ENV['OPENROUTER_API_KEY'] || ENV['OPENAI_API_KEY']
       when 'anthropic'
         ENV['ANTHROPIC_API_KEY']
       when 'deepseek'
@@ -415,7 +430,7 @@ module BlueprintsCLI
     def set_defaults
       # Blueprints defaults
       @config.set_if_empty(:blueprints, :database, :url,
-                           value: 'postgresql://postgres:blueprints@ninjabot:5433/blueprints_development')
+                           value: 'postgresql://postgres:blueprints@localhost:5432/blueprints')
       @config.set_if_empty(:blueprints, :features, :auto_description, value: true)
       @config.set_if_empty(:blueprints, :features, :auto_categorize, value: true)
       @config.set_if_empty(:blueprints, :features, :improvement_analysis, value: true)
@@ -482,6 +497,7 @@ module BlueprintsCLI
       @config.set_from_env(:ai, :provider_keys, :deepseek) { 'DEEPSEEK_API_KEY' }
       @config.set_from_env(:ai, :provider_keys, :openai_access_token) { 'OPENAI_ACCESS_TOKEN' }
       @config.set_from_env(:ai, :provider_keys, :openai_base_uri) { 'OPENAI_BASE_URI' }
+      @config.set_from_env(:ai, :rubyllm, :openai_api_key) { 'OPENAI_API_KEY' }
       @config.set_from_env(:ai, :rubyllm, :openai_api_base) { 'OPENAI_API_BASE' }
     end
 

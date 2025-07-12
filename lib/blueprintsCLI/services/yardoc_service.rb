@@ -3,6 +3,7 @@
 require 'ruby_llm'
 require 'tty-box'
 require 'tty-prompt'
+require 'tty-spinner'
 
 module BlueprintsCLI
   module Services
@@ -174,9 +175,14 @@ module BlueprintsCLI
       # @param preview [Boolean] Whether to show preview before writing (default: true)
       def initialize(file_path, preview: true)
         @file_path = file_path
-        @chat = RubyLLM.chat
         @preview = preview
         @prompt = TTY::Prompt.new if preview
+        
+        # Configure RubyLLM with available API keys
+        configure_rubyllm
+        
+        # Initialize chat with appropriate model and provider
+        @chat = create_chat_instance
       end
 
       # Generates YARD documentation for the file.
@@ -199,7 +205,17 @@ module BlueprintsCLI
         llm_prompt = PROMPT_TEMPLATE.gsub('{{RUBY_CODE}}', file_content)
 
         begin
+          # Set up spinner for AI generation feedback
+          spinner = TTY::Spinner.new("[:spinner] Generating YARD documentation with AI...", format: :dots)
+          
+          # Set up callback for streaming response feedback
+          @chat.on_new_message do
+            spinner.spin
+          end
+          
+          spinner.auto_spin
           response_message = @chat.ask(llm_prompt)
+          spinner.success('Documentation generated!')
           
           if response_message && response_message.content && !response_message.content.strip.empty?
             documented_content = response_message.content
@@ -213,10 +229,12 @@ module BlueprintsCLI
             show_success_message
             true
           else
+            spinner.error('Empty response from AI') if defined?(spinner)
             puts "Error: Received empty response from LLM."
             false
           end
         rescue => e
+          spinner.error('Generation failed') if defined?(spinner)
           puts "Error generating documentation: #{e.message}"
           false
         end
@@ -273,6 +291,36 @@ module BlueprintsCLI
 
         # Ask for confirmation
         @prompt.yes?('Apply YARD documentation to file?')
+      end
+
+      # Configure RubyLLM with available API keys
+      def configure_rubyllm
+        RubyLLM.configure do |config|
+          # Use Gemini if available
+          if ENV['GEMINI_API_KEY']
+            config.gemini_api_key = ENV['GEMINI_API_KEY']
+          # Use OpenRouter if available
+          elsif ENV['OPENROUTER_API_KEY']
+            config.openai_api_key = ENV['OPENROUTER_API_KEY']
+            config.openai_api_base = 'https://openrouter.ai/api/v1'
+          # Use OpenAI if available
+          elsif ENV['OPENAI_API_KEY']
+            config.openai_api_key = ENV['OPENAI_API_KEY']
+          end
+        end
+      end
+
+      # Create chat instance with appropriate model and provider
+      def create_chat_instance
+        if ENV['GEMINI_API_KEY']
+          RubyLLM.chat(model: 'gemini-2.0-flash', provider: :gemini)
+        elsif ENV['OPENROUTER_API_KEY']
+          RubyLLM.chat(model: 'gemini-2.0-flash', provider: :openai)
+        elsif ENV['OPENAI_API_KEY']
+          RubyLLM.chat(model: 'gpt-4o-mini', provider: :openai)
+        else
+          raise 'No AI provider configured. Please set GEMINI_API_KEY, OPENROUTER_API_KEY, or OPENAI_API_KEY environment variable.'
+        end
       end
 
       # Shows success message with styled box
