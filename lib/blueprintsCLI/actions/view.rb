@@ -55,7 +55,7 @@ module BlueprintsCLI
 
         blueprint = @db.get_blueprint(@id)
         unless blueprint
-          puts "❌ Blueprint #{@id} not found".colorize(:red)
+          BlueprintsCLI.logger.failure("Blueprint #{@id} not found")
           return false
         end
 

@@ -54,7 +54,7 @@ module BlueprintsCLI
         # Fetch the blueprint to delete
         blueprint = @db.get_blueprint(@id)
         unless blueprint
-          puts "❌ Blueprint #{@id} not found".colorize(:red)
+          BlueprintsCLI.logger.failure("Blueprint #{@id} not found")
           return false
         end
 
@@ -62,13 +62,13 @@ module BlueprintsCLI
         return false if !@force && !confirm_deletion?(blueprint)
 
         # Perform the deletion
-        puts '🗑️  Deleting blueprint...'.colorize(:yellow)
+        BlueprintsCLI.logger.step('Deleting blueprint...')
 
         if @db.delete_blueprint(@id)
-          puts "✅ Blueprint '#{blueprint[:name]}' (ID: #{@id}) deleted successfully".colorize(:green)
+          BlueprintsCLI.logger.success("Blueprint '#{blueprint[:name]}' (ID: #{@id}) deleted successfully")
           true
         else
-          puts '❌ Failed to delete blueprint'.colorize(:red)
+          BlueprintsCLI.logger.failure('Failed to delete blueprint')
           false
         end
       rescue StandardError => e

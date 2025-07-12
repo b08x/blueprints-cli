@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module BlueprintsCLI
-  # Centralized logger module for the ComputerTools application.
+  # Centralized logger module for the BlueprintsCLI application.
   # Encapsulates TTY::Logger configuration and provides a singleton instance.
   module Logger
     # Class variable to hold the singleton logger instance.
@@ -15,7 +15,7 @@ module BlueprintsCLI
       return @@instance if @@instance
 
       # Load user configuration for the logger
-      app_config = ComputerTools::Configuration.new
+      app_config = BlueprintsCLI::Configuration.new
       log_level = app_config.fetch(:logger, :level)&.to_sym || :info
       file_logging_enabled = app_config.fetch(:logger, :file_logging) || false
       log_file_path = app_config.fetch(:logger, :file_path) || default_log_path
@@ -112,7 +112,7 @@ module BlueprintsCLI
     def self.default_log_path
       # Use XDG Base Directory Specification if available, otherwise fallback
       state_home = ENV['XDG_STATE_HOME'] || File.expand_path('~/.local/state')
-      File.join(state_home, 'computertools', 'app.log')
+      File.join(state_home, 'BlueprintsCLI', 'app.log')
     end
   end
 end

@@ -356,7 +356,7 @@ module BlueprintsCLI
     def connect_to_database
       Sequel.connect(@database_url)
     rescue StandardError => e
-      puts "❌ Failed to connect to database: #{e.message}".colorize(:red)
+      BlueprintsCLI.logger.fatal("Failed to connect to database: #{e.message}")
       puts "Database URL: #{@database_url.gsub(/:[^:@]*@/, ':***@')}".colorize(:yellow)
       raise e
     end
@@ -379,7 +379,7 @@ module BlueprintsCLI
       # Check for vector extension
       return if @db.fetch("SELECT 1 FROM pg_extension WHERE extname = 'vector'").first
 
-      puts '⚠️  Warning: pgvector extension not found. Vector search may not work.'.colorize(:yellow)
+      BlueprintsCLI.logger.warn('pgvector extension not found. Vector search may not work.')
     end
 
     #
@@ -405,7 +405,7 @@ module BlueprintsCLI
     #
     def generate_embedding_for_text(text)
       unless @gemini_api_key
-        puts '⚠️  Warning: No Gemini API key found. Skipping embedding generation.'.colorize(:yellow)
+        BlueprintsCLI.logger.warn('No Gemini API key found. Skipping embedding generation.')
         return nil
       end
 

@@ -40,7 +40,7 @@ module BlueprintsCLI
       # @return [Boolean] true if the blueprint was successfully created, false otherwise.
       # @raise [StandardError] If an error occurs during the submission process.
       def call
-        puts '🚀 Processing blueprint submission...'.colorize(:blue)
+        BlueprintsCLI.logger.step('Processing blueprint submission...')
 
         # Generate missing metadata using AI
         generate_missing_metadata
@@ -57,11 +57,11 @@ module BlueprintsCLI
         )
 
         if blueprint
-          puts '✅ Blueprint created successfully!'.colorize(:green)
+          BlueprintsCLI.logger.success('Blueprint created successfully!')
           display_blueprint_summary(blueprint)
           true
         else
-          puts '❌ Failed to create blueprint'.colorize(:red)
+          BlueprintsCLI.logger.failure('Failed to create blueprint')
           false
         end
       rescue StandardError => e
@@ -79,7 +79,7 @@ module BlueprintsCLI
       def generate_missing_metadata
         # Generate name if not provided
         if @name.nil? || @name.strip.empty?
-          puts '📝 Generating blueprint name...'.colorize(:yellow)
+          BlueprintsCLI.logger.info('Generating blueprint name...')
           @name = BlueprintsCLI::Generators::Name.new(
             code: @code,
             description: @description

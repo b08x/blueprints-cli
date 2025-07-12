@@ -47,16 +47,16 @@ module BlueprintsCLI
       #   action = BlueprintsCLI::Actions::List.new
       #   action.call #=> true
       def call
-        puts '📋 Fetching blueprints...'.colorize(:blue)
+        BlueprintsCLI.logger.step('Fetching blueprints...')
 
         blueprints = @db.list_blueprints(limit: @limit)
 
         if blueprints.empty?
-          puts '📭 No blueprints found'.colorize(:yellow)
+          BlueprintsCLI.logger.warn('No blueprints found')
           return true
         end
 
-        puts "✅ Found #{blueprints.length} blueprints".colorize(:green)
+        BlueprintsCLI.logger.success("Found #{blueprints.length} blueprints")
 
         if @interactive && tty_prompt_available?
           interactive_blueprint_browser(blueprints)

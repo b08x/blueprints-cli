@@ -1,0 +1,15 @@
+# config/database.yml
+
+development:
+  adapter: postgres
+  host: localhost
+  database: blueprints_development
+  user: postgres
+  password:
+
+test:
+  adapter: postgres
+  host: localhost
+  database: blueprints_test
+  user: postgres
+  password:
