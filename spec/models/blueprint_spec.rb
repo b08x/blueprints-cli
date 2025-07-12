@@ -15,8 +15,12 @@ RSpec.describe Blueprint, type: :model do
   end
 
   describe '.search' do
-    let!(:blueprint1) { create(:blueprint, name: 'Ruby Code', description: 'A simple Ruby script.') }
-    let!(:blueprint2) { create(:blueprint, name: 'JavaScript Snippet', description: 'A utility function in JS.') }
+    let!(:blueprint1) do
+      create(:blueprint, name: 'Ruby Code', description: 'A simple Ruby script.')
+    end
+    let!(:blueprint2) do
+      create(:blueprint, name: 'JavaScript Snippet', description: 'A utility function in JS.')
+    end
 
     context 'when a query is provided' do
       it 'performs a semantic search' do

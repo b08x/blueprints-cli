@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'tty-box'
+require_relative '../ui/preview_boxes'
+
 module BlueprintsCLI
   module Actions
     ##
@@ -117,58 +120,103 @@ module BlueprintsCLI
       # @example Internal usage
       #   content = build_detailed_content(blueprint_data)
       def build_detailed_content(blueprint)
-        content = []
-        content << '=' * 80
-        content << '📋 Blueprint Details'.colorize(:blue).to_s
-        content << '=' * 80
-        content << "ID: #{blueprint[:id]}"
-        content << "Name: #{blueprint[:name]}"
-        content << "Created: #{blueprint[:created_at]}"
-        content << "Updated: #{blueprint[:updated_at]}"
-        content << ''
+        content_parts = []
+
+        # Metadata Box
+        metadata_content = build_metadata_content(blueprint)
+        metadata_box = TTY::Box.frame(
+          metadata_content,
+          title: { top_left: '📋 Blueprint Details' },
+          style: { border: { fg: :blue } },
+          padding: 1
+        )
+        content_parts << metadata_box
+
+        # Description Box
+        description_content = blueprint[:description] || 'No description available'
+        description_box = TTY::Box.frame(
+          description_content,
+          title: { top_left: '📝 Description' },
+          style: { border: { fg: :cyan } },
+          width: 120,
+          padding: 1
+        )
+        content_parts << description_box
+
+        # AI Suggestions Box (if available)
+        if blueprint[:ai_suggestions]
+          suggestions_content = build_suggestions_content(blueprint[:ai_suggestions])
+          suggestions_box = TTY::Box.frame(
+            suggestions_content,
+            title: { top_left: '🤖 AI Analysis & Suggestions' },
+            style: { border: { fg: :magenta } },
+            width: 140,
+            padding: 1
+          )
+          content_parts << suggestions_box
+        end
+
+        # Code Box with plain text (syntax highlighting removed due to readability issues)
+        code_box = UI::PreviewBoxes.code_box(
+          blueprint[:code],
+          title: '💻 Blueprint Code'
+        )
+        content_parts << code_box
+
+        content_parts.join("\n\n")
+      end
+
+      ##
+      # Builds metadata content for the metadata box.
+      #
+      # @param blueprint [Hash] The blueprint data
+      # @return [String] Formatted metadata content
+      def build_metadata_content(blueprint)
+        metadata_lines = []
+        metadata_lines << "ID: #{blueprint[:id]}"
+        metadata_lines << "Name: #{blueprint[:name]}"
+        metadata_lines << "Created: #{blueprint[:created_at]}"
+        metadata_lines << "Updated: #{blueprint[:updated_at]}"
 
         # Categories
         if blueprint[:categories] && blueprint[:categories].any?
           category_names = blueprint[:categories].map { |cat| cat[:title] }
-          content << "Categories: #{category_names.join(', ')}"
+          metadata_lines << "Categories: #{category_names.join(', ')}"
         else
-          content << 'Categories: None'
-        end
-        content << ''
-
-        # Description
-        content << 'Description:'
-        content << blueprint[:description] || 'No description available'
-        content << ''
-
-        # AI Suggestions (if available)
-        if blueprint[:ai_suggestions]
-          content << '🤖 AI Analysis & Suggestions:'.colorize(:cyan).to_s
-          content << '-' * 40
-
-          if blueprint[:ai_suggestions][:improvements]
-            content << '💡 Improvements:'.colorize(:yellow).to_s
-            blueprint[:ai_suggestions][:improvements].each do |improvement|
-              content << "  • #{improvement}"
-            end
-            content << ''
-          end
-
-          if blueprint[:ai_suggestions][:quality_assessment]
-            content << '📊 Quality Assessment:'.colorize(:yellow).to_s
-            content << blueprint[:ai_suggestions][:quality_assessment]
-            content << ''
-          end
+          metadata_lines << 'Categories: None'
         end
 
-        # Code
-        content << '-' * 80
-        content << '💻 Code:'.colorize(:green).to_s
-        content << '-' * 80
-        content << blueprint[:code]
-        content << '=' * 80
+        metadata_lines.join("\n")
+      end
 
-        content.join("\n")
+      ##
+      # Builds AI suggestions content for the suggestions box.
+      #
+      # @param suggestions [Hash] The AI suggestions data
+      # @return [String] Formatted suggestions content
+      def build_suggestions_content(suggestions)
+        content_lines = []
+
+        if suggestions[:improvements]
+          content_lines << '💡 Improvements:'
+          suggestions[:improvements].each do |improvement|
+            # Wrap long improvement text to fit in box (130 chars for width 140 box)
+            wrapped_improvement = wrap_text(improvement, 130)
+            # Indent continuation lines
+            wrapped_lines = wrapped_improvement.split("\n")
+            content_lines << "  • #{wrapped_lines.first}"
+            wrapped_lines[1..-1].each { |line| content_lines << "    #{line}" }
+          end
+          content_lines << ''
+        end
+
+        if suggestions[:quality_assessment]
+          content_lines << '📊 Quality Assessment:'
+          wrapped_assessment = wrap_text(suggestions[:quality_assessment], 130)
+          content_lines << wrapped_assessment
+        end
+
+        content_lines.join("\n")
       end
 
       ##
@@ -252,6 +300,15 @@ module BlueprintsCLI
       #
       # @return [Boolean] true if TTY::Pager is defined and available, false otherwise
       #
+      # Simple text wrapping helper
+      #
+      # @param text [String] Text to wrap
+      # @param width [Integer] Maximum line width
+      # @return [String] Wrapped text
+      def wrap_text(text, width = 80)
+        text.gsub(/(.{1,#{width}})(\s+|$)/, "\\1\n").strip
+      end
+
       # @example Internal usage
       #   if tty_pager_available?
       #     TTY::Pager.page(content)

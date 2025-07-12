@@ -14,3 +14,10 @@
 .DS_Store?
 
 .env
+
+/vendor/
+/generated/
+
+/.claude/
+/.qodo/
+/.ruby-lsp/

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'tty-box'
+
 module BlueprintsCLI
   module Actions
     # Handles the deletion of blueprints from the system with interactive confirmation.
@@ -141,33 +143,39 @@ module BlueprintsCLI
       #   confirm_deletion?(blueprint)
       #   # Shows confirmation dialog and returns true/false based on user input
       def confirm_deletion?(blueprint)
-        puts "\n#{'=' * 60}"
-        puts '🗑️  Blueprint Deletion Confirmation'.colorize(:red)
-        puts '=' * 60
-        puts "ID: #{blueprint[:id]}"
-        puts "Name: #{blueprint[:name]}"
-        puts "Description: #{blueprint[:description]}"
-
         categories = blueprint[:categories].map { |c| c[:title] }.join(', ')
-        puts "Categories: #{categories}" unless categories.empty?
-
-        puts "Created: #{blueprint[:created_at]}"
-        puts "Updated: #{blueprint[:updated_at]}"
-        puts "Code length: #{blueprint[:code].length} characters"
-        puts ''
-
         # Show first few lines of code as preview
         code_lines = blueprint[:code].lines
-        puts 'Code preview (first 5 lines):'
-        code_lines.first(5).each_with_index do |line, i|
-          puts "  #{i + 1}: #{line.chomp}"
-        end
-        puts '  ...' if code_lines.length > 5
-        puts ''
+        code_preview = code_lines.first(5).each_with_index.map do |line, i|
+          "  #{i + 1}: #{line.chomp}"
+        end.join("\n")
+        code_preview += "\n  ..." if code_lines.length > 5
 
-        puts '⚠️  WARNING: This action cannot be undone!'.colorize(:yellow)
-        puts 'The blueprint and all its metadata will be permanently deleted.'.colorize(:yellow)
-        puts ''
+        # Create content for the warning box
+        content = <<~CONTENT
+        ID: #{blueprint[:id]}
+        Name: #{blueprint[:name]}
+        Description: #{blueprint[:description]}
+        Categories: #{categories.empty? ? 'None' : categories}
+        Created: #{blueprint[:created_at]}
+        Updated: #{blueprint[:updated_at]}
+        Code length: #{blueprint[:code].length} characters
+
+        Code preview (first 5 lines):
+#{code_preview}
+
+        ⚠️  WARNING: This action cannot be undone!
+        The blueprint and all its metadata will be permanently deleted.
+        CONTENT
+
+        # Display the warning box with red border
+        warning_box = TTY::Box.frame(
+          content,
+          title: { top_left: '🗑️ Deletion Confirmation' },
+          style: { border: { fg: :red } },
+          padding: 1
+        )
+        puts "\n#{warning_box}"
 
         print 'Are you sure you want to delete this blueprint? (y/N): '
         response = $stdin.gets.chomp.downcase

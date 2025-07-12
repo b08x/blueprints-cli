@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# app/models/blueprint.rb
-
 require 'sequel'
 require 'pgvector'
 

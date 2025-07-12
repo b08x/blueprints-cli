@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'tty-box'
+require_relative '../ui/preview_boxes'
+
 module BlueprintsCLI
   module Actions
     # Facilitates the interactive editing of an existing blueprint.
@@ -44,7 +47,11 @@ module BlueprintsCLI
 
         puts "✏️  Editing blueprint: #{blueprint[:name]}".colorize(:blue)
         puts "Original description: #{blueprint[:description]}"
-        puts "Categories: #{blueprint[:categories].map { |c| c[:title] }.join(', ')}" if blueprint[:categories].any?
+        if blueprint[:categories].any?
+          puts "Categories: #{blueprint[:categories].map do |c|
+            c[:title]
+          end.join(', ')}"
+        end
 
         # Step 2: Open editor with current code
         temp_file = create_temp_file(blueprint)
@@ -171,24 +178,32 @@ module BlueprintsCLI
       # @return [Boolean] `true` if the user confirms, `false` otherwise.
       # @private
       def confirm_edit_operation(original_blueprint, modified_code)
-        puts "\n" + ('=' * 60)
-        puts '🔄 Edit Operation Confirmation'.colorize(:blue)
-        puts '=' * 60
-        puts "Original blueprint: #{original_blueprint[:name]} (ID: #{@id})"
-        puts "Original code length: #{original_blueprint[:code].length} characters"
-        puts "Modified code length: #{modified_code.length} characters"
-        puts ''
-        puts '⚠️  WARNING: This will:'.colorize(:yellow)
-        puts '   1. DELETE the existing blueprint (including embeddings)'.colorize(:yellow)
-        puts '   2. CREATE a new blueprint with the modified code'.colorize(:yellow)
-        puts '   3. Generate NEW embeddings for better search'.colorize(:yellow)
-        puts ''
+        # Create content for the confirmation box
+        content = <<~CONTENT
+          Original blueprint: #{original_blueprint[:name]} (ID: #{@id})
+          Original code length: #{original_blueprint[:code].length} characters
+          Modified code length: #{modified_code.length} characters
+
+          ⚠️  WARNING: This will:
+             1. DELETE the existing blueprint (including embeddings)
+             2. CREATE a new blueprint with the modified code
+             3. Generate NEW embeddings for better search
+        CONTENT
+
+        # Display the confirmation box with yellow border
+        confirmation_box = TTY::Box.frame(
+          content,
+          title: { top_left: '🔄 Edit Confirmation' },
+          style: { border: { fg: :yellow } },
+          padding: 1
+        )
+        puts "\n#{confirmation_box}"
 
         # Show a preview of changes
         show_change_preview(original_blueprint[:code], modified_code)
 
         print 'Continue with edit operation? (y/N): '
-        response = STDIN.gets.chomp.downcase
+        response = $stdin.gets.chomp.downcase
         %w[y yes].include?(response)
       end
 
@@ -202,24 +217,47 @@ module BlueprintsCLI
       # @return [void]
       # @private
       def show_change_preview(original_code, modified_code)
-        puts '📋 Change Preview:'.colorize(:cyan)
-
-        # Show first and last few lines to give context
+        # Show first few lines to give context
         original_lines = original_code.lines
         modified_lines = modified_code.lines
 
-        puts 'Original (first 3 lines):'
-        original_lines.first(3).each_with_index do |line, i|
-          puts "  #{i + 1}: #{line.chomp}"
-        end
+        # Build original code preview
+        original_preview = original_lines.first(5).each_with_index.map do |line, i|
+          "#{i + 1}: #{line.chomp}"
+        end.join("\n")
+        original_preview += "\n..." if original_lines.length > 5
 
-        puts "\nModified (first 3 lines):"
-        modified_lines.first(3).each_with_index do |line, i|
-          puts "  #{i + 1}: #{line.chomp}"
-        end
+        # Build modified code preview
+        modified_preview = modified_lines.first(5).each_with_index.map do |line, i|
+          "#{i + 1}: #{line.chomp}"
+        end.join("\n")
+        modified_preview += "\n..." if modified_lines.length > 5
 
+        # Create side-by-side preview boxes with plain text (syntax highlighting removed)
+        original_box = UI::PreviewBoxes.code_box(
+          original_preview,
+          title: '📜 Original Code'
+        )
+
+        modified_box = UI::PreviewBoxes.code_box(
+          modified_preview,
+          title: '✏️ Modified Code'
+        )
+
+        # Display boxes side by side (simplified version)
+        puts original_box
+        puts modified_box
+
+        # Show line count change if applicable
         if original_lines.length != modified_lines.length
-          puts "\nLine count changed: #{original_lines.length} → #{modified_lines.length}".colorize(:yellow)
+          change_info = TTY::Box.frame(
+            "Line count changed: #{original_lines.length} → #{modified_lines.length}",
+            title: { top_left: '📊 Changes Summary' },
+            style: { border: { fg: :yellow } },
+            padding: 1,
+            align: :center
+          )
+          puts change_info
         end
 
         puts ''

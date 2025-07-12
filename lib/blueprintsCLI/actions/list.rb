@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'tty-box'
+require 'tty-cursor'
+
 module BlueprintsCLI
   module Actions
     ##
@@ -105,7 +108,15 @@ module BlueprintsCLI
       #   2     Another Blueprint              Description of another blueprint                       Category3
       #   ========================================================================================================================
       def display_table(blueprints)
-        puts "\n" + '=' * 120
+        # Display header using TTY::Box
+        header_box = TTY::Box.frame(
+          "📚 Blueprint Collection",
+          width: 120,
+          align: :center,
+          style: { border: { fg: :blue } }
+        )
+        puts "\n#{header_box}"
+
         printf "%-5s %-30s %-50s %-25s\n", 'ID', 'Name', 'Description', 'Categories'
         puts '=' * 120
 
@@ -152,7 +163,9 @@ module BlueprintsCLI
 
         # Category analysis
         all_categories = blueprints.flat_map { |b| b[:categories].map { |c| c[:name] } }
-        category_counts = all_categories.each_with_object(Hash.new(0)) { |cat, hash| hash[cat] += 1 }
+        category_counts = all_categories.each_with_object(Hash.new(0)) do |cat, hash|
+          hash[cat] += 1
+        end
 
         if category_counts.any?
           puts "\nTop categories:"
@@ -180,9 +193,18 @@ module BlueprintsCLI
         return unless tty_prompt_available?
 
         prompt = TTY::Prompt.new
+        first_iteration = true
 
         loop do
-          puts "\n" + '=' * 80
+          # Only clear screen on first iteration, add spacing on subsequent ones
+          if first_iteration
+            clear_screen_smart
+            first_iteration = false
+          else
+            add_spacing(2)
+          end
+          
+          puts '=' * 80
           puts '📚 Blueprint Browser'.colorize(:blue)
           puts "Found #{blueprints.length} blueprints"
           puts '=' * 80
@@ -208,7 +230,11 @@ module BlueprintsCLI
             display_summary(blueprints)
             prompt.keypress('Press any key to continue...')
           when :submit
-            handle_submit_action(prompt)
+            submission_success = handle_submit_action(prompt)
+            # Refresh blueprints if submission was successful
+            if submission_success
+              blueprints = BlueprintsCLI.database.all_blueprints
+            end
           when :exit
             puts '👋 Goodbye!'.colorize(:green)
             break
@@ -326,20 +352,26 @@ module BlueprintsCLI
                                         { name: '✏️  Text input', value: :text }
                                       ])
 
+        success = false
         if submit_choice == :file
           file_path = prompt.ask('📁 Enter file path:')
           if file_path && File.exist?(file_path)
             code = File.read(file_path)
-            BlueprintsCLI::Actions::Submit.new(code: code).call
+            success = BlueprintsCLI::Actions::Submit.new(code: code).call
           else
             puts "❌ File not found: #{file_path}".colorize(:red)
           end
         else
           code = prompt.multiline('✏️  Enter code (Ctrl+D to finish):')
-          BlueprintsCLI::Actions::Submit.new(code: code.join("\n")).call if code && !code.join("\n").strip.empty?
+          if code && !code.join("\n").strip.empty?
+            success = BlueprintsCLI::Actions::Submit.new(code: code.join("\n")).call
+          end
         end
 
         prompt.keypress('Press any key to continue...')
+        
+        # Return success status to indicate if blueprints need to be refreshed
+        success
       end
 
       ##
@@ -447,6 +479,23 @@ module BlueprintsCLI
       # @return [Boolean] true if TTY::Prompt is defined and available
       def tty_prompt_available?
         defined?(TTY::Prompt)
+      end
+
+      ##
+      # Smart screen clearing that only clears when necessary
+      #
+      # @return [void]
+      def clear_screen_smart
+        print TTY::Cursor.clear_screen_down if defined?(TTY::Cursor)
+      end
+
+      ##
+      # Adds spacing without clearing the screen
+      #
+      # @param lines [Integer] number of lines to add (default: 2)
+      # @return [void]
+      def add_spacing(lines = 2)
+        puts "\n" * lines
       end
     end
   end

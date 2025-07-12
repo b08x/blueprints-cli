@@ -23,7 +23,8 @@ module BlueprintsCLI
       # @param auto_describe [Boolean] Whether to auto-generate the description if not provided. Defaults to true.
       # @param auto_categorize [Boolean] Whether to auto-generate the categories if not provided. Defaults to true.
       # @return [Submit] A new instance of Submit.
-      def initialize(code:, name: nil, description: nil, categories: nil, auto_describe: true, auto_categorize: true)
+      def initialize(code:, name: nil, description: nil, categories: nil, auto_describe: true,
+                     auto_categorize: true)
         @code = code
         @name = name
         @description = description
