@@ -88,7 +88,8 @@ module CLI
             private
 
             sig do
-              params(text: String, color: CLI::UI::Color, first: String, right_text: T.nilable(String)).returns(String)
+              params(text: String, color: CLI::UI::Color, first: String,
+                     right_text: T.nilable(String)).returns(String)
             end
             def edge(text, color:, first:, right_text: nil)
               color = CLI::UI.resolve_color(color)
@@ -106,9 +107,7 @@ module CLI
 
               suffix = +''
 
-              if right_text
-                suffix << ' ' << right_text << ' '
-              end
+              suffix << ' ' << right_text << ' ' if right_text
 
               preamble_width = CLI::UI::ANSI.printing_width(preamble)
               preamble_start = Frame.prefix_width

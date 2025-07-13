@@ -58,7 +58,7 @@ module CLI
         #
         sig { params(args: String, cmd: String).returns(String) }
         def control(args, cmd)
-          ESC + '[' + args + cmd
+          "#{ESC}[#{args}#{cmd}"
         end
 
         # https://en.wikipedia.org/wiki/ANSI_escape_code#graphics
@@ -146,7 +146,7 @@ module CLI
 
         sig { returns(Regexp) }
         def match_alternate_screen
-          /#{Regexp.escape(control("?1049", ""))}[hl]/
+          /#{Regexp.escape(control('?1049', ''))}[hl]/
         end
 
         # Show the cursor

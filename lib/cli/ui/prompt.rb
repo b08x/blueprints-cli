@@ -1,4 +1,3 @@
-# coding: utf-8
 # typed: true
 # frozen_string_literal: true
 
@@ -112,7 +111,7 @@ module CLI
             multiple: T::Boolean,
             filter_ui: T::Boolean,
             select_ui: T::Boolean,
-            options_proc: T.nilable(T.proc.params(handler: OptionsHandler).void),
+            options_proc: T.nilable(T.proc.params(handler: OptionsHandler).void)
           ).returns(T.any(String, T::Array[String]))
         end
         def ask(
@@ -126,21 +125,25 @@ module CLI
           select_ui: true,
           &options_proc
         )
-          has_options = !!(options || block_given?)
+          has_options = !(options || block_given?).nil?
           if has_options && is_file
-            raise(ArgumentError, 'conflicting arguments: is_file is only useful when options are not provided')
+            raise(ArgumentError,
+                  'conflicting arguments: is_file is only useful when options are not provided')
           end
 
           if options && multiple && default && !(Array(default) - options).empty?
-            raise(ArgumentError, 'conflicting arguments: default should only include elements present in options')
+            raise(ArgumentError,
+                  'conflicting arguments: default should only include elements present in options')
           end
 
           if multiple && !has_options
-            raise(ArgumentError, 'conflicting arguments: options must be provided when multiple is true')
+            raise(ArgumentError,
+                  'conflicting arguments: options must be provided when multiple is true')
           end
 
           if !multiple && default.is_a?(Array)
-            raise(ArgumentError, 'conflicting arguments: multiple defaults may only be provided when multiple is true')
+            raise(ArgumentError,
+                  'conflicting arguments: multiple defaults may only be provided when multiple is true')
           end
 
           if has_options
@@ -170,7 +173,7 @@ module CLI
           require 'io/console'
 
           CLI::UI::StdoutRouter::Capture.in_alternate_screen do
-            $stdout.print(CLI::UI.fmt('{{?}} ' + question)) # Do not use puts_question to avoid the new line.
+            $stdout.print(CLI::UI.fmt("{{?}} #{question}")) # Do not use puts_question to avoid the new line.
 
             # noecho interacts poorly with Readline under system Ruby, so do a manual `gets` here.
             # No fancy Readline integration (like echoing back) is required for a password prompt anyway.
@@ -198,7 +201,8 @@ module CLI
         #
         sig { params(question: String, default: T::Boolean).returns(T::Boolean) }
         def confirm(question, default: true)
-          ask_interactive(question, default ? ['yes', 'no'] : ['no', 'yes'], filter_ui: false) == 'yes'
+          ask_interactive(question, default ? %w[yes no] : %w[no yes],
+                          filter_ui: false) == 'yes'
         end
 
         # Present the user with a message and wait for any key to be pressed, returning the pressed key.
@@ -258,9 +262,7 @@ module CLI
                 return default
               end
 
-              if !line.empty? || allow_empty
-                return line
-              end
+              return line if !line.empty? || allow_empty
             end
           end
         end
@@ -272,25 +274,29 @@ module CLI
             multiple: T::Boolean,
             default: T.nilable(T.any(String, T::Array[String])),
             filter_ui: T::Boolean,
-            select_ui: T::Boolean,
+            select_ui: T::Boolean
           ).returns(T.any(String, T::Array[String]))
         end
-        def ask_interactive(question, options = nil, multiple: false, default: nil, filter_ui: true, select_ui: true)
-          raise(ArgumentError, 'conflicting arguments: options and block given') if options && block_given?
+        def ask_interactive(question, options = nil, multiple: false, default: nil,
+                            filter_ui: true, select_ui: true)
+          if options && block_given?
+            raise(ArgumentError,
+                  'conflicting arguments: options and block given')
+          end
 
           options ||= if block_given?
-            handler = OptionsHandler.new
-            yield handler
-            handler.options
-          end
+                        handler = OptionsHandler.new
+                        yield handler
+                        handler.options
+                      end
 
           raise(ArgumentError, 'insufficient options') if options.nil? || options.empty?
 
           navigate_text = if CLI::UI::OS.current.suggest_arrow_keys?
-            'Choose with ↑ ↓ ⏎'
-          else
-            "Navigate up with 'k' and down with 'j', press Enter to select"
-          end
+                            'Choose with ↑ ↓ ⏎'
+                          else
+                            "Navigate up with 'k' and down with 'j', press Enter to select"
+                          end
 
           instructions = (multiple ? 'Toggle options. ' : '') + navigate_text
           instructions += ", filter with 'f'" if filter_ui
@@ -305,22 +311,22 @@ module CLI
             # Clear the line
             print(ANSI.previous_line + ANSI.clear_to_end_of_line)
             # Force StdoutRouter to prefix
-            print(ANSI.previous_line + "\n")
+            print("#{ANSI.previous_line}\n")
 
             # reset the question to include the answer
             resp_text = case resp
-            when Array
-              case resp.size
-              when 0
-                '<nothing>'
-              when 1..2
-                resp.join(' and ')
-              else
-                "#{resp.size} items"
-              end
-            else
-              resp
-            end
+                        when Array
+                          case resp.size
+                          when 0
+                            '<nothing>'
+                          when 1..2
+                            resp.join(' and ')
+                          else
+                            "#{resp.size} items"
+                          end
+                        else
+                          resp
+                        end
             puts_question("#{question} (You chose: {{italic:#{resp_text}}})")
           end
 
@@ -333,7 +339,8 @@ module CLI
 
         # Useful for stubbing in tests
         sig do
-          params(options: T::Array[String], multiple: T::Boolean, default: T.nilable(T.any(T::Array[String], String)))
+          params(options: T::Array[String], multiple: T::Boolean,
+                 default: T.nilable(T.any(T::Array[String], String)))
             .returns(T.any(T::Array[String], String))
         end
         def interactive_prompt(options, multiple: false, default: nil)
@@ -345,19 +352,15 @@ module CLI
         sig { params(default: String).void }
         def write_default_over_empty_input(default)
           CLI::UI.raw do
-            $stderr.puts(
-              CLI::UI::ANSI.cursor_up(1) +
-              "\r" +
-              CLI::UI::ANSI.cursor_forward(4) + # TODO: width
-              default +
-              CLI::UI::Color::RESET.code,
+            warn(
+              "#{CLI::UI::ANSI.cursor_up(1)}\r#{CLI::UI::ANSI.cursor_forward(4)}#{default}#{CLI::UI::Color::RESET.code}"
             )
           end
         end
 
         sig { params(str: String).void }
         def puts_question(str)
-          $stdout.puts(CLI::UI.fmt('{{?}} ' + str))
+          $stdout.puts(CLI::UI.fmt("{{?}} #{str}"))
         end
 
         sig { params(is_file: T::Boolean).returns(String) }
@@ -370,7 +373,7 @@ module CLI
               (Dir.entries(directory).select do |fp|
                 fp.start_with?(filename)
               end - (input[-1] == '.' ? [] : ['.', '..'])).map do |fp|
-                File.join(directory, fp).gsub(/\A\.\//, '')
+                File.join(directory, fp).delete_prefix('./')
               end
             end
             Reline.completion_append_character = ''
@@ -394,7 +397,7 @@ module CLI
             print(CLI::UI::Color::RESET.code)
             line.to_s.chomp
           rescue Interrupt
-            CLI::UI.raw { $stderr.puts('^C' + CLI::UI::Color::RESET.code) }
+            CLI::UI.raw { warn("^C#{CLI::UI::Color::RESET.code}") }
             raise
           end
         end

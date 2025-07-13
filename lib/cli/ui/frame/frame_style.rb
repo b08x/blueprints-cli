@@ -17,8 +17,8 @@ module CLI
 
         MAP = {
           box: -> { FrameStyle::Box },
-          bracket: -> { FrameStyle::Bracket },
-        }
+          bracket: -> { FrameStyle::Bracket }
+        }.freeze
 
         class << self
           extend T::Sig

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # typed: true
 
 module CLI
@@ -45,7 +46,7 @@ module CLI
             padded_row = row.each_with_index.map do |cell, i|
               col_size = T.must(col_sizes[i]) # guaranteed to be non-nil
               cell_size = CLI::UI::ANSI.printing_width(CLI::UI.resolve_text(cell))
-              padded_cell = cell + ' ' * (col_size - cell_size)
+              padded_cell = cell + (' ' * (col_size - cell_size))
               padded_cell
             end
             CLI::UI.puts(padded_row.join(' ' * col_spacing), to: to)

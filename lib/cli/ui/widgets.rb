@@ -21,7 +21,7 @@ module CLI
     module Widgets
       extend T::Sig
 
-      MAP = {}
+      MAP = {}.freeze
 
       autoload(:Base, 'cli/ui/widgets/base')
       autoload(:Status, 'cli/ui/widgets/status')

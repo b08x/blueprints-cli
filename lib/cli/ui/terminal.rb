@@ -42,14 +42,14 @@ module CLI
             else
               winsize
             end
-          rescue
+          rescue StandardError
             [DEFAULT_HEIGHT, DEFAULT_WIDTH]
           end
         end
 
         sig { void }
         def setup_winsize_trap
-          @winsize_trap ||= Signal.trap('WINCH') do
+          @setup_winsize_trap ||= Signal.trap('WINCH') do
             @winsize = nil
           end
         end

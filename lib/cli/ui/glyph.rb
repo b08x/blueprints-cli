@@ -56,7 +56,7 @@ module CLI
       end
 
       # Mapping of glyphs to terminal output
-      MAP = {}
+      MAP = {}.freeze
       STAR      = new('*', 0x2b51,           '*', Color::YELLOW) # YELLOW SMALL STAR (⭑)
       INFO      = new('i', 0x1d4be,          'i', Color::BLUE)   # BLUE MATHEMATICAL SCRIPT SMALL i (𝒾)
       QUESTION  = new('?', 0x003f,           '?', Color::BLUE)   # BLUE QUESTION MARK (?)

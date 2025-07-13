@@ -15,13 +15,13 @@ module CLI
       TASK_FAILED = :task_failed
 
       RUNES = if CLI::UI::OS.current.use_emoji?
-        ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].freeze
-      else
-        ['\\', '|', '/', '-', '\\', '|', '/', '-'].freeze
-      end
+                ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].freeze
+              else
+                ['\\', '|', '/', '-', '\\', '|', '/', '-'].freeze
+              end
 
-      colors = [CLI::UI::Color::CYAN.code] * (RUNES.size / 2).ceil +
-        [CLI::UI::Color::MAGENTA.code] * (RUNES.size / 2).to_i
+      colors = ([CLI::UI::Color::CYAN.code] * (RUNES.size / 2).ceil) +
+               ([CLI::UI::Color::MAGENTA.code] * (RUNES.size / 2).to_i)
       GLYPHS = colors.zip(RUNES).map { |c, r| c + r + CLI::UI::Color::RESET.code }.freeze
 
       class << self
@@ -78,7 +78,7 @@ module CLI
             title: String,
             auto_debrief: T::Boolean,
             to: IOLike,
-            block: T.proc.params(task: SpinGroup::Task).void,
+            block: T.proc.params(task: SpinGroup::Task).void
           ).returns(T::Boolean)
         end
         def spin(title, auto_debrief: true, to: $stdout, &block)

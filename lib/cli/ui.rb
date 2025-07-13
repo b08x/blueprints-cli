@@ -1,9 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-unless defined?(T)
-  require('cli/ui/sorbet_runtime_stub')
-end
+require('cli/ui/sorbet_runtime_stub') unless defined?(T)
 
 module CLI
   module UI
@@ -113,7 +111,7 @@ module CLI
           multiple: T::Boolean,
           filter_ui: T::Boolean,
           select_ui: T::Boolean,
-          options_proc: T.nilable(T.proc.params(handler: Prompt::OptionsHandler).void),
+          options_proc: T.nilable(T.proc.params(handler: Prompt::OptionsHandler).void)
         ).returns(T.any(String, T::Array[String]))
       end
       def ask(
@@ -196,7 +194,7 @@ module CLI
           encoding: Encoding,
           format: T::Boolean,
           graceful: T::Boolean,
-          wrap: T::Boolean,
+          wrap: T::Boolean
         ).void
       end
       def puts(
@@ -215,7 +213,7 @@ module CLI
           encoding: encoding,
           format: format,
           graceful: graceful,
-          wrap: wrap,
+          wrap: wrap
         )
       end
 
@@ -235,7 +233,7 @@ module CLI
           timing: T.any(T::Boolean, Numeric),
           frame_style: FrameStylable,
           to: IOLike,
-          block: T.nilable(T.proc.returns(T.type_parameter(:T))),
+          block: T.nilable(T.proc.returns(T.type_parameter(:T)))
         ).returns(T.nilable(T.type_parameter(:T)))
       end
       def frame(
@@ -272,7 +270,7 @@ module CLI
           title: String,
           auto_debrief: T::Boolean,
           to: IOLike,
-          block: T.proc.params(task: Spinner::SpinGroup::Task).void,
+          block: T.proc.params(task: Spinner::SpinGroup::Task).void
         ).returns(T::Boolean)
       end
       def spinner(title, auto_debrief: true, to: $stdout, &block)
@@ -291,8 +289,8 @@ module CLI
           .params(color: Colorable, block: T.proc.returns(T.type_parameter(:T)))
           .returns(T.type_parameter(:T))
       end
-      def with_frame_color(color, &block)
-        CLI::UI::Frame.with_frame_color_override(color, &block)
+      def with_frame_color(color, &)
+        CLI::UI::Frame.with_frame_color_override(color, &)
       end
 
       # Duplicate output to a file path
@@ -306,10 +304,8 @@ module CLI
           .params(path: String, block: T.proc.returns(T.type_parameter(:T)))
           .returns(T.type_parameter(:T))
       end
-      def log_output_to(path, &block)
-        if CLI::UI::StdoutRouter.duplicate_output_to
-          raise 'multiple logs not allowed'
-        end
+      def log_output_to(path)
+        raise 'multiple logs not allowed' if CLI::UI::StdoutRouter.duplicate_output_to
 
         CLI::UI::StdoutRouter.duplicate_output_to = File.open(path, 'w')
         yield
@@ -330,8 +326,10 @@ module CLI
       #
       # * +block+ - block in which to disable frames
       #
-      sig { type_parameters(:T).params(block: T.proc.returns(T.type_parameter(:T))).returns(T.type_parameter(:T)) }
-      def raw(&block)
+      sig do
+        type_parameters(:T).params(block: T.proc.returns(T.type_parameter(:T))).returns(T.type_parameter(:T))
+      end
+      def raw
         prev = Thread.current[:no_cliui_frame_inset]
         Thread.current[:no_cliui_frame_inset] = true
         yield

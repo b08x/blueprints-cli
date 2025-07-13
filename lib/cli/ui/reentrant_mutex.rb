@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright (c) 2014 Boris Bera
 #
 # MIT License
@@ -50,10 +52,10 @@ module CLI
 
       def unlock
         c = decrease_count Thread.current
-        if c <= 0
-          super
-          delete_count Thread.current
-        end
+        return unless c <= 0
+
+        super
+        delete_count Thread.current
       end
 
       def count

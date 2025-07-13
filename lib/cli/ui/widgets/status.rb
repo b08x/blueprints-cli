@@ -7,16 +7,16 @@ module CLI
   module UI
     module Widgets
       class Status < Widgets::Base
-        ARGPARSE_PATTERN = %r{
+        ARGPARSE_PATTERN = /
           \A (?<succeeded> \d+)
           :  (?<failed>    \d+)
           :  (?<working>   \d+)
           :  (?<pending>   \d+) \z
-        }x # e.g. "1:23:3:404"
-        OPEN  = Color::RESET.code + Color::BOLD.code + '[' + Color::RESET.code
-        CLOSE = Color::RESET.code + Color::BOLD.code + ']' + Color::RESET.code
-        ARROW = Color::RESET.code + Color::GRAY.code + '◂' + Color::RESET.code
-        COMMA = Color::RESET.code + Color::GRAY.code + ',' + Color::RESET.code
+        /x # e.g. "1:23:3:404"
+        OPEN  = "#{Color::RESET.code}#{Color::BOLD.code}[#{Color::RESET.code}".freeze
+        CLOSE = "#{Color::RESET.code}#{Color::BOLD.code}]#{Color::RESET.code}".freeze
+        ARROW = "#{Color::RESET.code}#{Color::GRAY.code}◂#{Color::RESET.code}".freeze
+        COMMA = "#{Color::RESET.code}#{Color::GRAY.code},#{Color::RESET.code}".freeze
 
         SPINNER_STOPPED = '⠿'
         EMPTY_SET = '∅'

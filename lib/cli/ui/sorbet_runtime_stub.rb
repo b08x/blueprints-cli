@@ -12,7 +12,7 @@ module T
     def nilable(type); end
     def noreturn; end
     def self_type; end
-    def type_alias(type = nil, &_blk); end
+    def type_alias(type = nil, &); end
     def type_parameter(name); end
     def untyped; end
 
@@ -46,7 +46,7 @@ module T
   end
 
   module Sig
-    def sig(arg0 = nil, &blk); end
+    def sig(arg0 = nil, &); end
   end
 
   module Helpers
@@ -64,7 +64,7 @@ module T
     def type_member(variance = :invariant, fixed: nil, lower: nil, upper: BasicObject); end
     def type_template(variance = :invariant, fixed: nil, lower: nil, upper: BasicObject); end
 
-    def [](*types)
+    def [](*_types)
       self
     end
   end

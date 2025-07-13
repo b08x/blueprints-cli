@@ -8,7 +8,10 @@ module CLI
     class OS
       extend T::Sig
 
-      sig { params(emoji: T::Boolean, color_prompt: T::Boolean, arrow_keys: T::Boolean, shift_cursor: T::Boolean).void }
+      sig do
+        params(emoji: T::Boolean, color_prompt: T::Boolean, arrow_keys: T::Boolean,
+               shift_cursor: T::Boolean).void
+      end
       def initialize(emoji: true, color_prompt: true, arrow_keys: true, shift_cursor: false)
         @emoji = emoji
         @color_prompt = color_prompt
@@ -41,18 +44,19 @@ module CLI
 
         sig { returns(OS) }
         def current
-          @current_os ||= case RbConfig::CONFIG['host_os']
-          when /darwin/
-            MAC
-          when /linux/
-            LINUX
-          else
-            if RUBY_PLATFORM !~ /cygwin/ && ENV['OS'] == 'Windows_NT'
-              WINDOWS
-            else
-              raise "Could not determine OS from host_os #{RbConfig::CONFIG["host_os"]}"
-            end
-          end
+          @current ||= case RbConfig::CONFIG['host_os']
+                       when /darwin/
+                         MAC
+                       when /linux/
+                         LINUX
+                       else
+                         unless !RUBY_PLATFORM.include?('cygwin') && ENV['OS'] == 'Windows_NT'
+                           raise "Could not determine OS from host_os #{RbConfig::CONFIG['host_os']}"
+                         end
+
+                         WINDOWS
+
+                       end
         end
       end
 

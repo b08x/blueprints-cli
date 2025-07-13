@@ -31,7 +31,6 @@ module CLI
         #
         sig { params(title: String).void }
         def initialize(title)
-          require 'thread'
           sg = CLI::UI::Spinner::SpinGroup.new
           @m = Mutex.new
           @cv = ConditionVariable.new

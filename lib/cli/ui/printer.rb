@@ -44,7 +44,7 @@ module CLI
             encoding: T.nilable(Encoding),
             format: T::Boolean,
             graceful: T::Boolean,
-            wrap: T::Boolean,
+            wrap: T::Boolean
           ).returns(T::Boolean)
         end
         def puts(

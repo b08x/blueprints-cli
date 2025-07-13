@@ -1,4 +1,3 @@
-# coding: utf-8
 # typed: true
 # frozen_string_literal: true
 
@@ -11,7 +10,7 @@ module CLI
         extend T::Sig
 
         DONE = 'Done'
-        CHECKBOX_ICON = { false => '☐', true => '☑' }
+        CHECKBOX_ICON = { false => '☐', true => '☑' }.freeze
 
         class << self
           extend T::Sig
@@ -31,7 +30,8 @@ module CLI
           #   CLI::UI::Prompt::InteractiveOptions.call(%w(rails go python))
           #
           sig do
-            params(options: T::Array[String], multiple: T::Boolean, default: T.nilable(T.any(String, T::Array[String])))
+            params(options: T::Array[String], multiple: T::Boolean,
+                   default: T.nilable(T.any(String, T::Array[String])))
               .returns(T.any(String, T::Array[String]))
           end
           def call(options, multiple: false, default: nil)
@@ -60,10 +60,10 @@ module CLI
         def initialize(options, multiple: false, default: nil)
           @options = options
           @active = if default && (i = options.index(default))
-            i + 1
-          else
-            1
-          end
+                      i + 1
+                    else
+                      1
+                    end
           @marker = '>'
           @answer = nil
           @state = :root
@@ -76,10 +76,10 @@ module CLI
           # @options[0] is selected if @chosen[0]
           if multiple
             @chosen = if default
-              @options.map { |option| default.include?(option) }
-            else
-              Array.new(@options.size) { false }
-            end
+                        @options.map { |option| default.include?(option) }
+                      else
+                        Array.new(@options.size) { false }
+                      end
           end
           @redraw = true
           @presented_options = T.let([], T::Array[[String, T.nilable(Integer)]])
@@ -122,7 +122,7 @@ module CLI
           # it will be the widest number we will display, and we pad the others to
           # align with it. Then we calculate how many lines would be needed to
           # render the string based on the terminal width.
-          prefix = "#{@marker} #{@options.count}. #{@multiple ? "☐ " : ""}"
+          prefix = "#{@marker} #{@options.count}. #{'☐ ' if @multiple}"
 
           @option_lengths = @options.map do |text|
             next 1 if text.empty?
@@ -134,7 +134,9 @@ module CLI
 
             # Finally, we need to calculate how many lines each one will take. We can do that by dividing each one
             # by the width of the terminal, rounding up to the nearest natural number
-            non_empty_line_lengths.sum { |length| (length.to_f / @terminal_width_at_calculation_time).ceil }
+            non_empty_line_lengths.sum do |length|
+              (length.to_f / @terminal_width_at_calculation_time).ceil
+            end
           end
         end
 
@@ -219,16 +221,16 @@ module CLI
         sig { params(n: Integer).void }
         def select_n(n)
           if @multiple
-            if n == 0
+            if n.zero?
               @answer = []
               @chosen.each_with_index do |selected, i|
-                @answer << i + 1 if selected
+                @answer << (i + 1) if selected
               end
             else
               @active = n
               @chosen[n - 1] = !@chosen[n - 1]
             end
-          elsif n == 0
+          elsif n.zero?
             # Ignore pressing "0" when not in multiple mode
           elsif should_enter_select_mode?(n)
             # When we have more than 9 options, we need to enter select mode
@@ -259,7 +261,7 @@ module CLI
 
         sig { params(char: String).void }
         def select_bool(char)
-          return unless (@options - ['yes', 'no']).empty?
+          return unless (@options - %w[yes no]).empty?
 
           index = T.must(@options.index { |o| o.start_with?(char) })
           @active = index + 1
@@ -449,9 +451,9 @@ module CLI
 
         sig { void }
         def ensure_visible_is_active
-          unless presented_options.any? { |_, num| num == @active }
-            @active = presented_options.first&.last.to_i
-          end
+          return if presented_options.any? { |_, num| num == @active }
+
+          @active = presented_options.first&.last.to_i
         end
 
         sig { returns(Integer) }
@@ -497,22 +499,28 @@ module CLI
           max_num_length = (@options.size + 1).to_s.length
 
           metadata_text = if selecting?
-            select_text = @active
-            select_text = '{{info:e, q, or up/down anytime to exit}}' if @active == 0
-            "Select: #{select_text}"
-          elsif filtering? || has_filter?
-            filter_text = @filter
-            filter_text = '{{info:Ctrl-D anytime or Backspace now to exit}}' if @filter.empty?
-            "Filter: #{filter_text}"
-          end
+                            select_text = @active
+                            if @active.zero?
+                              select_text = '{{info:e, q, or up/down anytime to exit}}'
+                            end
+                            "Select: #{select_text}"
+                          elsif filtering? || has_filter?
+                            filter_text = @filter
+                            if @filter.empty?
+                              filter_text = '{{info:Ctrl-D anytime or Backspace now to exit}}'
+                            end
+                            "Filter: #{filter_text}"
+                          end
 
-          puts CLI::UI.fmt("  {{green:#{metadata_text}}}#{ANSI.clear_to_end_of_line}") if metadata_text
+          if metadata_text
+            puts CLI::UI.fmt("  {{green:#{metadata_text}}}#{ANSI.clear_to_end_of_line}")
+          end
 
           options.each do |choice, num|
             is_chosen = @multiple && num && @chosen[num - 1] && num != 0
 
             padding = ' ' * (max_num_length - num.to_s.length)
-            message = "  #{num}#{num ? "." : " "}#{padding}"
+            message = "  #{num}#{num ? '.' : ' '}#{padding}"
 
             format = '%s'
             # If multiple, bold selected. If not multiple, do not bold any options.
@@ -522,13 +530,15 @@ module CLI
             format = "{{cyan:#{format}}}" if @multiple && is_chosen && num != @active
             format = " #{format}"
 
-            message += format(format, CHECKBOX_ICON[is_chosen]) if @multiple && num && num > 0
+            message += format(format, CHECKBOX_ICON[is_chosen]) if @multiple && num && num.positive?
             message += format_choice(format, choice)
 
             if num == @active
 
               color = filtering? || selecting? ? 'green' : 'blue'
-              message = message.split("\n").map { |l| "{{#{color}:#{@marker} #{l.strip}}}" }.join("\n")
+              message = message.split("\n").map do |l|
+                "{{#{color}:#{@marker} #{l.strip}}}"
+              end.join("\n")
             end
 
             puts CLI::UI.fmt(message)

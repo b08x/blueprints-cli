@@ -84,7 +84,7 @@ module CLI
             timing: T.any(T::Boolean, Numeric),
             frame_style: FrameStylable,
             to: IOLike,
-            block: T.nilable(T.proc.returns(T.type_parameter(:T))),
+            block: T.nilable(T.proc.returns(T.type_parameter(:T)))
           ).returns(T.nilable(T.type_parameter(:T)))
         end
         def open(
@@ -94,8 +94,7 @@ module CLI
           success_text: nil,
           timing: block_given?,
           frame_style: self.frame_style,
-          to: $stdout,
-          &block
+          to: $stdout
         )
           frame_style = CLI::UI.resolve_style(frame_style)
           color = CLI::UI.resolve_color(color)
@@ -123,7 +122,7 @@ module CLI
           begin
             success = false
             success = yield
-          rescue
+          rescue StandardError
             closed = true
             t_diff = elapsed(t_start, timing)
             close(failure_text, color: :red, elapsed: t_diff, to: to)
@@ -133,10 +132,10 @@ module CLI
           ensure
             unless closed
               t_diff = elapsed(t_start, timing)
-              if T.unsafe(success) != false
-                close(success_text, color: color, elapsed: t_diff, to: to)
-              else
+              if T.unsafe(success) == false
                 close(failure_text, color: :red, elapsed: t_diff, to: to)
+              else
+                close(success_text, color: color, elapsed: t_diff, to: to)
               end
             end
           end
@@ -174,7 +173,7 @@ module CLI
             text: T.nilable(String),
             color: T.nilable(Colorable),
             frame_style: T.nilable(FrameStylable),
-            to: IOLike,
+            to: IOLike
           ).void
         end
         def divider(text, color: nil, frame_style: nil, to: $stdout)
@@ -224,7 +223,7 @@ module CLI
             color: T.nilable(Colorable),
             elapsed: T.nilable(Numeric),
             frame_style: T.nilable(FrameStylable),
-            to: IOLike,
+            to: IOLike
           ).void
         end
         def close(text, color: nil, elapsed: nil, frame_style: nil, to: $stdout)
@@ -289,7 +288,7 @@ module CLI
             .params(color: Colorable, block: T.proc.returns(T.type_parameter(:T)))
             .returns(T.type_parameter(:T))
         end
-        def with_frame_color_override(color, &block)
+        def with_frame_color_override(color)
           prev = Thread.current[:cliui_frame_color_override]
           Thread.current[:cliui_frame_color_override] = color
           yield

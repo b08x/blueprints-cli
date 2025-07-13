@@ -47,11 +47,11 @@ module CLI
             .params(
               title: T.nilable(String),
               width: Integer,
-              block: T.proc.params(bar: Progress).returns(T.type_parameter(:T)),
+              block: T.proc.params(bar: Progress).returns(T.type_parameter(:T))
             )
             .returns(T.type_parameter(:T))
         end
-        def progress(title = nil, width: Terminal.width, &block)
+        def progress(title = nil, width: Terminal.width)
           bar = Progress.new(title, width: width)
           print(CLI::UI::ANSI.hide_cursor)
           yield(bar)
@@ -89,7 +89,10 @@ module CLI
       #
       sig { params(percent: T.nilable(Numeric), set_percent: T.nilable(Numeric)).void }
       def tick(percent: nil, set_percent: nil)
-        raise ArgumentError, 'percent and set_percent cannot both be specified' if percent && set_percent
+        if percent && set_percent
+          raise ArgumentError,
+                'percent and set_percent cannot both be specified'
+        end
 
         @percent_done += percent || 0.01
         @percent_done = set_percent if set_percent
@@ -98,7 +101,7 @@ module CLI
         print(self)
 
         printed_lines = @title ? 2 : 1
-        print(CLI::UI::ANSI.previous_lines(printed_lines) + "\n")
+        print("#{CLI::UI::ANSI.previous_lines(printed_lines)}\n")
       end
 
       # Update the progress bar title
@@ -123,9 +126,9 @@ module CLI
 
         title = CLI::UI.resolve_text(@title, truncate_to: @max_width - Frame.prefix_width) if @title
         bar = CLI::UI.resolve_text([
-          FILLED_BAR + ' ' * filled,
-          UNFILLED_BAR + ' ' * unfilled,
-          CLI::UI::Color::RESET.code + suffix,
+          FILLED_BAR + (' ' * filled),
+          UNFILLED_BAR + (' ' * unfilled),
+          CLI::UI::Color::RESET.code + suffix
         ].join)
 
         [title, bar].compact.join("\n")

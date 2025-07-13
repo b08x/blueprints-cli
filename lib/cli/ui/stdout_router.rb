@@ -32,8 +32,8 @@ module CLI
           end
 
           # hook return of false suppresses output.
-          if (hook = Thread.current[:cliui_output_hook])
-            return 0 if hook.call(strs.join, @name) == false
+          if (hook = Thread.current[:cliui_output_hook]) && (hook.call(strs.join, @name) == false)
+            return 0
           end
 
           ret = T.unsafe(@stream).write_without_cli_ui(*prepend_id(@stream, strs))
@@ -112,8 +112,10 @@ module CLI
             T.must(current_capture)
           end
 
-          sig { type_parameters(:T).params(block: T.proc.returns(T.type_parameter(:T))).returns(T.type_parameter(:T)) }
-          def in_alternate_screen(&block)
+          sig do
+            type_parameters(:T).params(block: T.proc.returns(T.type_parameter(:T))).returns(T.type_parameter(:T))
+          end
+          def in_alternate_screen
             stdin_synchronize do
               previous_print_captured_output = current_capture&.print_captured_output
               current_capture&.print_captured_output = true
@@ -130,7 +132,7 @@ module CLI
                     Thread.current[:cliui_output_hook] = prev_hook
                   end
                 end
-                block.call
+                yield
               ensure
                 print(ANSI.exit_alternate_screen) if outermost_uncaptured?
               end
@@ -139,22 +141,24 @@ module CLI
             end
           end
 
-          sig { type_parameters(:T).params(block: T.proc.returns(T.type_parameter(:T))).returns(T.type_parameter(:T)) }
+          sig do
+            type_parameters(:T).params(block: T.proc.returns(T.type_parameter(:T))).returns(T.type_parameter(:T))
+          end
           def stdin_synchronize(&block)
             @stdin_mutex.synchronize do
               case $stdin
               when BlockingInput
-                $stdin.synchronize do
-                  block.call
-                end
+                $stdin.synchronize(&block)
               else
-                block.call
+                yield
               end
             end
           end
 
-          sig { type_parameters(:T).params(block: T.proc.returns(T.type_parameter(:T))).returns(T.type_parameter(:T)) }
-          def with_stdin_masked(&block)
+          sig do
+            type_parameters(:T).params(block: T.proc.returns(T.type_parameter(:T))).returns(T.type_parameter(:T))
+          end
+          def with_stdin_masked
             @capture_mutex.synchronize do
               if @active_captures.zero?
                 @stdin_mutex.synchronize do
@@ -181,7 +185,7 @@ module CLI
 
           sig { returns(T::Boolean) }
           def outermost_uncaptured?
-            @stdin_mutex.count == 1 && $stdin.is_a?(BlockingInput)
+            @stdin_mutex.one? && $stdin.is_a?(BlockingInput)
           end
         end
 
@@ -190,7 +194,7 @@ module CLI
             with_frame_inset: T::Boolean,
             merged_output: T::Boolean,
             duplicate_output_to: IO,
-            block: T.proc.void,
+            block: T.proc.void
           ).void
         end
         def initialize(
@@ -228,7 +232,7 @@ module CLI
 
           self.class.with_stdin_masked do
             Thread.current[:no_cliui_frame_inset] = !@with_frame_inset
-            Thread.current[:cliui_output_hook] = ->(data, stream) do
+            Thread.current[:cliui_output_hook] = lambda { |data, stream|
               stream = :stdout if @merged_output
               case stream
               when :stdout
@@ -239,7 +243,7 @@ module CLI
               else raise
               end
               print_captured_output # suppress writing to terminal by default
-            end
+            }
 
             @block.call
           end
@@ -268,35 +272,37 @@ module CLI
             @m = CLI::UI::ReentrantMutex.new
           end
 
-          sig { type_parameters(:T).params(block: T.proc.returns(T.type_parameter(:T))).returns(T.type_parameter(:T)) }
-          def synchronize(&block)
+          sig do
+            type_parameters(:T).params(block: T.proc.returns(T.type_parameter(:T))).returns(T.type_parameter(:T))
+          end
+          def synchronize
             @m.synchronize do
               previous_allowed_to_read = Thread.current[:cliui_allowed_to_read]
               Thread.current[:cliui_allowed_to_read] = true
-              block.call
+              yield
             ensure
               Thread.current[:cliui_allowed_to_read] = previous_allowed_to_read
             end
           end
 
-          READING_METHODS = [
-            :each,
-            :each_byte,
-            :each_char,
-            :each_codepoint,
-            :each_line,
-            :getbyte,
-            :getc,
-            :getch,
-            :gets,
-            :read,
-            :read_nonblock,
-            :readbyte,
-            :readchar,
-            :readline,
-            :readlines,
-            :readpartial,
-          ]
+          READING_METHODS = %i[
+            each
+            each_byte
+            each_char
+            each_codepoint
+            each_line
+            getbyte
+            getc
+            getch
+            gets
+            read
+            read_nonblock
+            readbyte
+            readchar
+            readline
+            readlines
+            readpartial
+          ].freeze
 
           NON_READING_METHODS = IO.instance_methods(false) - READING_METHODS
 
@@ -331,12 +337,12 @@ module CLI
             .params(on_streams: T::Array[IOLike], block: T.proc.params(id: String).returns(T.type_parameter(:T)))
             .returns(T.type_parameter(:T))
         end
-        def with_id(on_streams:, &block)
+        def with_id(on_streams:)
           require 'securerandom'
           id = format('%05d', rand(10**5))
           Thread.current[:cliui_output_id] = {
             id: id,
-            streams: on_streams.map { |stream| T.cast(stream, IOLike) },
+            streams: on_streams.map { |stream| T.cast(stream, IOLike) }
           }
           yield(id)
         ensure
@@ -353,8 +359,10 @@ module CLI
           raise NotEnabled unless enabled?
         end
 
-        sig { type_parameters(:T).params(block: T.proc.returns(T.type_parameter(:T))).returns(T.type_parameter(:T)) }
-        def with_enabled(&block)
+        sig do
+          type_parameters(:T).params(block: T.proc.returns(T.type_parameter(:T))).returns(T.type_parameter(:T))
+        end
+        def with_enabled
           enable
           yield
         ensure

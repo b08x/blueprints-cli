@@ -25,13 +25,13 @@ module CLI
               .params(block: T.proc.returns(T.type_parameter(:T)))
               .returns(T.type_parameter(:T))
           end
-          def pause_spinners(&block)
+          def pause_spinners(&)
             previous_paused = T.let(nil, T.nilable(T::Boolean))
             @pause_mutex.synchronize do
               previous_paused = @paused
               @paused = true
             end
-            block.call
+            yield
           ensure
             @pause_mutex.synchronize do
               @paused = previous_paused
@@ -73,10 +73,11 @@ module CLI
             interrupt_debrief: T::Boolean,
             max_concurrent: Integer,
             work_queue: T.nilable(WorkQueue),
-            to: IOLike,
+            to: IOLike
           ).void
         end
-        def initialize(auto_debrief: true, interrupt_debrief: false, max_concurrent: 0, work_queue: nil, to: $stdout)
+        def initialize(auto_debrief: true, interrupt_debrief: false, max_concurrent: 0,
+                       work_queue: nil, to: $stdout)
           @m = Mutex.new
           @tasks = []
           @puts_above = []
@@ -87,12 +88,12 @@ module CLI
           @internal_work_queue = work_queue.nil?
           @work_queue = T.let(
             work_queue || WorkQueue.new(max_concurrent.zero? ? 1024 : max_concurrent),
-            WorkQueue,
+            WorkQueue
           )
-          if block_given?
-            yield self
-            wait(to: to)
-          end
+          return unless block_given?
+
+          yield self
+          wait(to: to)
         end
 
         class Task
@@ -125,17 +126,17 @@ module CLI
               merged_output: T::Boolean,
               duplicate_output_to: IO,
               work_queue: WorkQueue,
-              block: T.proc.params(task: Task).returns(T.untyped),
+              block: T.proc.params(task: Task).returns(T.untyped)
             ).void
           end
-          def initialize(title, final_glyph:, merged_output:, duplicate_output_to:, work_queue:, &block)
+          def initialize(title, final_glyph:, merged_output:, duplicate_output_to:, work_queue:)
             @title = title
             @final_glyph = final_glyph
             @always_full_render = title =~ Formatter::SCAN_WIDGET
             @future = work_queue.enqueue do
               cap = CLI::UI::StdoutRouter::Capture.new(
-                merged_output: merged_output, duplicate_output_to: duplicate_output_to,
-              ) { block.call(self) }
+                merged_output: merged_output, duplicate_output_to: duplicate_output_to
+              ) { yield(self) }
               begin
                 cap.run
               ensure
@@ -168,8 +169,8 @@ module CLI
               result = @future.value
               @success = true
               @success = false if result == TASK_FAILED
-            rescue => exc
-              @exception = exc
+            rescue StandardError => e
+              @exception = e
               @success = false
             end
 
@@ -262,10 +263,10 @@ module CLI
                 final_glyph
               end
             elsif CLI::UI.enable_cursor?
-              if !@future.started?
-                CLI::UI.enable_color? ? Glyph::HOURGLASS.to_s : Glyph::HOURGLASS.char
-              else
+              if @future.started?
                 CLI::UI.enable_color? ? GLYPHS[index] : RUNES[index]
+              else
+                CLI::UI.enable_color? ? Glyph::HOURGLASS.to_s : Glyph::HOURGLASS.char
               end
             else
               Glyph::HOURGLASS.char
@@ -301,7 +302,7 @@ module CLI
             final_glyph: T.proc.params(success: T::Boolean).returns(T.any(Glyph, String)),
             merged_output: T::Boolean,
             duplicate_output_to: IO,
-            block: T.proc.params(task: Task).void,
+            block: T.proc.params(task: Task).void
           ).void
         end
         def add(
@@ -391,7 +392,9 @@ module CLI
                   unless @puts_above.empty?
                     to.print(CLI::UI::ANSI.cursor_up(consumed_lines)) if CLI::UI.enable_cursor?
                     while (message = @puts_above.shift)
-                      to.print(CLI::UI::ANSI.insert_lines(message.lines.count)) if CLI::UI.enable_cursor?
+                      if CLI::UI.enable_cursor?
+                        to.print(CLI::UI::ANSI.insert_lines(message.lines.count))
+                      end
                       message.lines.each do |line|
                         to.print(CLI::UI::Frame.prefix + CLI::UI.fmt(line))
                       end
@@ -411,17 +414,18 @@ module CLI
 
                     if CLI::UI.enable_cursor?
                       if nat_index > consumed_lines
-                        to.print(task.render(idx, true, width: width) + "\n")
+                        to.print("#{task.render(idx, true, width: width)}\n")
                         consumed_lines += 1
                       else
                         offset = consumed_lines - int_index
-                        move_to = CLI::UI::ANSI.cursor_up(offset) + "\r"
-                        move_from = "\r" + CLI::UI::ANSI.cursor_down(offset)
+                        move_to = "#{CLI::UI::ANSI.cursor_up(offset)}\r"
+                        move_from = "\r#{CLI::UI::ANSI.cursor_down(offset)}"
 
-                        to.print(move_to + task.render(idx, idx.zero? || force_full_render, width: width) + move_from)
+                        to.print(move_to + task.render(idx, idx.zero? || force_full_render,
+                                                       width: width) + move_from)
                       end
                     elsif !tasks_seen[int_index] || (task_done && !tasks_seen_done[int_index])
-                      to.print(task.render(idx, true, width: width) + "\n")
+                      to.print("#{task.render(idx, true, width: width)}\n")
                     end
 
                     tasks_seen[int_index] = true
@@ -459,7 +463,8 @@ module CLI
         # Provide an alternative debriefing for failed tasks
         sig do
           params(
-            block: T.proc.params(title: String, exception: T.nilable(Exception), out: String, err: String).void,
+            block: T.proc.params(title: String, exception: T.nilable(Exception), out: String,
+                                 err: String).void
           ).void
         end
         def failure_debrief(&block)
@@ -469,7 +474,7 @@ module CLI
         # Provide a debriefing for successful tasks
         sig do
           params(
-            block: T.proc.params(title: String, out: String, err: String).void,
+            block: T.proc.params(title: String, out: String, err: String).void
           ).void
         end
         def success_debrief(&block)
@@ -500,15 +505,14 @@ module CLI
               out = task.stdout
               err = task.stderr
 
-              if task.success
-                next @success_debrief&.call(title, out, err)
-              end
+              next @success_debrief&.call(title, out, err) if task.success
 
               # exception will not be set if the wait loop is stopped before the task is checked
               e = task.exception
               next @failure_debrief.call(title, e, out, err) if @failure_debrief
 
-              CLI::UI::Frame.open('Task Failed: ' + title, color: :red, timing: Time.new - @start) do
+              CLI::UI::Frame.open("Task Failed: #{title}", color: :red,
+                                                           timing: Time.new - @start) do
                 if e
                   to.puts("#{e.class}: #{e.message}")
                   to.puts("\tfrom #{e.backtrace.join("\n\tfrom ")}")

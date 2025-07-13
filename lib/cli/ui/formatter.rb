@@ -37,7 +37,7 @@ module CLI
         'success' => '32', # success
         'warning' => '33', # yellow
         'info' => '94', # bright blue
-        'command' => '36', # cyan
+        'command' => '36' # cyan
       }.freeze
 
       BEGIN_EXPR = '{{'
@@ -46,14 +46,14 @@ module CLI
       SCAN_WIDGET   = %r[@widget/(?<handle>\w+):(?<args>.*?)}}]
       SCAN_FUNCNAME = /\w+:/
       SCAN_GLYPH    = /.}}/
-      SCAN_BODY     = %r{
+      SCAN_BODY     = /
         .*?
         (
           #{BEGIN_EXPR} |
           #{END_EXPR}   |
           \z
         )
-      }mx
+      /mx
 
       DISCARD_BRACES = 0..-3
 
@@ -106,9 +106,7 @@ module CLI
         stack = parse_body(StringScanner.new(@text))
         prev_fmt = T.let(nil, T.nilable(Stack))
         content = @nodes.each_with_object(+'') do |(text, fmt), str|
-          if prev_fmt != fmt && enable_color
-            text = apply_format(text, fmt, sgr_map)
-          end
+          text = apply_format(text, fmt, sgr_map) if prev_fmt != fmt && enable_color
           str << text
           prev_fmt = fmt
         end
@@ -137,7 +135,7 @@ module CLI
             raise FormatError.new(
               "invalid format specifier: #{name}",
               @text,
-              -1,
+              -1
             )
           end
         end
@@ -156,7 +154,7 @@ module CLI
             raise FormatError.new(
               "invalid glyph handle at index #{index}: '#{glyph_handle}'",
               @text,
-              index,
+              index
             )
           end
         elsif (match = sc.scan(SCAN_WIDGET))
@@ -168,10 +166,10 @@ module CLI
           rescue Widgets::InvalidWidgetHandle
             index = sc.pos - 2 # rewind past '}}'
             raise(FormatError.new(
-              "invalid widget handle at index #{index}: '#{widget_handle}'",
-              @text,
-              index,
-            ))
+                    "invalid widget handle at index #{index}: '#{widget_handle}'",
+                    @text,
+                    index
+                  ))
           end
         elsif (match = sc.scan(SCAN_FUNCNAME))
           funcname = match.chop
@@ -196,9 +194,7 @@ module CLI
           parse_expr(sc, stack)
         elsif match&.end_with?(END_EXPR)
           emit(T.must(match[DISCARD_BRACES]), stack)
-          if stack.pop.is_a?(LITERAL_BRACES)
-            emit('}}', stack)
-          end
+          emit('}}', stack) if stack.pop.is_a?(LITERAL_BRACES)
           parse_body(sc, stack)
         elsif match
           emit(match, stack)
