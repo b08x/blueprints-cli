@@ -47,15 +47,38 @@ module BlueprintsCLI
     def self.start(given_args = ARGV)
       # If no arguments provided, launch interactive menu
       if given_args.empty?
-        begin
-          require 'tty-prompt'
-          debug_mode = ENV['BlueprintsCLI_DEBUG'] == 'true'
-          BlueprintsCLI::Commands::MenuCommand.new(debug: debug_mode).start
-        rescue LoadError
-          BlueprintsCLI.logger.failure("TTY::Prompt not available. Please run: bundle install. #{e.message}")
-          super
+        # Check for enhanced menu option
+        config = BlueprintsCLI.configuration
+        enhanced_enabled = config.fetch(:ui, :enhanced_menu, default: true) || 
+                          config.fetch(:ui, :slash_commands, default: true) ||
+                          ENV['BLUEPRINTS_ENHANCED_MENU'] == 'true' || 
+                          ENV['BLUEPRINTS_SLASH_COMMANDS'] == 'true'
+        
+        if enhanced_enabled
+          begin
+            BlueprintsCLI::SimpleEnhancedMenu.new.start
+          rescue StandardError => e
+            BlueprintsCLI.logger.failure("Enhanced menu failed: #{e.message}")
+            # Fallback to traditional menu
+            fallback_to_traditional_menu
+          end
+        else
+          fallback_to_traditional_menu
         end
       else
+        super
+      end
+    end
+
+    private
+
+    def self.fallback_to_traditional_menu
+      begin
+        require 'tty-prompt'
+        debug_mode = ENV['BlueprintsCLI_DEBUG'] == 'true'
+        BlueprintsCLI::Commands::MenuCommand.new(debug: debug_mode).start
+      rescue LoadError => e
+        BlueprintsCLI.logger.failure("TTY::Prompt not available. Please run: bundle install. #{e.message}")
         super
       end
     end

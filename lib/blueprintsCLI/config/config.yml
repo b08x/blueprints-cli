@@ -42,6 +42,8 @@ ui:
   interactive: true
   pager: most
   auto_pager: true
+  enhanced_menu: true
+  slash_commands: true
 features:
   auto_description: true
   auto_categorize: true
