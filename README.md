@@ -7,12 +7,14 @@ A command-line tool for storing and finding code snippets using semantic search.
 BlueprintsCLI stores code snippets in a PostgreSQL database and finds them using vector similarity search. It includes an AI integration that generates descriptions and categories automatically.
 
 The tool has two interfaces:
+
 - Interactive menu system for guided workflows
 - Direct command-line interface for specific operations
 
 ## Features
 
 ### Code management
+
 - Store code snippets with metadata
 - List stored snippets in table, summary, or JSON format
 - Search snippets using natural language queries
@@ -22,6 +24,7 @@ The tool has two interfaces:
 - Export snippet code to files
 
 ### AI integration
+
 - Uses Google Gemini API for text generation and embeddings
 - Generates descriptions automatically when storing snippets
 - Assigns categories automatically
@@ -29,6 +32,7 @@ The tool has two interfaces:
 - Provides code analysis and improvement suggestions
 
 ### User interface
+
 - Interactive menu system using TTY toolkit components
 - Command-line interface using Thor framework
 - Terminal tables, prompts, and progress indicators
@@ -84,29 +88,34 @@ bin/blueprintsCLI
 ### Direct commands
 
 #### Store code
+
 ```bash
 bin/blueprintsCLI blueprint submit path/to/file.rb
 bin/blueprintsCLI blueprint submit "puts 'Hello World'"
 ```
 
 #### List code snippets
+
 ```bash
 bin/blueprintsCLI blueprint list
 bin/blueprintsCLI blueprint list --format json
 ```
 
 #### Search code snippets
+
 ```bash
 bin/blueprintsCLI blueprint search "http server ruby"
 ```
 
 #### View specific snippet
+
 ```bash
 bin/blueprintsCLI blueprint view 42
 bin/blueprintsCLI blueprint view 42 --analyze
 ```
 
 #### Other operations
+
 ```bash
 bin/blueprintsCLI blueprint edit 42
 bin/blueprintsCLI blueprint delete 42
@@ -114,6 +123,7 @@ bin/blueprintsCLI blueprint export 42 output.rb
 ```
 
 #### Configuration commands
+
 ```bash
 bin/blueprintsCLI config show
 bin/blueprintsCLI config setup
@@ -144,6 +154,7 @@ CLI Layer → Commands → Actions → Database/AI Services
 ### Configuration
 
 Uses TTY::Config for configuration management with support for:
+
 - Environment variables (with `BLUEPRINTS_` prefix)
 - YAML configuration files
 - Validation rules
@@ -152,21 +163,25 @@ Uses TTY::Config for configuration management with support for:
 ## Development
 
 ### Run tests
+
 ```bash
 bundle exec rspec
 ```
 
 ### Run linter
+
 ```bash
 bundle exec rubocop
 ```
 
 ### Generate documentation
+
 ```bash
 bundle exec yard doc
 ```
 
 ### Interactive console
+
 ```bash
 bundle exec pry
 ```
@@ -174,12 +189,14 @@ bundle exec pry
 ## Dependencies
 
 ### Core libraries
+
 - Thor: command-line interface framework
 - Sequel: database ORM
 - TTY toolkit: terminal user interface components
 - Sublayer: AI framework wrapper
 
 ### External services
+
 - PostgreSQL: database storage
 - pgvector: vector similarity search extension
 - Google Gemini API: text generation and embeddings

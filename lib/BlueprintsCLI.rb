@@ -43,7 +43,15 @@ require 'yaml'
 require_relative 'blueprintsCLI/version'
 require_relative 'blueprintsCLI/configuration'
 require_relative 'blueprintsCLI/logger'
+
+# Establish database connection early (global DB constant for models)
+require_relative 'blueprintsCLI/config/environment'
+
+# Load database interface and models after DB connection is established
 require_relative 'blueprintsCLI/database'
+require_relative 'blueprintsCLI/db/models/blueprint'
+require_relative 'blueprintsCLI/db/models/category'
+
 require_relative 'blueprintsCLI/cli_ui_integration'
 require_relative 'blueprintsCLI/slash_command_parser'
 require_relative 'blueprintsCLI/enhanced_menu'

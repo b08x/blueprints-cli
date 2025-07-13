@@ -84,7 +84,8 @@ module BlueprintsCLI
     #   )
     #   # => {id: 1, code: "...", name: "...", ..., categories: [{id: 1, title: "Ruby"}, ...]}
     #
-    def create_blueprint(code:, name: nil, description: nil, categories: [])
+    def create_blueprint(code:, name: nil, description: nil, categories: [], language: 'ruby', 
+                         file_type: '.rb', blueprint_type: 'code', parser_type: 'ruby')
       @db.transaction do
         # Prepare blueprint data for enhanced processing
         blueprint_data = {
@@ -118,6 +119,10 @@ module BlueprintsCLI
           code: code,
           name: name,
           description: description,
+          language: language,
+          file_type: file_type,
+          blueprint_type: blueprint_type,
+          parser_type: parser_type,
           embedding: Pgvector.encode(embedding_vector),
           # nlp_metadata: rag_result.to_json,
           created_at: Time.now,

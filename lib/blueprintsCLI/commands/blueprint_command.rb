@@ -69,27 +69,71 @@ module BlueprintsCLI
       #
       # Accepts either a file path or direct code string as input.
       # Supports automatic description and categorization through AI features.
+      # If no input is provided and --interactive flag is set, enters multiline input mode.
       #
       # @return [Boolean] Returns false if submission fails due to missing input
       def handle_submit
         input = @args.first
 
         unless input
+          return handle_interactive_submit if @options['interactive']
+
           puts '❌ Please provide a file path or code string'.colorize(:red)
           puts 'Usage: blueprint submit <file_path_or_code>'
+          puts 'Or use: blueprint submit --interactive for multiline input'
           return false
+
         end
 
         if File.exist?(input)
           puts "📁 Submitting blueprint from file: #{input}".colorize(:blue)
           code = File.read(input)
+          filename = File.basename(input)
         else
           puts '📝 Submitting blueprint from code string'.colorize(:blue)
           code = input
+          filename = nil
         end
 
         BlueprintsCLI::Actions::Submit.new(
           code: code,
+          filename: filename,
+          auto_describe: @options['auto_describe'] != false,
+          auto_categorize: @options['auto_categorize'] != false
+        ).call
+      end
+
+      # Handles interactive blueprint submission with multiline input support.
+      #
+      # @return [Boolean] Returns true if submission succeeds, false otherwise
+      def handle_interactive_submit
+        require 'tty-prompt'
+
+        prompt = TTY::Prompt.new
+
+        puts '📝 Interactive Blueprint Submission'
+        puts 'Enter your code below (press Ctrl+D when finished):'
+        puts
+
+        code_lines = prompt.multiline('', help: 'Press Ctrl+D to finish input')
+
+        if code_lines.nil? || code_lines.empty?
+          puts '❌ No code provided'.colorize(:red)
+          return false
+        end
+
+        code = code_lines.join("\n").strip
+
+        if code.empty?
+          puts '❌ No code provided'.colorize(:red)
+          return false
+        end
+
+        puts "\n📝 Submitting blueprint from interactive input".colorize(:blue)
+
+        BlueprintsCLI::Actions::Submit.new(
+          code: code,
+          filename: nil,
           auto_describe: @options['auto_describe'] != false,
           auto_categorize: @options['auto_categorize'] != false
         ).call
@@ -132,7 +176,10 @@ module BlueprintsCLI
           return false
         end
 
-        format = (@options['format'] || 'detailed').to_sym
+        format = (@options['format'] || 'interactive').to_sym
+
+        # Ensure interactive is default for better UX unless explicitly specified
+        format = :interactive if format == :detailed && !@options['format']
 
         BlueprintsCLI::Actions::View.new(
           id: id.to_i,
@@ -296,7 +343,7 @@ module BlueprintsCLI
 
           📋 Browsing & Search:
             blueprint list                      List all blueprints
-            blueprint browse                    Interactive blueprint browser
+            blueprint browse                    Interactive browser with enhanced AI-powered viewing
             blueprint view <id>                 View specific blueprint
             blueprint search <query>            Search blueprints by content
 
@@ -307,7 +354,7 @@ module BlueprintsCLI
             blueprint config [show|setup]      Manage configuration
 
           Options:
-            --format FORMAT                     Output format (table, json, summary, detailed)
+            --format FORMAT                     Output format (table, json, summary, detailed, interactive)
             --interactive                       Interactive mode with prompts
             --output FILE                       Output file path
             --output_dir DIR                    Output directory for generated files
@@ -322,7 +369,9 @@ module BlueprintsCLI
             blueprint submit 'puts "hello world"'
             blueprint list --format summary
             blueprint browse
-            blueprint view 123 --analyze
+            blueprint view 123                         # Interactive two-column view (default)
+            blueprint view 123 --format detailed       # Traditional detailed view
+            blueprint view 123 --analyze               # Interactive view with AI suggestions
             blueprint edit 123
             blueprint delete 123
             blueprint delete --force 123

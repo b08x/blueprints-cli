@@ -23,6 +23,21 @@ module BlueprintsCLI
     valid_commands.each do |command_class|
       command = BlueprintsCLI::Commands.const_get(command_class)
       desc command.command_name, command.description
+
+      # Add specific options for blueprint command
+      if command.command_name == 'blueprint'
+        option :interactive, type: :boolean, aliases: '-i',
+                             desc: 'Enable interactive multiline input for submit command'
+        option :auto_describe, type: :boolean, default: true,
+                               desc: 'Auto-generate description using AI'
+        option :auto_categorize, type: :boolean, default: true, desc: 'Auto-categorize using AI'
+        option :format, type: :string, desc: 'Output format (table, summary, json, etc.)'
+        option :analyze, type: :boolean, desc: 'Include AI analysis in view output'
+        option :limit, type: :numeric, desc: 'Limit number of results'
+        option :output, type: :string, desc: 'Output file path'
+        option :force, type: :boolean, desc: 'Force overwrite existing files'
+      end
+
       define_method(command.command_name) do |*args|
         command.new(options).execute(*args)
       end
@@ -49,11 +64,11 @@ module BlueprintsCLI
       if given_args.empty?
         # Check for enhanced menu option
         config = BlueprintsCLI.configuration
-        enhanced_enabled = config.fetch(:ui, :enhanced_menu, default: true) || 
-                          config.fetch(:ui, :slash_commands, default: true) ||
-                          ENV['BLUEPRINTS_ENHANCED_MENU'] == 'true' || 
-                          ENV['BLUEPRINTS_SLASH_COMMANDS'] == 'true'
-        
+        enhanced_enabled = config.fetch(:ui, :enhanced_menu, default: true) ||
+                           config.fetch(:ui, :slash_commands, default: true) ||
+                           ENV['BLUEPRINTS_ENHANCED_MENU'] == 'true' ||
+                           ENV['BLUEPRINTS_SLASH_COMMANDS'] == 'true'
+
         if enhanced_enabled
           begin
             BlueprintsCLI::SimpleEnhancedMenu.new.start
@@ -70,17 +85,13 @@ module BlueprintsCLI
       end
     end
 
-    private
-
     def self.fallback_to_traditional_menu
-      begin
-        require 'tty-prompt'
-        debug_mode = ENV['BlueprintsCLI_DEBUG'] == 'true'
-        BlueprintsCLI::Commands::MenuCommand.new(debug: debug_mode).start
-      rescue LoadError => e
-        BlueprintsCLI.logger.failure("TTY::Prompt not available. Please run: bundle install. #{e.message}")
-        super
-      end
+      require 'tty-prompt'
+      debug_mode = ENV['BlueprintsCLI_DEBUG'] == 'true'
+      BlueprintsCLI::Commands::MenuCommand.new(debug: debug_mode).start
+    rescue LoadError => e
+      BlueprintsCLI.logger.failure("TTY::Prompt not available. Please run: bundle install. #{e.message}")
+      super
     end
   end
 end
