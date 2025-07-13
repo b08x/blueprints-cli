@@ -263,7 +263,7 @@ module BlueprintsCLI
       # Display available database templates
       def display_database_templates
         puts 'Available database configurations:'
-        DATABASE_TEMPLATES.each do |_key, template|
+        DATABASE_TEMPLATES.each_value do |template|
           puts "\n  #{template[:name]}:"
           puts "    #{template[:description]}"
           puts "    Requirements: #{template[:requirements].join(', ')}"

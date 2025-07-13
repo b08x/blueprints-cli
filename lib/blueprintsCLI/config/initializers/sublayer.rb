@@ -27,7 +27,7 @@ begin
   RubyLLM.provider = Sublayer.configuration.ai_provider.new(
     model: Sublayer.configuration.ai_model
   )
-rescue => e
+rescue StandardError => e
   # Continue without RubyLLM provider setup if it fails
   puts "Warning: Could not set up RubyLLM provider: #{e.message}"
 end

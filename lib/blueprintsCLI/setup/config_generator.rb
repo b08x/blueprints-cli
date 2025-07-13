@@ -258,7 +258,7 @@ module BlueprintsCLI
       def save_configuration
         # Ensure config directory exists
         config_dir = File.dirname(target_config_path)
-        FileUtils.mkdir_p(config_dir) unless Dir.exist?(config_dir)
+        FileUtils.mkdir_p(config_dir)
 
         # Write configuration file
         File.write(target_config_path, generate_yaml_content)
@@ -403,7 +403,7 @@ module BlueprintsCLI
         puts 'Add these environment variables to your shell profile:'
         puts ''
 
-        @setup_data[:providers].each do |_provider_key, provider_config|
+        @setup_data[:providers].each_value do |provider_config|
           env_var = provider_config[:env_var]
           puts "export #{env_var}='your_api_key_here'"
         end
