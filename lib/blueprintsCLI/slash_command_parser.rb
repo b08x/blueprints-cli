@@ -69,16 +69,16 @@ module BlueprintsCLI
       return unless slash_command?
 
       # Remove leading slash and split into parts
-      parts = @input[1..-1].split(/\s+/)
+      parts = @input[1..].split(/\s+/)
       return if parts.empty?
 
       @command = parts[0]
-      remaining_parts = parts[1..-1]
+      remaining_parts = parts[1..]
 
       # Check if first remaining part is a subcommand
       if remaining_parts.any? && COMMANDS.dig(@command, :subcommands)&.include?(remaining_parts[0])
         @subcommand = remaining_parts[0]
-        remaining_parts = remaining_parts[1..-1]
+        remaining_parts = remaining_parts[1..]
       end
 
       # Parse remaining parts into args and options
@@ -114,7 +114,7 @@ module BlueprintsCLI
 
       # Find matching commands
       matching_commands = COMMANDS.keys.select { |cmd| cmd.start_with?(@command) }
-      
+
       if matching_commands.size == 1 && matching_commands.first == @command
         # Complete subcommands
         subcommands = COMMANDS.dig(@command, :subcommands) || []
@@ -142,13 +142,13 @@ module BlueprintsCLI
       parts.each do |part|
         if part.start_with?('--')
           # Long option
-          key_value = part[2..-1].split('=', 2)
+          key_value = part[2..].split('=', 2)
           key = key_value[0]
           value = key_value.size > 1 ? key_value[1] : true
           @options[key] = value
         elsif part.start_with?('-')
           # Short option
-          @options[part[1..-1]] = true
+          @options[part[1..]] = true
         else
           # Argument
           @args << part
@@ -199,7 +199,7 @@ module BlueprintsCLI
 
     def handle_search_command
       if @args.empty?
-        CLIUIIntegration.puts("{{yellow:Usage: /search <query>}}")
+        CLIUIIntegration.puts('{{yellow:Usage: /search <query>}}')
         return false
       end
 
@@ -219,7 +219,7 @@ module BlueprintsCLI
     end
 
     def handle_exit_command
-      CLIUIIntegration.puts("{{green:👋 Goodbye!}}")
+      CLIUIIntegration.puts('{{green:👋 Goodbye!}}')
       exit(0)
     end
 
@@ -231,7 +231,7 @@ module BlueprintsCLI
     def command_help(cmd)
       command_info = COMMANDS[cmd]
       help = "{{cyan:#{cmd.upcase}}} - #{command_info[:description]}\n\n"
-      
+
       subcommands = command_info[:subcommands]
       if subcommands.any?
         help += "{{yellow:Subcommands:}}\n"
@@ -239,25 +239,25 @@ module BlueprintsCLI
           help += "  /#{cmd} #{sub}\n"
         end
       end
-      
-      help += "\nExample: {{blue:/#{cmd}#{subcommands.first ? " #{subcommands.first}" : ""}}}"
+
+      help += "\nExample: {{blue:/#{cmd}#{" #{subcommands.first}" if subcommands.first}}}"
       help
     end
 
     def all_commands_help
       help = "{{cyan:🚀 BlueprintsCLI Slash Commands}}\n\n"
       help += "{{yellow:Available Commands:}}\n"
-      
+
       COMMANDS.each do |cmd, info|
         help += "  {{blue:/#{cmd}}} - #{info[:description]}\n"
       end
-      
+
       help += "\n{{yellow:Tips:}}\n"
       help += "  • Type {{blue:/}} and press TAB for autocomplete\n"
       help += "  • Use {{blue:/help <command>}} for detailed help\n"
       help += "  • Use {{blue:/clear}} to clear the screen\n"
-      help += "  • Use {{blue:/exit}} to quit the application"
-      
+      help += '  • Use {{blue:/exit}} to quit the application'
+
       help
     end
   end
