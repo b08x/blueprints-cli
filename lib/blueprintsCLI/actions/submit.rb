@@ -24,7 +24,7 @@ module BlueprintsCLI
       # @param auto_describe [Boolean] Whether to auto-generate the description if not provided. Defaults to true.
       # @param auto_categorize [Boolean] Whether to auto-generate the categories if not provided. Defaults to true.
       # @return [Submit] A new instance of Submit.
-      def initialize(code:, name: nil, description: nil, categories: nil, filename: nil, 
+      def initialize(code:, name: nil, description: nil, categories: nil, filename: nil,
                      auto_describe: true, auto_categorize: true)
         @code = code
         @name = name
@@ -34,7 +34,7 @@ module BlueprintsCLI
         @auto_describe = auto_describe
         @auto_categorize = auto_categorize
         @db = BlueprintsCLI::BlueprintDatabase.new
-        
+
         # Detect types based on filename using Blueprint model method
         @types = Blueprint.detect_types(@filename)
       end
@@ -184,7 +184,6 @@ module BlueprintsCLI
 
         text[0..length - 4] + '...'
       end
-
     end
   end
 end

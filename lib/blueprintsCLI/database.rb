@@ -84,11 +84,11 @@ module BlueprintsCLI
     #   )
     #   # => {id: 1, code: "...", name: "...", ..., categories: [{id: 1, title: "Ruby"}, ...]}
     #
-    def create_blueprint(code:, name: nil, description: nil, categories: [], language: 'ruby', 
+    def create_blueprint(code:, name: nil, description: nil, categories: [], language: 'ruby',
                          file_type: '.rb', blueprint_type: 'code', parser_type: 'ruby')
       @db.transaction do
         # Prepare blueprint data for enhanced processing
-        blueprint_data = {
+        {
           code: code,
           name: name,
           description: description,
@@ -108,7 +108,7 @@ module BlueprintsCLI
           # Fallback to a zero vector if embedding fails
           BlueprintsCLI.logger.warn("RubyLLM embedding failed: #{e.message}, using zero vector")
           embedding_vector = Array.new(768, 0.0)
-        rescue => e
+        rescue StandardError => e
           # Handle other errors
           BlueprintsCLI.logger.warn("Embedding generation failed: #{e.message}, using zero vector")
           embedding_vector = Array.new(768, 0.0)
@@ -243,9 +243,9 @@ module BlueprintsCLI
         rag_search_result = @rag_service.search_blueprints(query, search_options)
 
         # Convert RAG results to database format
-        blueprint_ids = rag_search_result[:results].map do |r|
+        blueprint_ids = rag_search_result[:results].filter_map do |r|
           r[:blueprint_id] || r[:text_id]
-        end.compact
+        end
         return [] if blueprint_ids.empty?
 
         # Fetch full blueprint data
@@ -337,7 +337,7 @@ module BlueprintsCLI
         rescue RubyLLM::Error => e
           BlueprintsCLI.logger.warn("Update embedding failed: #{e.message}")
           # Skip embedding update on failure
-        rescue => e
+        rescue StandardError => e
           BlueprintsCLI.logger.warn("Update embedding generation failed: #{e.message}")
           # Skip embedding update on failure
         end
@@ -418,7 +418,7 @@ module BlueprintsCLI
                             rag_service: rag_stats,
                             cache_performance: cache_stats,
                             nlp_enabled: true,
-                            search_index_size: rag_stats.dig(:search_index_stats) || {}
+                            search_index_size: rag_stats[:search_index_stats] || {}
                           }
                         })
     rescue StandardError => e
@@ -599,12 +599,13 @@ module BlueprintsCLI
       rescue RubyLLM::Error => e
         BlueprintsCLI.logger.warn("Search embedding failed: #{e.message}")
         return []
-      rescue => e
+      rescue StandardError => e
         BlueprintsCLI.logger.warn("Search embedding generation failed: #{e.message}")
         return []
       end
 
       return [] unless query_embedding_vector&.any?
+
       query_embedding = Pgvector.encode(query_embedding_vector)
 
       # Perform vector similarity search using pgvector

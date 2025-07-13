@@ -69,13 +69,14 @@ class Blueprint < Sequel::Model
 
   # Blueprint type classification
   BLUEPRINT_TYPES = {
-    'code' => ['ruby', 'python', 'javascript', 'typescript', 'java', 'cpp', 'c', 'csharp', 'php', 'go', 'rust', 'swift', 'kotlin', 'scala', 'clojure', 'haskell', 'elm'],
-    'configuration' => ['yaml', 'json', 'xml'],
-    'template' => ['html', 'css', 'scss', 'sass', 'less'],
-    'script' => ['bash', 'powershell'],
-    'infrastructure' => ['dockerfile', 'terraform'],
+    'code' => %w[ruby python javascript typescript java cpp c csharp php
+      go rust swift kotlin scala clojure haskell elm],
+    'configuration' => %w[yaml json xml],
+    'template' => %w[html css scss sass less],
+    'script' => %w[bash powershell],
+    'infrastructure' => %w[dockerfile terraform],
     'database' => ['sql'],
-    'frontend' => ['vue', 'svelte']
+    'frontend' => %w[vue svelte]
   }.freeze
 
   # Automatically detect and set language, file_type, blueprint_type, and parser_type
@@ -93,7 +94,9 @@ class Blueprint < Sequel::Model
       file_type = '.txt'
     end
 
-    blueprint_type = BLUEPRINT_TYPES.find { |type, langs| langs.include?(language) }&.first || 'other'
+    blueprint_type = BLUEPRINT_TYPES.find do |_type, langs|
+      langs.include?(language)
+    end&.first || 'other'
     parser_type = PARSER_MAPPING[language] || language
 
     {
@@ -163,7 +166,7 @@ class Blueprint < Sequel::Model
         puts "Warning: Search embedding failed: #{e.message}"
         where(Sequel.ilike(:name, "%#{query}%") | Sequel.ilike(:description, "%#{query}%"))
           .order(Sequel.desc(:created_at)).limit(20)
-      rescue => e
+      rescue StandardError => e
         puts "Warning: Search failed: #{e.message}"
         where(Sequel.ilike(:name, "%#{query}%") | Sequel.ilike(:description, "%#{query}%"))
           .order(Sequel.desc(:created_at)).limit(20)
