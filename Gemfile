@@ -65,3 +65,5 @@ gem 'tty-spinner', '~> 0.9.3'
 gem 'tty-table', '~> 0.12'
 gem 'tty-tree', '~> 0.4.0'
 gem 'tty-which', '~> 0.5.0'
+
+gem 'rake', '~> 13.3'
