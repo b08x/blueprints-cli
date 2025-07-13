@@ -108,7 +108,7 @@ module Processors
             line = @lines[@current_idx]
             consumed = try_special_handlers(line)
 
-            if consumed > 0
+            if consumed.positive?
               @current_idx += consumed
             else
               add_to_text_buffer(line)
@@ -198,7 +198,7 @@ module Processors
 
           handlers.each do |handler|
             consumed = handler.call(line)
-            next unless consumed > 0
+            next unless consumed.positive?
 
             if @current_idx > @text_buffer_start && @text_buffer_start != -1
               flush_text_buffer(@current_idx - 1)

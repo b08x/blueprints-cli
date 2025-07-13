@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'sinatra'
 
 # Simple web server
@@ -22,7 +24,7 @@ get '/api/users/:id' do
     name: "User #{user_id}",
     email: "user#{user_id}@example.com"
   }
-  
+
   content_type :json
   user.to_json
 end
