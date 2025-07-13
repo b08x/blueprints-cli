@@ -17,10 +17,10 @@ module BlueprintsCLI
       # Configure color scheme to match BlueprintsCLI
       ::CLI::UI.enable_color = $stdout.tty?
       ::CLI::UI.enable_cursor = $stdout.tty? && ENV['CI'].nil?
-      
+
       # Set default frame style for consistent branding
       ::CLI::UI.frame_style = :box
-      
+
       # Set up custom instruction colors to match BlueprintsCLI theme
       ::CLI::UI::Prompt.instructions_color = :cyan
     end
@@ -36,9 +36,9 @@ module BlueprintsCLI
     end
 
     # Enhanced select with better visual styling
-    def self.select(question, options = nil, **kwargs, &block)
+    def self.select(question, options = nil, **kwargs, &)
       if block_given?
-        ::CLI::UI.ask(question, **kwargs, &block)
+        ::CLI::UI.ask(question, **kwargs, &)
       else
         ::CLI::UI.ask(question, options: options, **kwargs)
       end
@@ -60,8 +60,8 @@ module BlueprintsCLI
     end
 
     # Create a spinner with BlueprintsCLI styling
-    def self.spinner(title, **options, &block)
-      ::CLI::UI.spinner(title, **options, &block)
+    def self.spinner(title, ...)
+      ::CLI::UI.spinner(title, ...)
     end
   end
 end
