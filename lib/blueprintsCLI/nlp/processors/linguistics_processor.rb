@@ -7,7 +7,7 @@ begin
   LINGUISTICS_AVAILABLE = true
 rescue LoadError
   LINGUISTICS_AVAILABLE = false
-  puts "Warning: linguistics gem not available. Linguistics processor will be disabled."
+  puts 'Warning: linguistics gem not available. Linguistics processor will be disabled.'
 end
 
 begin
@@ -16,7 +16,7 @@ begin
   WORDNET_AVAILABLE = true
 rescue LoadError
   WORDNET_AVAILABLE = false
-  puts "Warning: rwordnet gem not available. WordNet features will be disabled."
+  puts 'Warning: rwordnet gem not available. WordNet features will be disabled.'
 end
 
 module BlueprintsCLI
@@ -31,13 +31,13 @@ module BlueprintsCLI
 
         def initialize
           super
-          
+
           if LINGUISTICS_AVAILABLE
             setup_linguistics
           else
-            puts "Linguistics processor initialized in fallback mode"
+            puts 'Linguistics processor initialized in fallback mode'
           end
-          
+
           if WORDNET_AVAILABLE
             begin
               @wordnet = WordNet::WordNetDB.instance
@@ -48,7 +48,7 @@ module BlueprintsCLI
           else
             @wordnet = nil
           end
-          
+
           build_morphology_trie
         end
 
@@ -59,14 +59,12 @@ module BlueprintsCLI
           begin
             # Check cache first
             cache_key = generate_cache_key(text)
-            if cached_result = get_cached_result(cache_key)
+            if (cached_result = get_cached_result(cache_key))
               return cached_result
             end
 
             # Return fallback if libraries not available
-            unless LINGUISTICS_AVAILABLE || WORDNET_AVAILABLE
-              return fallback_processing(text)
-            end
+            return fallback_processing(text) unless LINGUISTICS_AVAILABLE || WORDNET_AVAILABLE
 
             # Tokenize and analyze
             words = tokenize_advanced(text)
@@ -224,8 +222,8 @@ module BlueprintsCLI
             word_forms[word] = forms
 
             # Add all forms to Trie for fast lookup
-            forms[:variations].each { |_type, form| @trie_index[form.downcase] = word }
-            forms[:linguistic_forms].each do |_type, form|
+            forms[:variations].each_value { |form| @trie_index[form.downcase] = word }
+            forms[:linguistic_forms].each_value do |form|
               @trie_index[form.downcase] = word if form
             end
           end
@@ -290,7 +288,7 @@ module BlueprintsCLI
         def calculate_linguistic_complexity(words)
           {
             vocabulary_richness: calculate_vocabulary_richness(words),
-            avg_word_length: words.map(&:length).sum.to_f / words.length,
+            avg_word_length: words.sum(&:length).to_f / words.length,
             morphological_complexity: calculate_morphological_complexity(words),
             semantic_density: calculate_semantic_density(words),
             lexical_diversity: calculate_lexical_diversity(words)
@@ -315,7 +313,7 @@ module BlueprintsCLI
             sentiment_words: [],
             complexity_metrics: {
               vocabulary_richness: calculate_basic_richness(words),
-              avg_word_length: words.map(&:length).sum.to_f / words.length,
+              avg_word_length: words.sum(&:length).to_f / words.length,
               lexical_diversity: words.uniq.length.to_f / words.length
             },
             fallback: true
@@ -329,7 +327,8 @@ module BlueprintsCLI
         def calculate_basic_richness(words)
           unique_words = words.uniq.length
           total_words = words.length
-          return 0.0 if total_words == 0
+          return 0.0 if total_words.zero?
+
           unique_words.to_f / total_words
         end
 
@@ -363,11 +362,11 @@ module BlueprintsCLI
           when /[^aeiou]y$/
             word.gsub(/y$/, 'ied')
           when /e$/
-            word + 'd'
+            "#{word}d"
           when /[^aeiou][aeiou][^aeiou]$/
-            word + word[-1] + 'ed'
+            "#{word}#{word[-1]}ed"
           else
-            word + 'ed'
+            "#{word}ed"
           end
         end
 
@@ -377,9 +376,9 @@ module BlueprintsCLI
           when /e$/
             word.gsub(/e$/, 'ing')
           when /[^aeiou][aeiou][^aeiou]$/
-            word + word[-1] + 'ing'
+            "#{word}#{word[-1]}ing"
           else
-            word + 'ing'
+            "#{word}ing"
           end
         end
 
@@ -453,7 +452,7 @@ module BlueprintsCLI
             relations[:meronyms].length
           ]
 
-          @kd_tree_data[word] = vector if vector.any? { |v| v > 0 }
+          @kd_tree_data[word] = vector if vector.any?(&:positive?)
         end
 
         def get_lexical_category(synset)
@@ -480,7 +479,7 @@ module BlueprintsCLI
           hyponym_count = synset.hyponyms.length
           hypernym_count = synset.hypernyms.length
 
-          return 0.5 if hyponym_count + hypernym_count == 0
+          return 0.5 if (hyponym_count + hypernym_count).zero?
 
           hyponym_count.to_f / (hyponym_count + hypernym_count + 1)
         end
@@ -528,7 +527,7 @@ module BlueprintsCLI
           # Type-token ratio
           unique_words = words.uniq.length
           total_words = words.length
-          return 0.0 if total_words == 0
+          return 0.0 if total_words.zero?
 
           unique_words.to_f / total_words
         end
@@ -561,7 +560,7 @@ module BlueprintsCLI
           # Measure of lexical variation
           word_frequencies = words.tally
           max_frequency = word_frequencies.values.max
-          return 0.0 if max_frequency == 0
+          return 0.0 if max_frequency.zero?
 
           1.0 - (max_frequency.to_f / words.length)
         end

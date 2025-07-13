@@ -113,7 +113,7 @@ module BlueprintsCLI
 
         begin
           # Check cache if enabled
-          if @config[:enable_caching] && cached_result = get_cached_result(text)
+          if @config[:enable_caching] && (cached_result = get_cached_result(text))
             return cached_result
           end
 
@@ -218,7 +218,7 @@ module BlueprintsCLI
         # Prefix search using Trie
         query_words = query.downcase.split
         query_words.each do |word|
-          if search_index[:trie].has_key?(word)
+          if search_index[:trie].key?(word)
             results[:prefix_matches] << {
               word: word,
               text_id: search_index[:trie][word],
@@ -228,7 +228,7 @@ module BlueprintsCLI
             # Wildcard search for partial matches
             wildcard_matches = search_index[:trie].wildcard("#{word}*")
             wildcard_matches.each do |match|
-              next unless search_index[:trie].has_key?(match)
+              next unless search_index[:trie].key?(match)
 
               results[:prefix_matches] << {
                 word: match,
@@ -370,7 +370,7 @@ module BlueprintsCLI
         keywords.each do |keyword|
           key = keyword[:text] || keyword[:word] || keyword.to_s
 
-          if keyword_map.has_key?(key)
+          if keyword_map.key?(key)
             # Merge scores if duplicate
             existing = keyword_map[key]
             existing[:score] = [existing[:score], keyword[:score] || 0].max
@@ -422,7 +422,7 @@ module BlueprintsCLI
 
         text_length = merged_results[:original_text].length
         scores[:information_density] =
-          text_length > 0 ? total_features.to_f / text_length * 1000 : 0
+          text_length.positive? ? total_features.to_f / text_length * 1000 : 0
 
         # Processing completeness score
         expected_processors = @processors.count { |p| p[:enabled] }
@@ -537,7 +537,7 @@ module BlueprintsCLI
         return nil unless @result_cache
 
         cache_key = generate_cache_key(text)
-        @result_cache[cache_key] if @result_cache.has_key?(cache_key)
+        @result_cache[cache_key] if @result_cache.key?(cache_key)
       end
 
       def cache_result(text, result)

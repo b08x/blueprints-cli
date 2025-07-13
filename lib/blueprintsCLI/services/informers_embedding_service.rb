@@ -315,7 +315,7 @@ module BlueprintsCLI
 
         {
           total_cache_size: total_cache_size,
-          average_hit_rate: provider_count > 0 ? (total_hit_rate / provider_count).round(3) : 0.0
+          average_hit_rate: provider_count.positive? ? (total_hit_rate / provider_count).round(3) : 0.0
         }
       end
 
