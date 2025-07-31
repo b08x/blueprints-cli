@@ -22,14 +22,14 @@ unless ruby_llm_config.empty?
   end
 end
 
-# Set up RubyLLM provider to match Sublayer for consistency
-begin
-  RubyLLM.provider = Sublayer.configuration.ai_provider.new(
-    model: Sublayer.configuration.ai_model
-  )
-rescue StandardError => e
-  # Continue without RubyLLM provider setup if it fails
-  puts "Warning: Could not set up RubyLLM provider: #{e.message}"
-end
+# # Set up RubyLLM provider to match Sublayer for consistency
+# begin
+#   RubyLLM.provider = Sublayer.configuration.ai_provider.new(
+#     model: Sublayer.configuration.ai_model
+#   )
+# rescue StandardError => e
+#   # Continue without RubyLLM provider setup if it fails
+#   puts "Warning: Could not set up RubyLLM provider: #{e.message}"
+# end
 
 puts "Sublayer and RubyLLM configured to use #{Sublayer.configuration.ai_provider} with model #{Sublayer.configuration.ai_model}"

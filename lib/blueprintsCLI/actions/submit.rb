@@ -36,7 +36,7 @@ module BlueprintsCLI
         @db = BlueprintsCLI::BlueprintDatabase.new
 
         # Detect types based on filename using Blueprint model method
-        @types = Blueprint.detect_types(@filename)
+        @types = ::Blueprint.detect_types(@filename)
       end
 
       ##

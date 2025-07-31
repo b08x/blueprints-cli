@@ -1,6 +1,6 @@
 ---
 database:
-  url: postgresql://postgres:blueprints@localhost:5432/blueprints
+  url: postgresql://postgres:blueprints@ninjabot:5433/blueprints_development
   pool_size: 5
 ai:
   sublayer:
@@ -61,7 +61,7 @@ performance:
   connection_pool_size: 5
 blueprints:
   database:
-    url: postgresql://postgres:blueprints@localhost:5432/blueprints
+    url: postgresql://postgres:blueprints@ninjabot:5433/blueprints_development
   features:
     auto_description: true
     auto_categorize: true

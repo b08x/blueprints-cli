@@ -119,12 +119,11 @@ module BlueprintsCLI
           code: code,
           name: name,
           description: description,
-          language: language,
-          file_type: file_type,
-          blueprint_type: blueprint_type,
-          parser_type: parser_type,
+          language: language || 'ruby',
+          file_type: file_type || '.rb',
+          blueprint_type: blueprint_type || 'code',
+          parser_type: parser_type || 'ruby',
           embedding: Pgvector.encode(embedding_vector),
-          # nlp_metadata: rag_result.to_json,
           created_at: Time.now,
           updated_at: Time.now
         )
@@ -166,14 +165,7 @@ module BlueprintsCLI
       # Add categories
       blueprint[:categories] = get_blueprint_categories(id)
 
-      # Add enhanced NLP metadata if available
-      if blueprint[:nlp_metadata]
-        begin
-          blueprint[:nlp_analysis] = JSON.parse(blueprint[:nlp_metadata])
-        rescue JSON::ParserError
-          # Ignore parsing errors for metadata
-        end
-      end
+      # Enhanced NLP metadata is disabled - skip parsing
 
       blueprint
     end
@@ -230,49 +222,13 @@ module BlueprintsCLI
     #   results = db.search_blueprints(query: "http server in ruby", limit: 5)
     #   # => [{id: 12, ..., distance: 0.18}, {id: 34, ..., distance: 0.21}]
     #
-    def search_blueprints(query:, limit: 10, enhanced: true)
-      if enhanced
-        # Use enhanced RAG service for hybrid search
-        search_options = {
-          max_results: limit,
-          relevance_threshold: 0.3,
-          include_patterns: true,
-          boost_exact_matches: true
-        }
-
-        rag_search_result = @rag_service.search_blueprints(query, search_options)
-
-        # Convert RAG results to database format
-        blueprint_ids = rag_search_result[:results].filter_map do |r|
-          r[:blueprint_id] || r[:text_id]
-        end
-        return [] if blueprint_ids.empty?
-
-        # Fetch full blueprint data
-        results = @db[:blueprints].where(id: blueprint_ids).all
-
-        # Add categories and enhance with RAG analysis
-        results.each do |blueprint|
-          blueprint[:categories] = get_blueprint_categories(blueprint[:id])
-
-          # Add RAG search metadata
-          rag_match = rag_search_result[:results].find do |r|
-            (r[:blueprint_id] || r[:text_id]) == blueprint[:id]
-          end
-          blueprint[:search_metadata] = rag_match if rag_match
-          blueprint[:query_analysis] = rag_search_result[:query_analysis]
-        end
-
-        # Sort by RAG relevance score
-        results.sort_by { |b| -(b.dig(:search_metadata, :final_score) || 0) }
-      else
-        # Fallback to traditional vector search
-        traditional_vector_search(query, limit)
-      end
-    rescue StandardError => e
-      BlueprintsCLI.logger.failure("Error in enhanced search: #{e.message}")
-      # Fallback to traditional search on error
+    def search_blueprints(query:, limit: 10, enhanced: false)
+      # Enhanced RAG search is temporarily disabled, use traditional vector search
       traditional_vector_search(query, limit)
+    rescue StandardError => e
+      BlueprintsCLI.logger.failure("Error in search: #{e.message}")
+      # Return empty array if search fails completely
+      []
     end
 
     #
@@ -403,98 +359,63 @@ module BlueprintsCLI
     #   `:total_categories`, and `:database_url` keys.
     #
     def stats
-      basic_stats = {
+      {
         total_blueprints: @db[:blueprints].count,
         total_categories: @db[:categories].count,
-        database_url: @database_url.gsub(/:[^:@]*@/, ':***@') # Hide password
+        database_url: @database_url.gsub(/:[^:@]*@/, ':***@'), # Hide password
+        enhanced_features: {
+          rag_service: 'disabled',
+          cache_performance: 'disabled',
+          nlp_enabled: false,
+          search_index_size: {}
+        }
       }
-
-      # Add enhanced RAG statistics
-      rag_stats = @rag_service.get_statistics
-      cache_stats = @cache_manager.statistics
-
-      basic_stats.merge({
-                          enhanced_features: {
-                            rag_service: rag_stats,
-                            cache_performance: cache_stats,
-                            nlp_enabled: true,
-                            search_index_size: rag_stats[:search_index_stats] || {}
-                          }
-                        })
     rescue StandardError => e
-      BlueprintsCLI.logger.warn("Error gathering enhanced stats: #{e.message}")
-      basic_stats
+      BlueprintsCLI.logger.warn("Error gathering stats: #{e.message}")
+      {
+        total_blueprints: 0,
+        total_categories: 0,
+        database_url: 'unknown',
+        enhanced_features: { status: 'error' }
+      }
     end
 
-    # Find similar blueprints using enhanced RAG service
+    # Find similar blueprints - disabled for now, returns empty array
     def find_similar_blueprints(blueprint_id, options = {})
-      @rag_service.find_similar_blueprints(blueprint_id, options)
-    rescue StandardError => e
-      BlueprintsCLI.logger.failure("Error finding similar blueprints: #{e.message}")
+      BlueprintsCLI.logger.info("Similar blueprints search disabled (enhanced RAG offline)")
       []
     end
 
-    # Analyze code patterns for a blueprint
+    # Analyze code patterns - disabled for now, returns empty hash
     def analyze_blueprint_patterns(blueprint_id)
-      blueprint = get_blueprint(blueprint_id)
-      return {} unless blueprint
-
-      @rag_service.analyze_code_patterns(blueprint)
-    rescue StandardError => e
-      BlueprintsCLI.logger.failure("Error analyzing blueprint patterns: #{e.message}")
+      BlueprintsCLI.logger.info("Pattern analysis disabled (enhanced RAG offline)")
       {}
     end
 
-    # Rebuild the search index with all existing blueprints
+    # Rebuild search index - disabled for now
     def rebuild_search_index
-      blueprints = list_blueprints(limit: 10_000) # Get all blueprints
-      @rag_service.rebuild_search_index(blueprints)
-    rescue StandardError => e
-      BlueprintsCLI.logger.warn("Error rebuilding search index: #{e.message}")
+      BlueprintsCLI.logger.info("Search index rebuild disabled (enhanced RAG offline)")
     end
 
-    # Get enhanced search suggestions based on query
+    # Get search suggestions - simplified fallback
     def get_search_suggestions(partial_query, limit: 5)
-      # Use Trie-based prefix search from RAG service
-      suggestions = []
-
-      # Get recent searches from cache
-      if @rag_service.search_index && @rag_service.search_index[:trie]
-        trie = @rag_service.search_index[:trie]
-        matches = trie.wildcard("#{partial_query.downcase}*")
-        suggestions = matches.first(limit)
-      end
-
-      suggestions
+      # Simple database-based suggestions using blueprint names
+      @db[:blueprints]
+        .where(Sequel.ilike(:name, "%#{partial_query}%"))
+        .select(:name)
+        .limit(limit)
+        .map { |row| row[:name] }
     rescue StandardError => e
       BlueprintsCLI.logger.warn("Error getting search suggestions: #{e.message}")
       []
     end
 
-    # Get blueprint recommendations based on user patterns
+    # Get recommendations - fallback to recent blueprints
     def get_recommendations(user_context = {}, limit: 5)
-      # Use priority queue from RAG service to get top-ranked blueprints
-      if @rag_service.search_index && @rag_service.search_index[:priority_rankings]
-        recommendations = []
-        temp_queue = @rag_service.search_index[:priority_rankings].dup
-
-        count = 0
-        while !temp_queue.empty? && count < limit
-          ranked_item = temp_queue.pop
-          blueprint_id = ranked_item[:blueprint_id] || ranked_item[:text_id]
-          blueprint = get_blueprint(blueprint_id) if blueprint_id
-          recommendations << blueprint if blueprint
-          count += 1
-        end
-
-        recommendations
-      else
-        # Fallback to recent blueprints
-        list_blueprints(limit: limit)
-      end
+      list_blueprints(limit: limit)
     rescue StandardError => e
       BlueprintsCLI.logger.warn("Error getting recommendations: #{e.message}")
-      list_blueprints(limit: limit)
+      []
     end
 
     private
