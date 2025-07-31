@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlueprintsCLI - AI-Powered Code Snippet Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #3D2B3D; /* Dark Purple */
+            color: #C0C5CE; /* Light Gray */
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        /* Dark Sunset Palette Classes */
+        .dark-sunset-bg { background-color: #3D2B3D; }
+        .dark-sunset-surface { background-color: rgba(255, 255, 255, 0.05); } /* Subtle surface on dark bg */
+        .dark-sunset-border { border-color: rgba(192, 197, 206, 0.2); } /* Light Gray border */
+        .dark-sunset-text-primary { color: #C0C5CE; } /* Light Gray */
+        .dark-sunset-text-secondary { color: #D4C9A8; } /* Beige */
+        .dark-sunset-accent-red { color: #B22222; }
+        .dark-sunset-accent-orange { color: #D97925; }
+        .dark-sunset-accent-yellow { color: #D4C9A8; }
+        .dark-sunset-accent-purple { color: #3D2B3D; }
+
+        .code-block {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: #D8DEE9;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .command-tab.active {
+            background-color: #B22222; /* Deep Red */
+            color: #FFFFFF;
+            font-weight: 600;
+        }
+        .command-tab {
+            transition: all 0.2s ease-in-out;
+            color: #C0C5CE; /* Light Gray */
+        }
+
+        .process-arrow {
+            position: relative;
+            background: #C0C5CE; /* Light Gray */
+            height: 4px;
+        }
+        .process-arrow::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: -6px;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 8px solid #C0C5CE;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="dark-sunset-bg">
+    <!-- Chosen Palette: Fiery Sunset (Dark Variant) -->
+    <!-- Application Structure Plan: The application uses a single-page, top-down narrative structure to guide the user from understanding the problem to installation. It starts with a visual hero section demonstrating the core workflow (Input -> Process -> Output). This is followed by an interactive section detailing the primary CLI commands, a changelog visualization, a "Technology Stack" section to build credibility, and finally, a clear, actionable installation guide. This structure was chosen to logically answer a developer's questions: "What is it?", "How does it work?", "What can it do?", "What's new?", "What's it built with?", and "How do I get it?". This flow provides a frictionless path to adoption. -->
+    <!-- Visualization & Content Choices: 1. Core Workflow (Hero): Presented as a three-panel diagram using HTML/CSS Flexbox. 2. Core Commands: An interactive tabbed interface (Vanilla JS). 3. Changelog: A card-based layout using a responsive grid (Tailwind CSS) to visualize the latest updates from the CHANGELOG.md file. Each category of change (Feature, Bug Fix) has a corresponding icon (Unicode) and color treatment for quick identification. 4. Technology Stack: A responsive grid of cards. 5. Installation Guide: A series of code blocks with "copy" buttons (Vanilla JS). No charts are needed; the focus is on demonstrating a CLI tool's workflow and functionality. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <div class="container mx-auto px-4 py-8 md:py-16">
+
+        <header class="text-center mb-16">
+            <h1 class="text-5xl md:text-6xl font-bold dark-sunset-text-primary mb-2">BlueprintsCLI</h1>
+            <p class="text-lg md:text-xl dark-sunset-text-secondary max-w-3xl mx-auto">A command-line tool for storing and finding code snippets using semantic search.</p>
+        </header>
+
+        <main>
+            <section id="workflow" class="mb-24">
+                <h2 class="text-3xl font-bold text-center mb-2 dark-sunset-accent-red">From Code Chaos to an Intelligent Library</h2>
+                <p class="text-center text-lg dark-sunset-text-secondary mb-12">Visually understand the entire workflow in one glance.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                    
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold mb-4 dark-sunset-text-primary">1. Input: Raw Code</h3>
+                        <div class="dark-sunset-surface p-4 rounded-lg border dark-sunset-border shadow-lg h-full">
+                            <p class="text-sm text-left font-mono dark-sunset-text-secondary mb-2">temp_server.rb</p>
+                            <pre class="code-block text-left text-sm"><code>require 'sinatra'
+
+get '/' do
+  'Hello, World!'
+end</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center px-4">
+                       <div class="flex items-center justify-center mb-4 space-x-4">
+                           <div class="text-center">
+                               <span class="text-3xl">🧠</span>
+                               <p class="text-xs mt-1">AI Analysis</p>
+                           </div>
+                           <div class="text-center">
+                               <span class="text-3xl">🔗</span>
+                               <p class="text-xs mt-1">Vector Embedding</p>
+                           </div>
+                           <div class="text-center">
+                                <span class="text-3xl">💾</span>
+                               <p class="text-xs mt-1">Database Storage</p>
+                           </div>
+                       </div>
+                       <div class="process-arrow w-full my-4 hidden md:block"></div>
+                       <div class="text-4xl block md:hidden my-4">⬇️</div>
+                        <p class="font-mono text-sm dark-sunset-accent-orange">blueprintsCLI blueprint submit ...</p>
+                    </div>
+
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold mb-4 dark-sunset-text-primary">3. Output: Structured Blueprint</h3>
+                        <div class="dark-sunset-surface p-4 rounded-lg border dark-sunset-border shadow-lg h-full">
+                            <div class="text-left">
+                                <p class="text-sm font-semibold dark-sunset-accent-orange">Name:</p>
+                                <p class="mb-2 font-mono text-sm dark-sunset-text-primary">Sinatra "Hello World" Server</p>
+                                
+                                <p class="text-sm font-semibold dark-sunset-accent-orange">Description:</p>
+                                <p class="mb-2 font-mono text-sm dark-sunset-text-primary">A minimal Sinatra web application that serves a "Hello, World!" message at the root endpoint.</p>
+
+                                <p class="text-sm font-semibold dark-sunset-accent-orange">Categories:</p>
+                                <div class="flex flex-wrap gap-2 mt-1">
+                                    <span class="text-xs font-mono px-2 py-1 rounded" style="background-color: #B22222; color: #FFFFFF;">ruby</span>
+                                    <span class="text-xs font-mono px-2 py-1 rounded" style="background-color: #D97925; color: #FFFFFF;">web-app</span>
+                                    <span class="text-xs font-mono px-2 py-1 rounded" style="background-color: #D4C9A8; color: #3D2B3D;">api</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="commands" class="mb-24">
+                <h2 class="text-3xl font-bold text-center mb-12 dark-sunset-accent-red">Core Functionality</h2>
+                <div class="max-w-4xl mx-auto dark-sunset-surface rounded-lg border dark-sunset-border overflow-hidden shadow-2xl">
+                    <div class="flex border-b dark-sunset-border">
+                        <button class="command-tab active flex-1 p-3 text-sm md:text-base" data-target="submit">submit</button>
+                        <button class="command-tab flex-1 p-3 text-sm md:text-base" data-target="list">list</button>
+                        <button class="command-tab flex-1 p-3 text-sm md:text-base" data-target="search">search</button>
+                        <button class="command-tab flex-1 p-3 text-sm md:text-base" data-target="view">view</button>
+                    </div>
+                    <div id="command-content" class="p-6">
+                    </div>
+                </div>
+            </section>
+
+            <section id="changelog" class="mb-24">
+                <h2 class="text-3xl font-bold text-center mb-12 dark-sunset-accent-red">Project Updates</h2>
+                <div class="max-w-5xl mx-auto dark-sunset-surface rounded-lg border dark-sunset-border shadow-2xl p-6 md:p-8">
+                    <div class="border-b-2 border-dashed dark-sunset-border pb-4 mb-6">
+                        <h3 class="text-2xl font-bold dark-sunset-text-primary">Version 0.1.0</h3>
+                        <p class="text-sm dark-sunset-text-secondary">Released on 2025-07-12</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="changelog-card">
+                            <h4 class="font-semibold text-lg mb-3"><span class="mr-2">🚀</span>Features</h4>
+                            <ul class="list-disc list-inside space-y-2 text-sm">
+                                <li>AI-powered YARD documentation generation</li>
+                                <li>Enhanced UI with professional TTY-Box previews</li>
+                                <li>Intelligent syntax highlighting</li>
+                                <li>AI-powered code generation from natural language</li>
+                                <li>Improved AI error handling and reporting</li>
+                                <li>Enhanced context-aware logging system</li>
+                                <li>Comprehensive setup wizard</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-card">
+                            <h4 class="font-semibold text-lg mb-3"><span class="mr-2">🐛</span>Bug Fixes</h4>
+                            <ul class="list-disc list-inside space-y-2 text-sm">
+                                <li>Implement working View Logs with tty-pager</li>
+                            </ul>
+                        </div>
+                        <div class="changelog-card">
+                            <h4 class="font-semibold text-lg mb-3"><span class="mr-2">🚜</span>Refactor</h4>
+                            <ul class="list-disc list-inside space-y-2 text-sm">
+                                <li>Unify configuration and improve UX</li>
+                                <li>Update screen clearing logic</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tech-stack" class="mb-24">
+                <h2 class="text-3xl font-bold text-center mb-12 dark-sunset-accent-red">Technology Stack</h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 max-w-5xl mx-auto">
+                    <div class="flex flex-col items-center justify-center p-6 dark-sunset-surface rounded-lg border dark-sunset-border">
+                        <span class="text-5xl mb-3">🐘</span>
+                        <p class="font-semibold dark-sunset-text-primary">PostgreSQL</p>
+                        <p class="text-xs text-center dark-sunset-text-secondary">Primary Data Store</p>
+                    </div>
+                    <div class="flex flex-col items-center justify-center p-6 dark-sunset-surface rounded-lg border dark-sunset-border">
+                        <span class="text-5xl mb-3">🌿</span>
+                        <p class="font-semibold dark-sunset-text-primary">pgvector</p>
+                        <p class="text-xs text-center dark-sunset-text-secondary">Vector Similarity Search</p>
+                    </div>
+                    <div class="flex flex-col items-center justify-center p-6 dark-sunset-surface rounded-lg border dark-sunset-border">
+                        <span class="text-5xl mb-3">🧠</span>
+                        <p class="font-semibold dark-sunset-text-primary">Google Gemini</p>
+                        <p class="text-xs text-center dark-sunset-text-secondary">Embeddings & Metadata</p>
+                    </div>
+                     <div class="flex flex-col items-center justify-center p-6 dark-sunset-surface rounded-lg border dark-sunset-border">
+                        <span class="text-5xl mb-3">💎</span>
+                        <p class="font-semibold dark-sunset-text-primary">Ruby</p>
+                        <p class="text-xs text-center dark-sunset-text-secondary">Core Application Language</p>
+                    </div>
+                    <div class="flex flex-col items-center justify-center p-6 dark-sunset-surface rounded-lg border dark-sunset-border">
+                        <span class="text-5xl mb-3">⚙️</span>
+                        <p class="font-semibold dark-sunset-text-primary">Thor CLI</p>
+                        <p class="text-xs text-center dark-sunset-text-secondary">Command-Line Interface</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="installation" class="max-w-3xl mx-auto">
+                <h2 class="text-3xl font-bold text-center mb-12 dark-sunset-accent-red">Installation & Usage Guide</h2>
+                
+                <div class="space-y-8">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 dark-sunset-text-primary">1. Clone Repository</h3>
+                        <p class="dark-sunset-text-secondary mb-3">Get the source code on your local machine.</p>
+                        <div class="relative">
+                            <pre class="code-block" id="clone-cmd"><code>git clone https://github.com/b08x/blueprints-cli.git
+cd blueprints-cli</code></pre>
+                            <button class="absolute top-2 right-2 text-xs px-2 py-1 rounded" style="background-color: #D97925; color: #FFFFFF;" onclick="copyToClipboard('clone-cmd')">Copy</button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 dark-sunset-text-primary">2. Install Dependencies</h3>
+                        <p class="dark-sunset-text-secondary mb-3">Install the required Ruby gems using Bundler.</p>
+                         <div class="relative">
+                            <pre class="code-block" id="bundle-cmd"><code>bundle install</code></pre>
+                             <button class="absolute top-2 right-2 text-xs px-2 py-1 rounded" style="background-color: #D97925; color: #FFFFFF;" onclick="copyToClipboard('bundle-cmd')">Copy</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 dark-sunset-text-primary">3. Set Up Database</h3>
+                        <p class="dark-sunset-text-secondary mb-3">Create and migrate the PostgreSQL database.</p>
+                        <div class="relative">
+                            <pre class="code-block" id="db-cmd"><code>rake db:create
+rake db:migrate</code></pre>
+                             <button class="absolute top-2 right-2 text-xs px-2 py-1 rounded" style="background-color: #D97925; color: #FFFFFF;" onclick="copyToClipboard('db-cmd')">Copy</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 dark-sunset-text-primary">4. Configure Environment</h3>
+                        <p class="dark-sunset-text-secondary mb-3">Set your API key and database URL. Create a <code class="font-mono text-sm bg-gray-700 text-gray-200 px-1 rounded">.env</code> file or export variables.</p>
+                         <div class="relative">
+                            <pre class="code-block" id="env-cmd"><code>GEMINI_API_KEY="your-gemini-api-key"
+DATABASE_URL="postgresql://user:pass@host:5432/blueprints_development"</code></pre>
+                             <button class="absolute top-2 right-2 text-xs px-2 py-1 rounded" style="background-color: #D97925; color: #FFFFFF;" onclick="copyToClipboard('env-cmd')">Copy</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 dark-sunset-text-primary">5. Run a Command</h3>
+                        <p class="dark-sunset-text-secondary mb-3">You're ready to go! Try submitting your first blueprint.</p>
+                         <div class="relative">
+                            <pre class="code-block" id="run-cmd"><code>bin/blueprintsCLI blueprint submit "puts 'Hello, Blueprints!'"</code></pre>
+                             <button class="absolute top-2 right-2 text-xs px-2 py-1 rounded" style="background-color: #D97925; color: #FFFFFF;" onclick="copyToClipboard('run-cmd')">Copy</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="text-center mt-24 pt-8 border-t dark-sunset-border">
+            <p class="text-sm dark-sunset-text-secondary">&copy; 2025 BlueprintsCLI. Released under the MIT License.</p>
+            <p class="text-sm mt-2"><a href="https://github.com/b08x/blueprints-cli" target="_blank" rel="noopener noreferrer" class="dark-sunset-accent-red hover:underline">View on GitHub</a></p>
+        </footer>
+    </div>
+    
+    <div id="copy-notification" class="fixed bottom-5 right-5 text-white px-4 py-2 rounded-lg shadow-lg" style="display: none; opacity: 0; transition: opacity 0.3s; background-color: #B22222;">
+        Copied to clipboard!
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.command-tab');
+            const contentContainer = document.getElementById('command-content');
+
+            const commandData = {
+                submit: {
+                    description: 'Stores a new code snippet in the database. It can automatically generate a name, description, and categories for the code using AI.',
+                    command: `bin/blueprintsCLI blueprint submit "def hello\n  puts 'world'\nend"`,
+                    output: `
+🚀 Processing blueprint submission...
+📖 Generating blueprint description...
+   Generated description: This Ruby method 'hello' prints the string 'world' to the console.
+🏷️  Generating blueprint categories...
+   Generated categories: ruby, utility, script
+✅ Blueprint created successfully!
+
+============================================================
+📋 Blueprint Summary
+============================================================
+ID: 1
+Name: Hello World Method
+Description: This Ruby method 'hello' prints the string 'world' to the console.
+Categories: ruby, utility, script
+Code length: 24 characters
+Created: 2025-07-12 17:40:00
+============================================================`
+                },
+                list: {
+                    description: 'Displays all stored blueprints. Supports multiple formats like table, summary, or JSON.',
+                    command: `bin/blueprintsCLI blueprint list`,
+                    output: `
+📚 Blueprint Collection
+====================================================================================================
+ID   Name                           Description                                Categories
+====================================================================================================
+1    Hello World Method             This Ruby method 'hello' prints...         ruby, utility, script
+2    Sinatra Web Server             A minimal Sinatra web application...       ruby, web-app, api
+====================================================================================================`
+                },
+                search: {
+                    description: 'Finds blueprints using a natural language query. It performs a semantic search by converting the query into a vector and finding the most similar stored blueprints.',
+                    command: `bin/blueprintsCLI blueprint search "ruby http server"`,
+                    output: `
+🚀 Searching for: 'ruby http server'...
+✅ Found 2 matching blueprints
+====================================================================================================
+ID   Name                           Description                                Categories      Score
+====================================================================================================
+2    Sinatra Web Server             A minimal Sinatra web application...       ruby, web-app   92.3%
+1    Hello World Method             This Ruby method 'hello' prints...         ruby, utility   34.1%
+====================================================================================================`
+                },
+                view: {
+                    description: 'Shows the detailed contents of a specific blueprint, including its code, metadata, and optional AI-powered improvement suggestions.',
+                    command: `bin/blueprintsCLI blueprint view 2 --analyze`,
+                    output: `
+🔍 Fetching blueprint 2...
+🤖 Generating AI analysis...
+============================================================
+📋 Blueprint Details
+============================================================
+ID: 2, Name: Sinatra Web Server...
+...
+============================================================
+💻 Blueprint Code
+============================================================
+require 'sinatra'
+get '/' do
+  'Hello, World!'
+end
+...`
+                }
+            };
+
+            function updateContent(target) {
+                const data = commandData[target];
+                contentContainer.innerHTML = `
+                    <div class="fade-in">
+                        <p class="dark-sunset-text-secondary mb-6">${data.description}</p>
+                        <p class="font-mono text-sm mb-2" style="color: #D97925;">$ ${data.command}</p>
+                        <pre class="code-block text-sm">${data.output.trim()}</pre>
+                    </div>
+                `;
+            }
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const target = tab.getAttribute('data-target');
+                    updateContent(target);
+                });
+            });
+
+            updateContent('submit');
+        });
+
+        function copyToClipboard(elementId) {
+            const preElement = document.getElementById(elementId);
+            const textToCopy = preElement.querySelector('code').innerText;
+            
+            const textArea = document.createElement('textarea');
+            textArea.value = textToCopy;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showCopyNotification();
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+            }
+            document.body.removeChild(textArea);
+        }
+        
+        function showCopyNotification() {
+            const notification = document.getElementById('copy-notification');
+            if (notification.style.display !== 'none') {
+                return;
+            }
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.opacity = '1';
+            }, 10);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 300);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

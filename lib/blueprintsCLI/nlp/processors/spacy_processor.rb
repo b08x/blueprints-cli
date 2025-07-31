@@ -7,7 +7,7 @@ begin
   SPACY_AVAILABLE = true
 rescue LoadError
   SPACY_AVAILABLE = false
-  puts "Warning: ruby-spacy gem not available. SpaCy processor will be disabled."
+  puts 'Warning: ruby-spacy gem not available. SpaCy processor will be disabled.'
 end
 
 module BlueprintsCLI
@@ -21,13 +21,13 @@ module BlueprintsCLI
         def initialize(model_name: 'en_core_web_sm')
           super()
           @model_name = model_name
-          
+
           if SPACY_AVAILABLE
             @nlp_model = load_spacy_model
             build_linguistic_trie
           else
             @nlp_model = nil
-            puts "SpaCy processor initialized in fallback mode"
+            puts 'SpaCy processor initialized in fallback mode'
           end
         end
 
@@ -38,14 +38,12 @@ module BlueprintsCLI
           begin
             # Check cache first
             cache_key = generate_cache_key(text)
-            if cached_result = get_cached_result(cache_key)
+            if (cached_result = get_cached_result(cache_key))
               return cached_result
             end
 
             # Return fallback if SpaCy not available
-            unless SPACY_AVAILABLE && @nlp_model
-              return fallback_processing(text)
-            end
+            return fallback_processing(text) unless SPACY_AVAILABLE && @nlp_model
 
             # Process with SpaCy
             doc = @nlp_model.call(text)
@@ -228,10 +226,10 @@ module BlueprintsCLI
 
         def load_spacy_model
           return nil unless SPACY_AVAILABLE
-          
+
           begin
             Spacy::Language.new(@model_name)
-          rescue StandardError => e
+          rescue StandardError
             # Fallback to basic English model
             puts "Warning: Could not load #{@model_name}, falling back to basic model"
             begin
@@ -271,10 +269,13 @@ module BlueprintsCLI
         def extract_basic_keywords(text)
           words = text.downcase.scan(/\b\w+\b/)
           word_freq = words.tally
-          
+
           # Simple keyword extraction based on frequency and length
-          word_freq.select { |word, freq| word.length > 3 && freq > 0 }
-                   .map { |word, freq| { text: word, lemma: word, pos: 'UNKNOWN', score: freq.to_f / words.length } }
+          word_freq.select { |word, freq| word.length > 3 && freq.positive? }
+                   .map do |word, freq|
+            { text: word, lemma: word, pos: 'UNKNOWN',
+              score: freq.to_f / words.length }
+          end
                    .sort_by { |kw| -kw[:score] }
                    .first(10)
         end
@@ -336,14 +337,14 @@ module BlueprintsCLI
 
         def calculate_complexity_score(doc)
           # Simple complexity based on sentence structure
-          avg_deps_per_token = doc.map { |token| token.children.count }.sum.to_f / doc.length
+          avg_deps_per_token = doc.sum { |token| token.children.count }.to_f / doc.length
           avg_deps_per_token / 3.0 # Normalize
         end
 
         def estimate_readability(doc)
           # Simple readability estimate
-          avg_word_length = doc.select(&:is_alpha).map { |t| t.text.length }.sum.to_f /
-                            doc.select(&:is_alpha).count
+          avg_word_length = doc.select(&:is_alpha).sum { |t| t.text.length }.to_f /
+                            doc.count(&:is_alpha)
 
           case avg_word_length
           when 0..4 then 'easy'

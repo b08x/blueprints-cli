@@ -103,12 +103,12 @@ module BlueprintsCLI
       context = build_context_by_level(class_name, method_name, caller_info)
 
       # Cache the result for performance (with size limit)
-      if context && context.any?
+      if context&.any?
         manage_cache_size
         @context_cache[cache_key] = context
       end
 
-      context && context.any? ? context : nil
+      context&.any? ? context : nil
     end
 
     # Extract method name from caller stack
@@ -131,7 +131,7 @@ module BlueprintsCLI
     # @return [String, nil] The class name or nil if not found
     def extract_class_name(skip_frames)
       # Look through several frames to find a class context
-      (skip_frames..skip_frames + 10).each do |frame_index|
+      (skip_frames..(skip_frames + 10)).each do |frame_index|
         location = caller_locations(frame_index, 1)&.first
         break unless location
 

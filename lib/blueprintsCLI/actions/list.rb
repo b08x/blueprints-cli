@@ -313,17 +313,17 @@ module BlueprintsCLI
       ##
       # Handles actions for a selected blueprint in interactive mode.
       #
-      # Provides options to view, edit, export, analyze, or copy the blueprint ID.
+      # Provides options to view (with AI analysis), edit, export, or copy the blueprint ID.
+      # The view action launches the enhanced interactive two-column viewer with AI suggestions.
       #
       # @param blueprint [Hash] The selected blueprint
       # @param prompt [TTY::Prompt] The prompt instance for user interaction
       # @return [void]
       def handle_selected_blueprint(blueprint, prompt)
         actions = [
-          { name: '👁️  View details', value: :view },
+          { name: '👁️  View details (with AI analysis)', value: :view },
           { name: '✏️  Edit blueprint', value: :edit },
           { name: '💾 Export code', value: :export },
-          { name: '🔍 View with AI analysis', value: :analyze },
           { name: '📋 Copy ID', value: :copy_id },
           { name: '↩️  Back to list', value: :back }
         ]
@@ -334,9 +334,9 @@ module BlueprintsCLI
         when :view
           BlueprintsCLI::Actions::View.new(
             id: blueprint[:id],
-            format: :detailed
+            format: :interactive,
+            with_suggestions: true
           ).call
-          prompt.keypress('Press any key to continue...')
         when :edit
           BlueprintsCLI::Actions::Edit.new(
             id: blueprint[:id]
@@ -347,13 +347,6 @@ module BlueprintsCLI
           BlueprintsCLI::Actions::Export.new(
             id: blueprint[:id],
             output_path: filename
-          ).call
-          prompt.keypress('Press any key to continue...')
-        when :analyze
-          BlueprintsCLI::Actions::View.new(
-            id: blueprint[:id],
-            format: :detailed,
-            with_suggestions: true
           ).call
           prompt.keypress('Press any key to continue...')
         when :copy_id

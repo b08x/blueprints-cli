@@ -20,18 +20,23 @@ module BlueprintsCLI
       # @param name [String, nil] The name of the blueprint. If not provided, it will be auto-generated.
       # @param description [String, nil] The description of the blueprint. If not provided and auto_describe is true, it will be auto-generated.
       # @param categories [Array, nil] The categories of the blueprint. If not provided and auto_categorize is true, they will be auto-generated.
+      # @param filename [String, nil] The original filename for type detection.
       # @param auto_describe [Boolean] Whether to auto-generate the description if not provided. Defaults to true.
       # @param auto_categorize [Boolean] Whether to auto-generate the categories if not provided. Defaults to true.
       # @return [Submit] A new instance of Submit.
-      def initialize(code:, name: nil, description: nil, categories: nil, auto_describe: true,
-                     auto_categorize: true)
+      def initialize(code:, name: nil, description: nil, categories: nil, filename: nil,
+                     auto_describe: true, auto_categorize: true)
         @code = code
         @name = name
         @description = description
         @categories = categories || []
+        @filename = filename
         @auto_describe = auto_describe
         @auto_categorize = auto_categorize
         @db = BlueprintsCLI::BlueprintDatabase.new
+
+        # Detect types based on filename using Blueprint model method
+        @types = ::Blueprint.detect_types(@filename)
       end
 
       ##
@@ -54,7 +59,11 @@ module BlueprintsCLI
           code: @code,
           name: @name,
           description: @description,
-          categories: @categories
+          categories: @categories,
+          language: @types[:language],
+          file_type: @types[:file_type],
+          blueprint_type: @types[:blueprint_type],
+          parser_type: @types[:parser_type]
         )
 
         if blueprint
@@ -148,6 +157,10 @@ module BlueprintsCLI
         puts "ID: #{blueprint[:id]}"
         puts "Name: #{blueprint[:name]}"
         puts "Description: #{blueprint[:description]}"
+        puts "Language: #{@types[:language]}"
+        puts "File Type: #{@types[:file_type]}"
+        puts "Blueprint Type: #{@types[:blueprint_type]}"
+        puts "Parser Type: #{@types[:parser_type]}"
 
         if blueprint[:categories] && blueprint[:categories].any?
           category_names = blueprint[:categories].map { |cat| cat[:title] }

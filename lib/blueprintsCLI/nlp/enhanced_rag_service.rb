@@ -34,7 +34,7 @@ module BlueprintsCLI
           blueprint_id = blueprint_data[:id] || generate_blueprint_id(text_content)
 
           # Check cache first
-          if cached_result = @cache_manager.get(:pipeline, text_content, @config)
+          if (cached_result = @cache_manager.get(:pipeline, text_content, @config))
             update_metrics(:cache_hit, Time.now - start_time)
             return enrich_cached_result(cached_result, blueprint_id)
           end
@@ -548,9 +548,7 @@ module BlueprintsCLI
           if options[:boost_exact_matches] && query_analysis[:combined_analysis]
             query_keywords = query_analysis[:combined_analysis][:keywords] || []
             query_keywords.each do |keyword|
-              if result[:details] && result[:details].to_s.include?(keyword[:text] || keyword[:word])
-                score += 0.2
-              end
+              score += 0.2 if result[:details]&.to_s&.include?(keyword[:text] || keyword[:word])
             end
           end
 
@@ -679,7 +677,7 @@ module BlueprintsCLI
         {
           count: functions.length,
           names: functions,
-          avg_name_length: functions.empty? ? 0 : functions.map(&:length).sum.to_f / functions.length
+          avg_name_length: functions.empty? ? 0 : functions.sum(&:length).to_f / functions.length
         }
       end
 
@@ -721,7 +719,7 @@ module BlueprintsCLI
 
         {
           count: comment_lines.length,
-          avg_length: comment_lines.empty? ? 0 : comment_lines.map(&:length).sum.to_f / comment_lines.length,
+          avg_length: comment_lines.empty? ? 0 : comment_lines.sum(&:length).to_f / comment_lines.length,
           has_docstrings: code.include?('"""') || code.include?("'''")
         }
       end

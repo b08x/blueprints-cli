@@ -20,6 +20,7 @@ module BlueprintsCLI
       # Load user configuration for the logger
       app_config = BlueprintsCLI::Configuration.new
       log_level = app_config.fetch(:logger, :level)&.to_sym || :info
+      console_logging_enabled = app_config.fetch(:logger, :console_logging, default: true)
       file_logging_enabled = app_config.fetch(:logger, :file_logging) || false
       log_file_path = app_config.fetch(:logger, :file_path) || default_log_path
       file_log_level = app_config.fetch(:logger, :file_level)&.to_sym || :debug
@@ -27,7 +28,7 @@ module BlueprintsCLI
       base_logger = TTY::Logger.new do |config|
         # Configure handlers (console and optional file)
         handlers = []
-        handlers << configure_console_handler(log_level)
+        handlers << configure_console_handler(log_level) if console_logging_enabled
         handlers << configure_file_handler(log_file_path, file_log_level) if file_logging_enabled
 
         config.handlers = handlers

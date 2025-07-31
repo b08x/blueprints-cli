@@ -34,7 +34,7 @@ module BlueprintsCLI
             next if word.length < min_length
 
             # Use Trie for efficient prefix matching
-            next unless @trie_index.has_key?(word.downcase)
+            next unless @trie_index.key?(word.downcase)
 
             terms << {
               term: word,

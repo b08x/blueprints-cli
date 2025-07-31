@@ -126,7 +126,7 @@ module BlueprintsCLI
       #
       # @return [Integer] Number of dimensions
       def dimensions
-        @model_dimensions ||= begin
+        @dimensions ||= begin
           # Try to get from known models first
           known_dims = MODEL_DIMENSIONS[@model_name]
           return known_dims if known_dims
@@ -249,7 +249,7 @@ module BlueprintsCLI
         truncated = ''
 
         words.each do |word|
-          break unless (truncated + ' ' + word).length <= max_length
+          break unless "#{truncated} #{word}".length <= max_length
 
           truncated += (truncated.empty? ? '' : ' ') + word
         end

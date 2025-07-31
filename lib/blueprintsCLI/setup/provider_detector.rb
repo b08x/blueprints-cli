@@ -109,7 +109,7 @@ module BlueprintsCLI
       def display_detected_providers
         if @detected_providers.any?
           puts "\n🔍 Detected AI Providers:"
-          @detected_providers.each do |_provider_key, config|
+          @detected_providers.each_value do |config|
             info = config[:info]
             puts "  ✓ #{info[:name]} - #{info[:description]}"
             puts "    Models: #{info[:models].join(', ')}"

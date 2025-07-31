@@ -61,7 +61,7 @@ module BlueprintsCLI
       def mark_accessed!
         self.last_accessed = Time.now.to_f.to_s
         self.access_count = (access_count.to_i + 1).to_s
-        save
+        save_changes
       end
 
       # Check if entry has expired
@@ -111,7 +111,7 @@ module BlueprintsCLI
                                    cached_at: Time.now.iso8601
                                  })
 
-        cache_entry.save
+        cache_entry.save_changes
         cache_entry
       end
 
@@ -139,9 +139,9 @@ module BlueprintsCLI
         entries = all.to_a
         {
           total_entries: entries.length,
-          avg_processing_time: entries.map { |e| e.processing_time.to_f }.sum / entries.length,
-          avg_token_count: entries.map { |e| e.token_count.to_i }.sum / entries.length,
-          avg_entity_count: entries.map { |e| e.entity_count.to_i }.sum / entries.length,
+          avg_processing_time: entries.sum { |e| e.processing_time.to_f } / entries.length,
+          avg_token_count: entries.sum { |e| e.token_count.to_i } / entries.length,
+          avg_entity_count: entries.sum { |e| e.entity_count.to_i } / entries.length,
           models_used: entries.map(&:model_name).uniq,
           hit_rate: calculate_hit_rate(entries)
         }
@@ -159,7 +159,7 @@ module BlueprintsCLI
         return 0.0 if entries.empty?
 
         total_accesses = entries.sum { |e| e.access_count.to_i }
-        return 0.0 if total_accesses == 0
+        return 0.0 if total_accesses.zero?
 
         (entries.length.to_f / total_accesses * 100).round(2)
       end
@@ -203,7 +203,7 @@ module BlueprintsCLI
                                    cached_at: Time.now.iso8601
                                  })
 
-        cache_entry.save
+        cache_entry.save_changes
         cache_entry
       end
 
@@ -223,7 +223,7 @@ module BlueprintsCLI
       def self.by_semantic_density(min_density, max_density)
         all.select do |entry|
           density = entry.semantic_density.to_f
-          density >= min_density && density <= max_density
+          density.between?(min_density, max_density)
         end
       end
 
@@ -282,7 +282,7 @@ module BlueprintsCLI
                                    cached_at: Time.now.iso8601
                                  })
 
-        cache_entry.save
+        cache_entry.save_changes
         cache_entry
       end
 
@@ -376,7 +376,7 @@ module BlueprintsCLI
         intersection = (chars1 & chars2).size
         union = (chars1 | chars2).size
 
-        return 0.0 if union == 0
+        return 0.0 if union.zero?
 
         intersection.to_f / union
       end
@@ -390,7 +390,7 @@ module BlueprintsCLI
         norm1 = Math.sqrt(vector1.sum { |v| v * v })
         norm2 = Math.sqrt(vector2.sum { |v| v * v })
 
-        return 0.0 if norm1 == 0 || norm2 == 0
+        return 0.0 if norm1.zero? || norm2.zero?
 
         dot_product / (norm1 * norm2)
       end
@@ -434,7 +434,7 @@ module BlueprintsCLI
                                    cached_at: Time.now.iso8601
                                  })
 
-        cache_entry.save
+        cache_entry.save_changes
         cache_entry
       end
 
@@ -458,9 +458,9 @@ module BlueprintsCLI
 
         {
           total_cached: entries.length,
-          avg_processing_time: entries.map { |e| e.processing_time.to_f }.sum / entries.length,
-          avg_analysis_score: entries.map { |e| e.analysis_score.to_f }.sum / entries.length,
-          avg_feature_count: entries.map { |e| e.feature_count.to_i }.sum / entries.length,
+          avg_processing_time: entries.sum { |e| e.processing_time.to_f } / entries.length,
+          avg_analysis_score: entries.sum { |e| e.analysis_score.to_f } / entries.length,
+          avg_feature_count: entries.sum { |e| e.feature_count.to_i } / entries.length,
           processor_usage: calculate_processor_usage(entries),
           cache_efficiency: calculate_cache_efficiency(entries)
         }
@@ -487,7 +487,7 @@ module BlueprintsCLI
         return 0.0 if entries.empty?
 
         total_accesses = entries.sum { |e| e.access_count.to_i }
-        return 0.0 if total_accesses == 0
+        return 0.0 if total_accesses.zero?
 
         cache_hits = entries.count { |e| e.access_count.to_i > 1 }
         (cache_hits.to_f / entries.length * 100).round(2)
