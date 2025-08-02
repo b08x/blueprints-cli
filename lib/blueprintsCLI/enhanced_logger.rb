@@ -19,6 +19,7 @@ module BlueprintsCLI
   class EnhancedLogger
     # Delegate most methods to the underlying TTY::Logger instance
     extend Forwardable
+
     def_delegators :@base_logger, :level, :level=, :add_type, :handlers, :handlers=
 
     # Standard log levels that should include context
