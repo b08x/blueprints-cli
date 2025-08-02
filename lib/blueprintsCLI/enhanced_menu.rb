@@ -2,6 +2,8 @@
 
 require_relative 'cli_ui_integration'
 require_relative 'slash_command_parser'
+require_relative 'autocomplete_handler'
+require_relative 'readline_integration'
 
 module BlueprintsCLI
   # EnhancedMenu provides an advanced interactive interface with slash commands
@@ -9,7 +11,9 @@ module BlueprintsCLI
   class EnhancedMenu
     def initialize
       @running = true
+      @autocomplete_handler = AutocompleteHandler.new
       CLIUIIntegration.initialize!
+      setup_autocomplete
     end
 
     # Start the enhanced interactive session
@@ -32,6 +36,17 @@ module BlueprintsCLI
     end
 
     private
+
+    def setup_autocomplete
+      # Initialize readline with our autocomplete handler
+      success = ReadlineIntegration.setup_readline(@autocomplete_handler)
+      
+      if success
+        BlueprintsCLI.logger.debug("Autocomplete functionality enabled")
+      else
+        BlueprintsCLI.logger.warn("Autocomplete functionality not available, falling back to basic input")
+      end
+    end
 
     def show_welcome_banner
       CLIUIIntegration.frame('🚀 BlueprintsCLI Enhanced Interactive Mode', color: :cyan) do
@@ -71,12 +86,12 @@ module BlueprintsCLI
     end
 
     def get_user_input
-      # Custom prompt with slash command support
+      # Custom prompt with slash command support and autocomplete
       CLIUIIntegration.raw_puts('')
-      print "#{::CLI::UI.fmt('{{cyan:blueprintsCLI}}')} #{::CLI::UI.fmt('{{blue:>}}')} "
-
-      input = $stdin.gets&.chomp
-      input&.strip
+      prompt = "#{::CLI::UI.fmt('{{cyan:blueprintsCLI}}')} #{::CLI::UI.fmt('{{blue:>}}')} "
+      
+      # Use readline integration for autocomplete support
+      ReadlineIntegration.readline_input(prompt, true)
     end
 
     def handle_invalid_slash_command(parser)
