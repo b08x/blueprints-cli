@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2025-08-02
+
+### 🚀 Features
+
+- **Multi-language Support**: Add automatic language detection for 25+ programming languages
+- **Enhanced Interactive UI**: Implement multiline input support with CLI-UI framework integration  
+- **Advanced NLP Pipeline**: Comprehensive RAG pipeline with SpaCy, linguistics, and embedding providers
+- **Intelligent Autocomplete**: CLI with autocompleting slash commands and enhanced parsing
+- **Enhanced Menu System**: Improved navigation and integration with better user workflows
+- **Development Tooling**: Comprehensive test scripts, utilities, and development configuration
+
+### 🐛 Bug Fixes
+
+- **Logging System**: Resolve circular dependency issues and disable problematic console logging
+- **RubyLLM Integration**: Correct embedding API usage with proper fallback mechanisms
+- **Command Structure**: Enhanced base command structure with improved error handling
+
+### 🚜 Refactor
+
+- **Configuration Infrastructure**: Major improvements to setup and configuration management
+- **Documentation**: Comprehensive README update with AI-powered blueprint system details
+- **Menu Integration**: Better system integration with enhanced user experience
+
+### 📚 Documentation
+
+- **Comprehensive README**: Complete rewrite with detailed architecture and usage examples
+- **Development Docs**: Enhanced configuration and development environment documentation
+
+### ⚙️ Miscellaneous Tasks
+
+- **Dependencies**: Add CLI-UI framework and related terminal enhancement libraries
+- **Enhanced RAG**: Advanced NLP capabilities with provider abstraction (currently disabled for stability)
+- **Development Environment**: Improved packaging configuration and development scripts
+
 ## [0.1.0] - 2025-07-12
 
 ### 🚀 Features

@@ -24,6 +24,7 @@ end
 gem 'algorithms', '~> 1.0'
 gem 'bm25f', '~> 0.1.0'
 gem 'caliber', '~> 0.67.0'
+gem 'circuit_breaker', '~> 1.1'
 gem 'clipboard', '~> 2.0'
 gem 'colorize', '~> 1.1'
 gem 'dotenv', '~> 3.1'
@@ -36,6 +37,7 @@ gem 'git-lint', '~> 8.8'
 gem 'informers', '~> 1.2'
 gem 'json'
 gem 'linguistics', '~> 2.1'
+gem 'numpy', '~> 0.4.0'
 gem 'ohm', '~> 3.1'
 gem 'pg', '~> 1.5'
 gem 'pgvector', '~> 0.2'
@@ -69,7 +71,3 @@ gem 'tty-spinner', '~> 0.9.3'
 gem 'tty-table', '~> 0.12'
 gem 'tty-tree', '~> 0.4.0'
 gem 'tty-which', '~> 0.5.0'
-
-gem "circuit_breaker", "~> 1.1"
-
-gem "numpy", "~> 0.4.0"
