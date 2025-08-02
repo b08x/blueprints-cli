@@ -366,6 +366,9 @@ module BlueprintsCLI
         if system('which pbcopy > /dev/null 2>&1') # macOS
           IO.popen('pbcopy', 'w') { |pipe| pipe.write(@blueprint[:code]) }
           CLIUIIntegration.puts('{{green:✅ Code copied to clipboard (macOS)}}')
+        elsif system('which wl-copy > /dev/null 2>&1') # Linux
+          IO.popen('wl-copy', 'w') { |pipe| pipe.write(@blueprint[:code]) }
+          CLIUIIntegration.puts('{{green:✅ Code copied to clipboard (Linux)}}')
         elsif system('which xclip > /dev/null 2>&1') # Linux
           IO.popen('xclip -selection clipboard', 'w') { |pipe| pipe.write(@blueprint[:code]) }
           CLIUIIntegration.puts('{{green:✅ Code copied to clipboard (Linux)}}')
