@@ -182,7 +182,6 @@ namespace :docs do
     rdoc.options << '--line-numbers'
     rdoc.options << '--all'
     rdoc.options << '--charset=UTF-8'
-    rdoc.options << '--inline-source'
 
     # Include main files
     rdoc.rdoc_files.include('README.md')

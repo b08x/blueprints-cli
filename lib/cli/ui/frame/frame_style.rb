@@ -10,6 +10,7 @@ module CLI
         include Kernel
         extend T::Sig
         extend T::Helpers
+
         abstract!
 
         autoload(:Box, 'cli/ui/frame/frame_style/box')

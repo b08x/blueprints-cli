@@ -9,6 +9,7 @@ module CLI
       class Base
         extend T::Sig
         extend T::Helpers
+
         abstract!
 
         class << self

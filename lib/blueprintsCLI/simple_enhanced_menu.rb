@@ -81,7 +81,6 @@ module BlueprintsCLI
       input.chomp.strip
     end
 
-
     def handle_invalid_slash_command(parser)
       puts "\e[31mInvalid command: #{parser.input}\e[0m"
 

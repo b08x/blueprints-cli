@@ -676,741 +676,761 @@ module BlueprintsCLI
     #
     # @example Run interactive setup
     #   config = BlueprintsCLI::Configuration.new(auto_load: false)
-    #   if config.interactive_setup\n    #     puts \"Configuration setup completed successfully\"\n    #   else\n    #     puts \"Setup failed, check error messages\"\n    #   end\n    #\n    # @example First-time user experience\n    #   unless config.exist?\n    #     puts \"Welcome to BlueprintsCLI! Let's set up your configuration.\"\n    #     config.interactive_setup\n    #   end\n    #\n    # @raise [StandardError] Various errors may be raised during setup,\n    #   which are caught and logged as failure messages.\n    #\n    # @since 0.1.0\n    # @see TTY::Prompt\n    # @see #save_config\n    # @see #validate!\n    def interactive_setup
-    require 'tty-prompt'
-    prompt = TTY::Prompt.new
+    #   if config.interactive_setup
+    #     puts "Configuration setup completed successfully"
+    #   else
+    #     puts "Setup failed, check error messages"
+    #   end
+    #
+    # @example First-time user experience
+    #   unless config.exist?
+    #     puts "Welcome to BlueprintsCLI! Let's set up your configuration."
+    #     config.interactive_setup
+    #   end
+    #
+    # @raise [StandardError] Various errors may be raised during setup,
+    #   which are caught and logged as failure messages.
+    #
+    # @since 0.1.0
+    # @see TTY::Prompt
+    # @see #save_config
+    # @see #validate!
+    def interactive_setup
+      require 'tty-prompt'
+      prompt = TTY::Prompt.new
 
-    puts '🔧 BlueprintsCLI Interactive Configuration Setup'
-    puts '=' * 50
+      puts '🔧 BlueprintsCLI Interactive Configuration Setup'
+      puts '=' * 50
 
-    # Database configuration
-    configure_database_interactive(prompt)
+      # Database configuration
+      configure_database_interactive(prompt)
 
-    # AI provider configuration
-    configure_ai_interactive(prompt)
+      # AI provider configuration
+      configure_ai_interactive(prompt)
 
-    # Logger configuration
-    configure_logger_interactive(prompt)
+      # Logger configuration
+      configure_logger_interactive(prompt)
 
-    # Editor configuration
-    configure_editor_interactive(prompt)
+      # Editor configuration
+      configure_editor_interactive(prompt)
 
-    # Save configuration
-    save_config
+      # Save configuration
+      save_config
 
-    true
-  rescue StandardError => e
-    # Can't use BlueprintsCLI.logger here as it may not be initialized yet
-    warn("Error during interactive setup: #{e.message}")
-    false
-  end
-
-  # Configure logger settings interactively
-  #
-  # Provides an interactive interface for configuring logger settings including
-  # console log level, file logging options, and log file paths. This method
-  # is used both during initial setup and when editing specific configuration sections.
-  #
-  # @return [void]
-  #
-  # @example Configure logger independently
-  #   config.configure_logger
-  #   # Prompts for logger level, file logging, etc.
-  #
-  # @since 0.1.0
-  # @see #configure_logger_interactive
-  def configure_logger
-    configure_logger_interactive(TTY::Prompt.new)
-  end
-
-  # Configure filesystem path settings interactively
-  #
-  # Provides an interactive interface for configuring filesystem paths
-  # used by BlueprintsCLI, such as temporary directories for editor operations.
-  #
-  # @return [void]
-  #
-  # @example Configure paths
-  #   config.configure_paths
-  #   # Prompts for temporary directory path
-  #
-  # @since 0.1.0
-  def configure_paths
-    prompt = TTY::Prompt.new
-    puts "\n📁 Path Configuration"
-
-    temp_dir = prompt.ask('Temporary directory:', default: fetch(:editor, :temp_dir) || '/tmp')
-    set(:editor, :temp_dir, value: temp_dir)
-  end
-
-  # Configure display and UI settings interactively
-  #
-  # Provides an interactive interface for configuring user interface settings
-  # including colored output, interactive prompts, and pager configuration.
-  #
-  # @return [void]
-  #
-  # @example Configure display settings
-  #   config.configure_display
-  #   # Prompts for colors, interactive mode, pager choice
-  #
-  # @since 0.1.0
-  def configure_display
-    prompt = TTY::Prompt.new
-    puts "\n🎨 Display Configuration"
-
-    colors = prompt.yes?('Enable colored output?', default: fetch(:ui, :colors, default: true))
-    set(:ui, :colors, value: colors)
-
-    interactive_mode = prompt.yes?('Enable interactive prompts?',
-                                   default: fetch(:ui, :interactive, default: true))
-    set(:ui, :interactive, value: interactive_mode)
-
-    pager = prompt.ask('Pager command:', default: fetch(:ui, :pager) || 'most')
-    set(:ui, :pager, value: pager)
-  end
-
-  # Configure Restic backup settings interactively (placeholder)
-  #
-  # This method is a placeholder for future Restic backup configuration.
-  # Currently displays a message indicating the feature is not implemented.
-  #
-  # @return [void]
-  #
-  # @note This method is not yet implemented and serves as a placeholder
-  #   for future backup configuration functionality.
-  #
-  # @since 0.1.0
-  def configure_restic
-    # Placeholder for restic configuration if needed
-    puts "\n💾 Restic Configuration (not implemented yet)"
-  end
-
-  # Configure terminal settings interactively (placeholder)
-  #
-  # This method is a placeholder for future terminal configuration options.
-  # Currently displays a message indicating the feature is not implemented.
-  #
-  # @return [void]
-  #
-  # @note This method is not yet implemented and serves as a placeholder
-  #   for future terminal configuration functionality.
-  #
-  # @since 0.1.0
-  def configure_terminals
-    # Placeholder for terminal configuration if needed
-    puts "\n🖥️  Terminal Configuration (not implemented yet)"
-  end
-
-  # Save current configuration to file with force overwrite
-  #
-  # Convenience method that saves the current configuration state to file
-  # with force overwrite enabled. This is typically used after interactive
-  # setup or configuration changes to persist the updates.
-  #
-  # @return [Boolean] true if save was successful, false otherwise.
-  #
-  # @example Save configuration after changes
-  #   config.set(:logger, :level, value: 'debug')
-  #   config.save_config
-  #   # => true
-  #
-  # @since 0.1.0
-  # @see #write
-  def save_config
-    write(force: true)
-  end
-
-  private
-
-  # Validate terminal command availability (placeholder)
-  #
-  # This method is a placeholder for validating that configured terminal
-  # commands are available on the system. Currently returns true as a
-  # basic implementation.
-  #
-  # @return [Boolean] Always returns true in current implementation.
-  #
-  # @note This is a placeholder implementation that could be extended
-  #   to check if configured terminal commands are available in PATH.
-  #
-  # @since 0.1.0
-  # @api private
-  def validate_terminal_command
-    # This is a placeholder validation - just return true for now
-    # Could be extended to check if configured terminal commands are available
-    true
-  end
-
-  # Configure database settings interactively
-  #
-  # Prompts the user for database configuration including the database URL.
-  # Uses existing configuration values as defaults when available.
-  #
-  # @param prompt [TTY::Prompt] The prompt instance for user interaction.
-  #
-  # @return [void]
-  #
-  # @since 0.1.0
-  # @api private
-  def configure_database_interactive(prompt)
-    puts "\n📊 Database Configuration"
-
-    current_url = fetch(:database, :url) || fetch(:blueprints, :database, :url)
-    database_url = prompt.ask('Database URL:', default: current_url)
-
-    set(:database, :url, value: database_url) if database_url
-  end
-
-  # Configure AI provider settings interactively
-  #
-  # Prompts the user to select an AI provider and optionally configure
-  # API keys. Supports Gemini, OpenAI, Anthropic, and DeepSeek providers.
-  # API keys can be left empty to use environment variables.
-  #
-  # @param prompt [TTY::Prompt] The prompt instance for user interaction.
-  #
-  # @return [void]
-  #
-  # @since 0.1.0
-  # @api private
-  def configure_ai_interactive(prompt)
-    puts "\n🤖 AI Provider Configuration"
-
-    provider = prompt.select('Select AI provider:', %w[Gemini OpenAI Anthropic DeepSeek])
-    set(:ai, :sublayer, :provider, value: provider)
-
-    case provider.downcase
-    when 'gemini'
-      api_key = prompt.mask('Gemini API Key (leave empty to use environment variable):')
-      set(:ai, :provider_keys, :gemini, value: api_key) unless api_key.empty?
-    when 'openai'
-      api_key = prompt.mask('OpenAI API Key (leave empty to use environment variable):')
-      set(:ai, :provider_keys, :openai, value: api_key) unless api_key.empty?
-    when 'anthropic'
-      api_key = prompt.mask('Anthropic API Key (leave empty to use environment variable):')
-      set(:ai, :provider_keys, :anthropic, value: api_key) unless api_key.empty?
-    when 'deepseek'
-      api_key = prompt.mask('DeepSeek API Key (leave empty to use environment variable):')
-      set(:ai, :provider_keys, :deepseek, value: api_key) unless api_key.empty?
-    end
-  end
-
-  # Configure logger settings interactively
-  #
-  # Prompts the user for logger configuration including console log level,
-  # file logging options, file log level, and log file path.
-  #
-  # @param prompt [TTY::Prompt] The prompt instance for user interaction.
-  #
-  # @return [void]
-  #
-  # @since 0.1.0
-  # @api private
-  def configure_logger_interactive(prompt)
-    puts "\n📝 Logger Configuration"
-
-    level = prompt.select('Console log level:', %w[debug info warn error fatal])
-    set(:logger, :level, value: level)
-
-    file_logging = prompt.yes?('Enable file logging?')
-    set(:logger, :file_logging, value: file_logging)
-
-    return unless file_logging
-
-    file_level = prompt.select('File log level:', %w[debug info warn error fatal])
-    set(:logger, :file_level, value: file_level)
-
-    file_path = prompt.ask('Log file path:', default: default_log_path)
-    set(:logger, :file_path, value: file_path)
-  end
-
-  # Configure editor settings interactively
-  #
-  # Prompts the user for editor configuration including default editor
-  # selection and auto-save preferences. Uses EDITOR or VISUAL environment
-  # variables as defaults when available.
-  #
-  # @param prompt [TTY::Prompt] The prompt instance for user interaction.
-  #
-  # @return [void]
-  #
-  # @since 0.1.0
-  # @api private
-  def configure_editor_interactive(prompt)
-    puts "\n✏️  Editor Configuration"
-
-    current_editor = fetch(:editor, :default) || ENV['EDITOR'] || ENV['VISUAL'] || 'vim'
-    editor = prompt.ask('Default editor:', default: current_editor)
-    set(:editor, :default, value: editor)
-
-    auto_save = prompt.yes?('Enable auto-save for edits?')
-    set(:editor, :auto_save, value: auto_save)
-  end
-
-  # Setup TTY::Config with paths and environment mapping
-  #
-  # Initializes the TTY::Config instance with configuration file paths,
-  # environment variable mapping, and search paths. This method sets up
-  # the foundational configuration system before loading any actual values.
-  #
-  # @param config_paths [Array<String>] Additional paths to search for configuration files.
-  # @param filename [String] Base filename for configuration files (without extension).
-  #
-  # @return [void]
-  #
-  # @since 0.1.0
-  # @api private
-  def setup_config(config_paths, filename)
-    @config.filename = filename
-    @config.extname = DEFAULT_EXTENSION
-    @config.env_prefix = ENV_PREFIX
-    @config.env_separator = '_'
-    @config.autoload_env
-
-    # Add default search paths
-    default_paths = [
-      File.join(Dir.home, '.config', 'BlueprintsCLI'),
-      File.join(Dir.home, '.blueprintsCLI'),
-      File.join(__dir__, 'config'),
-      Dir.pwd
-    ]
-
-    (default_paths + config_paths).each do |path|
-      @config.append_path(path) if Dir.exist?(path)
-    end
-  end
-
-  # Load configuration from file and set defaults
-  #
-  # Performs the complete configuration loading process including reading
-  # configuration files, setting default values, mapping environment variables,
-  # and configuring external provider libraries.
-  #
-  # This method handles errors gracefully and will continue with defaults
-  # if configuration files cannot be read.
-  #
-  # @return [void]
-  #
-  # @since 0.1.0
-  # @api private
-  def load_configuration
-    # Try to read existing configuration file
-    begin
-      @config.read if @config.exist?
-    rescue TTY::Config::ReadError => e
+      true
+    rescue StandardError => e
       # Can't use BlueprintsCLI.logger here as it may not be initialized yet
-      warn "Failed to read configuration file: #{e.message}"
+      warn("Error during interactive setup: #{e.message}")
+      false
     end
 
-    # Set default values
-    set_defaults
-
-    # Map common environment variables
-    setup_env_mappings
-
-    # Configure external providers
-    configure_providers
-  end
-
-  # Set default configuration values
-  #
-  # Establishes default values for all configuration sections using
-  # TTY::Config's set_if_empty method. This ensures that the application
-  # has sensible defaults even when no configuration file is present.
-  #
-  # Default values include:
-  # - Database connection settings
-  # - AI provider configurations
-  # - Logger settings
-  # - UI preferences
-  # - Performance tuning parameters
-  #
-  # @return [void]
-  #
-  # @since 0.1.0
-  # @api private
-  def set_defaults
-    # Blueprints defaults
-    @config.set_if_empty(:blueprints, :database, :url,
-                         value: 'postgresql://postgres:blueprints@localhost:5432/blueprints')
-    @config.set_if_empty(:blueprints, :features, :auto_description, value: true)
-    @config.set_if_empty(:blueprints, :features, :auto_categorize, value: true)
-    @config.set_if_empty(:blueprints, :features, :improvement_analysis, value: true)
-    @config.set_if_empty(:blueprints, :editor, value: ENV['EDITOR'] || ENV['VISUAL'] || 'vim')
-    @config.set_if_empty(:blueprints, :auto_save_edits, value: false)
-    @config.set_if_empty(:blueprints, :search, :default_limit, value: 10)
-    @config.set_if_empty(:blueprints, :search, :semantic_search, value: true)
-    @config.set_if_empty(:blueprints, :export, :include_metadata, value: false)
-    @config.set_if_empty(:blueprints, :export, :auto_detect_extension, value: true)
-    @config.set_if_empty(:blueprints, :performance, :batch_size, value: 100)
-    @config.set_if_empty(:blueprints, :performance, :connection_pool_size, value: 5)
-    @config.set_if_empty(:blueprints, :ui, :colors, value: true)
-    @config.set_if_empty(:blueprints, :ui, :interactive, value: true)
-    @config.set_if_empty(:blueprints, :ui, :pager, value: true)
-
-    # AI defaults
-    @config.set_if_empty(:ai, :sublayer, :project_name, value: 'blueprintsCLI')
-    @config.set_if_empty(:ai, :sublayer, :project_template, value: 'CLI')
-    @config.set_if_empty(:ai, :sublayer, :provider, value: 'Gemini')
-    @config.set_if_empty(:ai, :sublayer, :model, value: 'gemini-2.0-flash')
-    @config.set_if_empty(:ai, :embedding_model, value: 'text-embedding-004')
-
-    # RubyLLM defaults
-    @config.set_if_empty(:ai, :rubyllm, :default_model, value: 'gemini-2.0-flash')
-    @config.set_if_empty(:ai, :rubyllm, :default_embedding_model, value: 'text-embedding-004')
-    @config.set_if_empty(:ai, :rubyllm, :default_image_model, value: 'imagen-3.0-generate-002')
-    @config.set_if_empty(:ai, :rubyllm, :request_timeout, value: 120)
-    @config.set_if_empty(:ai, :rubyllm, :max_retries, value: 3)
-    @config.set_if_empty(:ai, :rubyllm, :retry_interval, value: 0.5)
-    @config.set_if_empty(:ai, :rubyllm, :retry_backoff_factor, value: 2)
-    @config.set_if_empty(:ai, :rubyllm, :retry_interval_randomness, value: 0.5)
-    @config.set_if_empty(:ai, :rubyllm, :log_level, value: 'info')
-    @config.set_if_empty(:ai, :rubyllm, :log_assume_model_exists, value: false)
-
-    # OpenAI gem defaults
-    @config.set_if_empty(:ai, :openai, :log_errors, value: true)
-
-    # Logger defaults
-    @config.set_if_empty(:logger, :level, value: 'info')
-    @config.set_if_empty(:logger, :file_logging, value: false)
-    @config.set_if_empty(:logger, :file_level, value: 'debug')
-    @config.set_if_empty(:logger, :file_path, value: default_log_path)
-  end
-
-  # Setup environment variable mappings
-  #
-  # Configures automatic mapping between environment variables and
-  # configuration keys. This allows environment variables to override
-  # configuration file values and provides flexible deployment options.
-  #
-  # Mappings include:
-  # - Database URLs (BLUEPRINT_DATABASE_URL, DATABASE_URL)
-  # - Editor preferences (EDITOR, VISUAL)
-  # - Debug settings (DEBUG, BLUEPRINTS_DEBUG)
-  # - AI provider API keys (OPENAI_API_KEY, GEMINI_API_KEY, etc.)
-  #
-  # @return [void]
-  #
-  # @since 0.1.0
-  # @api private
-  def setup_env_mappings
-    # Database
-    @config.set_from_env(:blueprints, :database, :url) { 'BLUEPRINT_DATABASE_URL' }
-    @config.set_from_env(:blueprints, :database, :url) { 'DATABASE_URL' }
-
-    # Editor
-    @config.set_from_env(:blueprints, :editor) { 'EDITOR' }
-    @config.set_from_env(:blueprints, :editor) { 'VISUAL' }
-
-    # Debug mode
-    @config.set_from_env(:blueprints, :debug) { 'DEBUG' }
-    @config.set_from_env(:blueprints, :debug) { 'BLUEPRINTS_DEBUG' }
-
-    # AI Provider API keys
-    @config.set_from_env(:ai, :provider_keys, :openai) { 'OPENAI_API_KEY' }
-    @config.set_from_env(:ai, :provider_keys, :gemini) { 'GEMINI_API_KEY' }
-    @config.set_from_env(:ai, :provider_keys, :gemini) { 'GOOGLE_API_KEY' }
-    @config.set_from_env(:ai, :provider_keys, :anthropic) { 'ANTHROPIC_API_KEY' }
-    @config.set_from_env(:ai, :provider_keys, :deepseek) { 'DEEPSEEK_API_KEY' }
-    @config.set_from_env(:ai, :provider_keys, :openai_access_token) { 'OPENAI_ACCESS_TOKEN' }
-    @config.set_from_env(:ai, :provider_keys, :openai_base_uri) { 'OPENAI_BASE_URI' }
-    @config.set_from_env(:ai, :rubyllm, :openai_api_key) { 'OPENAI_API_KEY' }
-    @config.set_from_env(:ai, :rubyllm, :openai_api_base) { 'OPENAI_API_BASE' }
-  end
-
-  # Setup validation rules
-  #
-  # Establishes comprehensive validation rules for all configuration sections.
-  # These rules are used by the validate! method to ensure configuration
-  # integrity and provide meaningful error messages for invalid values.
-  #
-  # Validation rules include:
-  # - Database URL format validation
-  # - Boolean value validation for feature flags
-  # - Numeric range validation for performance settings
-  # - Enum validation for AI providers and log levels
-  # - Required field validation
-  #
-  # @return [void]
-  #
-  # @since 0.1.0
-  # @api private
-  def setup_validations
-    # Database URL validation
-    @config.validate(:blueprints, :database, :url) do |key, value|
-      unless value.is_a?(String) && !value.empty?
-        raise ValidationError,
-              "#{key} must be a non-empty string"
-      end
-
-      unless value.start_with?('postgres://') || value.start_with?('postgresql://')
-        raise ValidationError, "#{key} must be a PostgreSQL URL (postgres:// or postgresql://)"
-      end
+    # Configure logger settings interactively
+    #
+    # Provides an interactive interface for configuring logger settings including
+    # console log level, file logging options, and log file paths. This method
+    # is used both during initial setup and when editing specific configuration sections.
+    #
+    # @return [void]
+    #
+    # @example Configure logger independently
+    #   config.configure_logger
+    #   # Prompts for logger level, file logging, etc.
+    #
+    # @since 0.1.0
+    # @see #configure_logger_interactive
+    def configure_logger
+      configure_logger_interactive(TTY::Prompt.new)
     end
 
-    # Feature flags validation
-    @config.validate(:blueprints, :features, :auto_description) do |key, value|
-      raise ValidationError, "#{key} must be true or false" unless [true, false].include?(value)
+    # Configure filesystem path settings interactively
+    #
+    # Provides an interactive interface for configuring filesystem paths
+    # used by BlueprintsCLI, such as temporary directories for editor operations.
+    #
+    # @return [void]
+    #
+    # @example Configure paths
+    #   config.configure_paths
+    #   # Prompts for temporary directory path
+    #
+    # @since 0.1.0
+    def configure_paths
+      prompt = TTY::Prompt.new
+      puts "\n📁 Path Configuration"
+
+      temp_dir = prompt.ask('Temporary directory:', default: fetch(:editor, :temp_dir) || '/tmp')
+      set(:editor, :temp_dir, value: temp_dir)
     end
 
-    @config.validate(:blueprints, :features, :auto_categorize) do |key, value|
-      raise ValidationError, "#{key} must be true or false" unless [true, false].include?(value)
+    # Configure display and UI settings interactively
+    #
+    # Provides an interactive interface for configuring user interface settings
+    # including colored output, interactive prompts, and pager configuration.
+    #
+    # @return [void]
+    #
+    # @example Configure display settings
+    #   config.configure_display
+    #   # Prompts for colors, interactive mode, pager choice
+    #
+    # @since 0.1.0
+    def configure_display
+      prompt = TTY::Prompt.new
+      puts "\n🎨 Display Configuration"
+
+      colors = prompt.yes?('Enable colored output?', default: fetch(:ui, :colors, default: true))
+      set(:ui, :colors, value: colors)
+
+      interactive_mode = prompt.yes?('Enable interactive prompts?',
+                                     default: fetch(:ui, :interactive, default: true))
+      set(:ui, :interactive, value: interactive_mode)
+
+      pager = prompt.ask('Pager command:', default: fetch(:ui, :pager) || 'most')
+      set(:ui, :pager, value: pager)
     end
 
-    # Numeric validations
-    @config.validate(:blueprints, :search, :default_limit) do |key, value|
-      unless value.is_a?(Integer) && value.positive?
-        raise ValidationError,
-              "#{key} must be a positive integer"
-      end
+    # Configure Restic backup settings interactively (placeholder)
+    #
+    # This method is a placeholder for future Restic backup configuration.
+    # Currently displays a message indicating the feature is not implemented.
+    #
+    # @return [void]
+    #
+    # @note This method is not yet implemented and serves as a placeholder
+    #   for future backup configuration functionality.
+    #
+    # @since 0.1.0
+    def configure_restic
+      # Placeholder for restic configuration if needed
+      puts "\n💾 Restic Configuration (not implemented yet)"
     end
 
-    @config.validate(:blueprints, :performance, :batch_size) do |key, value|
-      unless value.is_a?(Integer) && value.positive?
-        raise ValidationError,
-              "#{key} must be a positive integer"
-      end
+    # Configure terminal settings interactively (placeholder)
+    #
+    # This method is a placeholder for future terminal configuration options.
+    # Currently displays a message indicating the feature is not implemented.
+    #
+    # @return [void]
+    #
+    # @note This method is not yet implemented and serves as a placeholder
+    #   for future terminal configuration functionality.
+    #
+    # @since 0.1.0
+    def configure_terminals
+      # Placeholder for terminal configuration if needed
+      puts "\n🖥️  Terminal Configuration (not implemented yet)"
     end
 
-    # AI provider validation
-    @config.validate(:ai, :sublayer, :provider) do |key, value|
-      valid_providers = %w[Gemini OpenAI Anthropic DeepSeek]
-      unless valid_providers.include?(value)
-        raise ValidationError, "#{key} must be one of: #{valid_providers.join(', ')}"
-      end
+    # Save current configuration to file with force overwrite
+    #
+    # Convenience method that saves the current configuration state to file
+    # with force overwrite enabled. This is typically used after interactive
+    # setup or configuration changes to persist the updates.
+    #
+    # @return [Boolean] true if save was successful, false otherwise.
+    #
+    # @example Save configuration after changes
+    #   config.set(:logger, :level, value: 'debug')
+    #   config.save_config
+    #   # => true
+    #
+    # @since 0.1.0
+    # @see #write
+    def save_config
+      write(force: true)
     end
 
-    # Logger level validation
-    @config.validate(:logger, :level) do |key, value|
-      valid_levels = %w[debug info warn error fatal]
-      unless valid_levels.include?(value.to_s.downcase)
-        raise ValidationError, "#{key} must be one of: #{valid_levels.join(', ')}"
-      end
+    private
+
+    # Validate terminal command availability (placeholder)
+    #
+    # This method is a placeholder for validating that configured terminal
+    # commands are available on the system. Currently returns true as a
+    # basic implementation.
+    #
+    # @return [Boolean] Always returns true in current implementation.
+    #
+    # @note This is a placeholder implementation that could be extended
+    #   to check if configured terminal commands are available in PATH.
+    #
+    # @since 0.1.0
+    # @api private
+    def validate_terminal_command
+      # This is a placeholder validation - just return true for now
+      # Could be extended to check if configured terminal commands are available
+      true
     end
 
-    # RubyLLM timeout validation
-    @config.validate(:ai, :rubyllm, :request_timeout) do |key, value|
-      unless value.is_a?(Integer) && value.positive?
-        raise ValidationError,
-              "#{key} must be a positive integer"
+    # Configure database settings interactively
+    #
+    # Prompts the user for database configuration including the database URL.
+    # Uses existing configuration values as defaults when available.
+    #
+    # @param prompt [TTY::Prompt] The prompt instance for user interaction.
+    #
+    # @return [void]
+    #
+    # @since 0.1.0
+    # @api private
+    def configure_database_interactive(prompt)
+      puts "\n📊 Database Configuration"
+
+      current_url = fetch(:database, :url) || fetch(:blueprints, :database, :url)
+      database_url = prompt.ask('Database URL:', default: current_url)
+
+      set(:database, :url, value: database_url) if database_url
+    end
+
+    # Configure AI provider settings interactively
+    #
+    # Prompts the user to select an AI provider and optionally configure
+    # API keys. Supports Gemini, OpenAI, Anthropic, and DeepSeek providers.
+    # API keys can be left empty to use environment variables.
+    #
+    # @param prompt [TTY::Prompt] The prompt instance for user interaction.
+    #
+    # @return [void]
+    #
+    # @since 0.1.0
+    # @api private
+    def configure_ai_interactive(prompt)
+      puts "\n🤖 AI Provider Configuration"
+
+      provider = prompt.select('Select AI provider:', %w[Gemini OpenAI Anthropic DeepSeek])
+      set(:ai, :sublayer, :provider, value: provider)
+
+      case provider.downcase
+      when 'gemini'
+        api_key = prompt.mask('Gemini API Key (leave empty to use environment variable):')
+        set(:ai, :provider_keys, :gemini, value: api_key) unless api_key.empty?
+      when 'openai'
+        api_key = prompt.mask('OpenAI API Key (leave empty to use environment variable):')
+        set(:ai, :provider_keys, :openai, value: api_key) unless api_key.empty?
+      when 'anthropic'
+        api_key = prompt.mask('Anthropic API Key (leave empty to use environment variable):')
+        set(:ai, :provider_keys, :anthropic, value: api_key) unless api_key.empty?
+      when 'deepseek'
+        api_key = prompt.mask('DeepSeek API Key (leave empty to use environment variable):')
+        set(:ai, :provider_keys, :deepseek, value: api_key) unless api_key.empty?
       end
     end
 
-    # RubyLLM retry validation
-    @config.validate(:ai, :rubyllm, :max_retries) do |key, value|
-      unless value.is_a?(Integer) && value >= 0
-        raise ValidationError,
-              "#{key} must be a non-negative integer"
+    # Configure logger settings interactively
+    #
+    # Prompts the user for logger configuration including console log level,
+    # file logging options, file log level, and log file path.
+    #
+    # @param prompt [TTY::Prompt] The prompt instance for user interaction.
+    #
+    # @return [void]
+    #
+    # @since 0.1.0
+    # @api private
+    def configure_logger_interactive(prompt)
+      puts "\n📝 Logger Configuration"
+
+      level = prompt.select('Console log level:', %w[debug info warn error fatal])
+      set(:logger, :level, value: level)
+
+      file_logging = prompt.yes?('Enable file logging?')
+      set(:logger, :file_logging, value: file_logging)
+
+      return unless file_logging
+
+      file_level = prompt.select('File log level:', %w[debug info warn error fatal])
+      set(:logger, :file_level, value: file_level)
+
+      file_path = prompt.ask('Log file path:', default: default_log_path)
+      set(:logger, :file_path, value: file_path)
+    end
+
+    # Configure editor settings interactively
+    #
+    # Prompts the user for editor configuration including default editor
+    # selection and auto-save preferences. Uses EDITOR or VISUAL environment
+    # variables as defaults when available.
+    #
+    # @param prompt [TTY::Prompt] The prompt instance for user interaction.
+    #
+    # @return [void]
+    #
+    # @since 0.1.0
+    # @api private
+    def configure_editor_interactive(prompt)
+      puts "\n✏️  Editor Configuration"
+
+      current_editor = fetch(:editor, :default) || ENV['EDITOR'] || ENV['VISUAL'] || 'vim'
+      editor = prompt.ask('Default editor:', default: current_editor)
+      set(:editor, :default, value: editor)
+
+      auto_save = prompt.yes?('Enable auto-save for edits?')
+      set(:editor, :auto_save, value: auto_save)
+    end
+
+    # Setup TTY::Config with paths and environment mapping
+    #
+    # Initializes the TTY::Config instance with configuration file paths,
+    # environment variable mapping, and search paths. This method sets up
+    # the foundational configuration system before loading any actual values.
+    #
+    # @param config_paths [Array<String>] Additional paths to search for configuration files.
+    # @param filename [String] Base filename for configuration files (without extension).
+    #
+    # @return [void]
+    #
+    # @since 0.1.0
+    # @api private
+    def setup_config(config_paths, filename)
+      @config.filename = filename
+      @config.extname = DEFAULT_EXTENSION
+      @config.env_prefix = ENV_PREFIX
+      @config.env_separator = '_'
+      @config.autoload_env
+
+      # Add default search paths
+      default_paths = [
+        File.join(Dir.home, '.config', 'BlueprintsCLI'),
+        File.join(Dir.home, '.blueprintsCLI'),
+        File.join(__dir__, 'config'),
+        Dir.pwd
+      ]
+
+      (default_paths + config_paths).each do |path|
+        @config.append_path(path) if Dir.exist?(path)
       end
     end
 
-    # RubyLLM retry interval validation
-    @config.validate(:ai, :rubyllm, :retry_interval) do |key, value|
-      unless value.is_a?(Numeric) && value >= 0
-        raise ValidationError,
-              "#{key} must be a non-negative number"
+    # Load configuration from file and set defaults
+    #
+    # Performs the complete configuration loading process including reading
+    # configuration files, setting default values, mapping environment variables,
+    # and configuring external provider libraries.
+    #
+    # This method handles errors gracefully and will continue with defaults
+    # if configuration files cannot be read.
+    #
+    # @return [void]
+    #
+    # @since 0.1.0
+    # @api private
+    def load_configuration
+      # Try to read existing configuration file
+      begin
+        @config.read if @config.exist?
+      rescue TTY::Config::ReadError => e
+        # Can't use BlueprintsCLI.logger here as it may not be initialized yet
+        warn "Failed to read configuration file: #{e.message}"
+      end
+
+      # Set default values
+      set_defaults
+
+      # Map common environment variables
+      setup_env_mappings
+
+      # Configure external providers
+      configure_providers
+    end
+
+    # Set default configuration values
+    #
+    # Establishes default values for all configuration sections using
+    # TTY::Config's set_if_empty method. This ensures that the application
+    # has sensible defaults even when no configuration file is present.
+    #
+    # Default values include:
+    # - Database connection settings
+    # - AI provider configurations
+    # - Logger settings
+    # - UI preferences
+    # - Performance tuning parameters
+    #
+    # @return [void]
+    #
+    # @since 0.1.0
+    # @api private
+    def set_defaults
+      # Blueprints defaults
+      @config.set_if_empty(:blueprints, :database, :url,
+                           value: 'postgresql://postgres:blueprints@localhost:5432/blueprints')
+      @config.set_if_empty(:blueprints, :features, :auto_description, value: true)
+      @config.set_if_empty(:blueprints, :features, :auto_categorize, value: true)
+      @config.set_if_empty(:blueprints, :features, :improvement_analysis, value: true)
+      @config.set_if_empty(:blueprints, :editor, value: ENV['EDITOR'] || ENV['VISUAL'] || 'vim')
+      @config.set_if_empty(:blueprints, :auto_save_edits, value: false)
+      @config.set_if_empty(:blueprints, :search, :default_limit, value: 10)
+      @config.set_if_empty(:blueprints, :search, :semantic_search, value: true)
+      @config.set_if_empty(:blueprints, :export, :include_metadata, value: false)
+      @config.set_if_empty(:blueprints, :export, :auto_detect_extension, value: true)
+      @config.set_if_empty(:blueprints, :performance, :batch_size, value: 100)
+      @config.set_if_empty(:blueprints, :performance, :connection_pool_size, value: 5)
+      @config.set_if_empty(:blueprints, :ui, :colors, value: true)
+      @config.set_if_empty(:blueprints, :ui, :interactive, value: true)
+      @config.set_if_empty(:blueprints, :ui, :pager, value: true)
+
+      # AI defaults
+      @config.set_if_empty(:ai, :sublayer, :project_name, value: 'blueprintsCLI')
+      @config.set_if_empty(:ai, :sublayer, :project_template, value: 'CLI')
+      @config.set_if_empty(:ai, :sublayer, :provider, value: 'Gemini')
+      @config.set_if_empty(:ai, :sublayer, :model, value: 'gemini-2.0-flash')
+      @config.set_if_empty(:ai, :embedding_model, value: 'text-embedding-004')
+
+      # RubyLLM defaults
+      @config.set_if_empty(:ai, :rubyllm, :default_model, value: 'gemini-2.0-flash')
+      @config.set_if_empty(:ai, :rubyllm, :default_embedding_model, value: 'text-embedding-004')
+      @config.set_if_empty(:ai, :rubyllm, :default_image_model, value: 'imagen-3.0-generate-002')
+      @config.set_if_empty(:ai, :rubyllm, :request_timeout, value: 120)
+      @config.set_if_empty(:ai, :rubyllm, :max_retries, value: 3)
+      @config.set_if_empty(:ai, :rubyllm, :retry_interval, value: 0.5)
+      @config.set_if_empty(:ai, :rubyllm, :retry_backoff_factor, value: 2)
+      @config.set_if_empty(:ai, :rubyllm, :retry_interval_randomness, value: 0.5)
+      @config.set_if_empty(:ai, :rubyllm, :log_level, value: 'info')
+      @config.set_if_empty(:ai, :rubyllm, :log_assume_model_exists, value: false)
+
+      # OpenAI gem defaults
+      @config.set_if_empty(:ai, :openai, :log_errors, value: true)
+
+      # Logger defaults
+      @config.set_if_empty(:logger, :level, value: 'info')
+      @config.set_if_empty(:logger, :file_logging, value: false)
+      @config.set_if_empty(:logger, :file_level, value: 'debug')
+      @config.set_if_empty(:logger, :file_path, value: default_log_path)
+    end
+
+    # Setup environment variable mappings
+    #
+    # Configures automatic mapping between environment variables and
+    # configuration keys. This allows environment variables to override
+    # configuration file values and provides flexible deployment options.
+    #
+    # Mappings include:
+    # - Database URLs (BLUEPRINT_DATABASE_URL, DATABASE_URL)
+    # - Editor preferences (EDITOR, VISUAL)
+    # - Debug settings (DEBUG, BLUEPRINTS_DEBUG)
+    # - AI provider API keys (OPENAI_API_KEY, GEMINI_API_KEY, etc.)
+    #
+    # @return [void]
+    #
+    # @since 0.1.0
+    # @api private
+    def setup_env_mappings
+      # Database
+      @config.set_from_env(:blueprints, :database, :url) { 'BLUEPRINT_DATABASE_URL' }
+      @config.set_from_env(:blueprints, :database, :url) { 'DATABASE_URL' }
+
+      # Editor
+      @config.set_from_env(:blueprints, :editor) { 'EDITOR' }
+      @config.set_from_env(:blueprints, :editor) { 'VISUAL' }
+
+      # Debug mode
+      @config.set_from_env(:blueprints, :debug) { 'DEBUG' }
+      @config.set_from_env(:blueprints, :debug) { 'BLUEPRINTS_DEBUG' }
+
+      # AI Provider API keys
+      @config.set_from_env(:ai, :provider_keys, :openai) { 'OPENAI_API_KEY' }
+      @config.set_from_env(:ai, :provider_keys, :gemini) { 'GEMINI_API_KEY' }
+      @config.set_from_env(:ai, :provider_keys, :gemini) { 'GOOGLE_API_KEY' }
+      @config.set_from_env(:ai, :provider_keys, :anthropic) { 'ANTHROPIC_API_KEY' }
+      @config.set_from_env(:ai, :provider_keys, :deepseek) { 'DEEPSEEK_API_KEY' }
+      @config.set_from_env(:ai, :provider_keys, :openai_access_token) { 'OPENAI_ACCESS_TOKEN' }
+      @config.set_from_env(:ai, :provider_keys, :openai_base_uri) { 'OPENAI_BASE_URI' }
+      @config.set_from_env(:ai, :rubyllm, :openai_api_key) { 'OPENAI_API_KEY' }
+      @config.set_from_env(:ai, :rubyllm, :openai_api_base) { 'OPENAI_API_BASE' }
+    end
+
+    # Setup validation rules
+    #
+    # Establishes comprehensive validation rules for all configuration sections.
+    # These rules are used by the validate! method to ensure configuration
+    # integrity and provide meaningful error messages for invalid values.
+    #
+    # Validation rules include:
+    # - Database URL format validation
+    # - Boolean value validation for feature flags
+    # - Numeric range validation for performance settings
+    # - Enum validation for AI providers and log levels
+    # - Required field validation
+    #
+    # @return [void]
+    #
+    # @since 0.1.0
+    # @api private
+    def setup_validations
+      # Database URL validation
+      @config.validate(:blueprints, :database, :url) do |key, value|
+        unless value.is_a?(String) && !value.empty?
+          raise ValidationError,
+                "#{key} must be a non-empty string"
+        end
+
+        unless value.start_with?('postgres://') || value.start_with?('postgresql://')
+          raise ValidationError, "#{key} must be a PostgreSQL URL (postgres:// or postgresql://)"
+        end
+      end
+
+      # Feature flags validation
+      @config.validate(:blueprints, :features, :auto_description) do |key, value|
+        raise ValidationError, "#{key} must be true or false" unless [true, false].include?(value)
+      end
+
+      @config.validate(:blueprints, :features, :auto_categorize) do |key, value|
+        raise ValidationError, "#{key} must be true or false" unless [true, false].include?(value)
+      end
+
+      # Numeric validations
+      @config.validate(:blueprints, :search, :default_limit) do |key, value|
+        unless value.is_a?(Integer) && value.positive?
+          raise ValidationError,
+                "#{key} must be a positive integer"
+        end
+      end
+
+      @config.validate(:blueprints, :performance, :batch_size) do |key, value|
+        unless value.is_a?(Integer) && value.positive?
+          raise ValidationError,
+                "#{key} must be a positive integer"
+        end
+      end
+
+      # AI provider validation
+      @config.validate(:ai, :sublayer, :provider) do |key, value|
+        valid_providers = %w[Gemini OpenAI Anthropic DeepSeek]
+        unless valid_providers.include?(value)
+          raise ValidationError, "#{key} must be one of: #{valid_providers.join(', ')}"
+        end
+      end
+
+      # Logger level validation
+      @config.validate(:logger, :level) do |key, value|
+        valid_levels = %w[debug info warn error fatal]
+        unless valid_levels.include?(value.to_s.downcase)
+          raise ValidationError, "#{key} must be one of: #{valid_levels.join(', ')}"
+        end
+      end
+
+      # RubyLLM timeout validation
+      @config.validate(:ai, :rubyllm, :request_timeout) do |key, value|
+        unless value.is_a?(Integer) && value.positive?
+          raise ValidationError,
+                "#{key} must be a positive integer"
+        end
+      end
+
+      # RubyLLM retry validation
+      @config.validate(:ai, :rubyllm, :max_retries) do |key, value|
+        unless value.is_a?(Integer) && value >= 0
+          raise ValidationError,
+                "#{key} must be a non-negative integer"
+        end
+      end
+
+      # RubyLLM retry interval validation
+      @config.validate(:ai, :rubyllm, :retry_interval) do |key, value|
+        unless value.is_a?(Numeric) && value >= 0
+          raise ValidationError,
+                "#{key} must be a non-negative number"
+        end
+      end
+
+      # RubyLLM log level validation
+      @config.validate(:ai, :rubyllm, :log_level) do |key, value|
+        valid_levels = %w[debug info warn]
+        unless valid_levels.include?(value.to_s.downcase)
+          raise ValidationError, "#{key} must be one of: #{valid_levels.join(', ')}"
+        end
+      end
+
+      # RubyLLM boolean validation
+      @config.validate(:ai, :rubyllm, :log_assume_model_exists) do |key, value|
+        raise ValidationError, "#{key} must be true or false" unless [true, false].include?(value)
       end
     end
 
-    # RubyLLM log level validation
-    @config.validate(:ai, :rubyllm, :log_level) do |key, value|
-      valid_levels = %w[debug info warn]
-      unless valid_levels.include?(value.to_s.downcase)
-        raise ValidationError, "#{key} must be one of: #{valid_levels.join(', ')}"
+    # Validate blueprints configuration section
+    #
+    # Validates the blueprints section of the configuration, particularly
+    # focusing on database URL availability. Only validates when not using
+    # default fallback URLs to avoid false positives.
+    #
+    # @return [void]
+    #
+    # @raise [ValidationError] if database URL is required but missing.
+    #
+    # @since 0.1.0
+    # @api private
+    def validate_blueprints!
+      database_url = fetch(:blueprints, :database, :url)
+      # Only validate if we're not using the default fallback
+      return unless database_url.nil? || (database_url.empty? && !ENV['BLUEPRINT_DATABASE_URL'] && !ENV['DATABASE_URL'])
+
+      raise ValidationError, 'Database URL is required'
+    end
+
+    # Validate AI configuration section
+    #
+    # Validates AI provider configuration including provider name, model
+    # specification, and API key availability. Issues warnings for missing
+    # API keys rather than raising errors to allow for environment-specific
+    # configuration.
+    #
+    # @return [void]
+    #
+    # @raise [ValidationError] if required AI configuration is missing.
+    #
+    # @since 0.1.0
+    # @api private
+    def validate_ai!
+      provider = fetch(:ai, :sublayer, :provider)
+      model = fetch(:ai, :sublayer, :model)
+
+      raise ValidationError, 'AI provider is required' if provider.nil? || provider.empty?
+
+      raise ValidationError, 'AI model is required' if model.nil? || model.empty?
+
+      # Check if API key is available for the provider
+      api_key = ai_api_key(provider)
+      return unless api_key.nil? || api_key.empty?
+
+      # Can't use BlueprintsCLI.logger here as it may not be initialized yet
+      warn "No API key found for AI provider '#{provider}'. Set the appropriate environment variable."
+    end
+
+    # Validate logger configuration section
+    #
+    # Validates logger settings including log level values and file logging
+    # configuration. Ensures that file paths are specified when file logging
+    # is enabled.
+    #
+    # @return [void]
+    #
+    # @raise [ValidationError] if logger configuration is invalid.
+    #
+    # @since 0.1.0
+    # @api private
+    def validate_logger!
+      level = fetch(:logger, :level)
+      if level && !%w[debug info warn error fatal].include?(level.to_s.downcase)
+        raise ValidationError, "Invalid logger level: #{level}"
       end
+
+      return unless fetch(:logger, :file_logging) && fetch(:logger, :file_path).nil?
+
+      raise ValidationError, 'Logger file path is required when file logging is enabled'
     end
 
-    # RubyLLM boolean validation
-    @config.validate(:ai, :rubyllm, :log_assume_model_exists) do |key, value|
-      raise ValidationError, "#{key} must be true or false" unless [true, false].include?(value)
-    end
-  end
-
-  # Validate blueprints configuration section
-  #
-  # Validates the blueprints section of the configuration, particularly
-  # focusing on database URL availability. Only validates when not using
-  # default fallback URLs to avoid false positives.
-  #
-  # @return [void]
-  #
-  # @raise [ValidationError] if database URL is required but missing.
-  #
-  # @since 0.1.0
-  # @api private
-  def validate_blueprints!
-    database_url = fetch(:blueprints, :database, :url)
-    # Only validate if we're not using the default fallback
-    return unless database_url.nil? || (database_url.empty? && !ENV['BLUEPRINT_DATABASE_URL'] && !ENV['DATABASE_URL'])
-
-    raise ValidationError, 'Database URL is required'
-  end
-
-  # Validate AI configuration section
-  #
-  # Validates AI provider configuration including provider name, model
-  # specification, and API key availability. Issues warnings for missing
-  # API keys rather than raising errors to allow for environment-specific
-  # configuration.
-  #
-  # @return [void]
-  #
-  # @raise [ValidationError] if required AI configuration is missing.
-  #
-  # @since 0.1.0
-  # @api private
-  def validate_ai!
-    provider = fetch(:ai, :sublayer, :provider)
-    model = fetch(:ai, :sublayer, :model)
-
-    raise ValidationError, 'AI provider is required' if provider.nil? || provider.empty?
-
-    raise ValidationError, 'AI model is required' if model.nil? || model.empty?
-
-    # Check if API key is available for the provider
-    api_key = ai_api_key(provider)
-    return unless api_key.nil? || api_key.empty?
-
-    # Can't use BlueprintsCLI.logger here as it may not be initialized yet
-    warn "No API key found for AI provider '#{provider}'. Set the appropriate environment variable."
-  end
-
-  # Validate logger configuration section
-  #
-  # Validates logger settings including log level values and file logging
-  # configuration. Ensures that file paths are specified when file logging
-  # is enabled.
-  #
-  # @return [void]
-  #
-  # @raise [ValidationError] if logger configuration is invalid.
-  #
-  # @since 0.1.0
-  # @api private
-  def validate_logger!
-    level = fetch(:logger, :level)
-    if level && !%w[debug info warn error fatal].include?(level.to_s.downcase)
-      raise ValidationError, "Invalid logger level: #{level}"
+    # Get default log file path
+    #
+    # Constructs a default log file path using XDG Base Directory specification.
+    # Falls back to ~/.local/state if XDG_STATE_HOME is not set.
+    #
+    # @return [String] The default log file path.
+    #
+    # @example Default log path
+    #   config.send(:default_log_path)
+    #   # => "/home/user/.local/state/BlueprintsCLI/app.log"
+    #
+    # @since 0.1.0
+    # @api private
+    def default_log_path
+      state_home = ENV['XDG_STATE_HOME'] || File.expand_path('~/.local/state')
+      File.join(state_home, 'BlueprintsCLI', 'app.log')
     end
 
-    return unless fetch(:logger, :file_logging) && fetch(:logger, :file_path).nil?
-
-    raise ValidationError, 'Logger file path is required when file logging is enabled'
-  end
-
-  # Get default log file path
-  #
-  # Constructs a default log file path using XDG Base Directory specification.
-  # Falls back to ~/.local/state if XDG_STATE_HOME is not set.
-  #
-  # @return [String] The default log file path.
-  #
-  # @example Default log path
-  #   config.send(:default_log_path)
-  #   # => "/home/user/.local/state/BlueprintsCLI/app.log"
-  #
-  # @since 0.1.0
-  # @api private
-  def default_log_path
-    state_home = ENV['XDG_STATE_HOME'] || File.expand_path('~/.local/state')
-    File.join(state_home, 'BlueprintsCLI', 'app.log')
-  end
-
-  # Configure external provider libraries based on unified configuration
-  #
-  # Configures external AI provider libraries (RubyLLM and OpenAI gem)
-  # using values from the unified configuration system. This ensures
-  # that all provider libraries are properly initialized with the
-  # correct API keys and settings.
-  #
-  # @return [void]
-  #
-  # @since 0.1.0
-  # @api private
-  def configure_providers
-    configure_rubyllm
-    configure_openai_gem
-  end
-
-  # Configure RubyLLM with settings from unified config system
-  #
-  # Initializes the RubyLLM library with API keys, model defaults,
-  # connection settings, and logging configuration from the unified
-  # configuration system. Handles errors gracefully to avoid blocking
-  # application startup.
-  #
-  # Configuration includes:
-  # - API keys for all supported providers
-  # - Default models for text, embedding, and image generation
-  # - Connection timeouts and retry settings
-  # - Logging configuration
-  #
-  # @return [void]
-  #
-  # @since 0.1.0
-  # @api private
-  def configure_rubyllm
-    RubyLLM.configure do |config|
-      # API Keys - use the existing ai_api_key method that checks environment variables
-      config.openai_api_key = ai_api_key(:openai)
-      config.gemini_api_key = ai_api_key(:gemini)
-      config.anthropic_api_key = ai_api_key(:anthropic)
-      config.deepseek_api_key = ai_api_key(:deepseek)
-
-      # Custom endpoint
-      config.openai_api_base = fetch(:ai, :rubyllm, :openai_api_base)
-
-      # Default models
-      config.default_model = fetch(:ai, :rubyllm, :default_model)
-      config.default_embedding_model = fetch(:ai, :rubyllm, :default_embedding_model)
-      config.default_image_model = fetch(:ai, :rubyllm, :default_image_model)
-
-      # Connection settings
-      config.request_timeout = fetch(:ai, :rubyllm, :request_timeout)
-      config.max_retries = fetch(:ai, :rubyllm, :max_retries)
-      config.retry_interval = fetch(:ai, :rubyllm, :retry_interval)
-      config.retry_backoff_factor = fetch(:ai, :rubyllm, :retry_backoff_factor)
-      config.retry_interval_randomness = fetch(:ai, :rubyllm, :retry_interval_randomness)
-
-      # Logging settings
-      log_file = fetch(:ai, :rubyllm, :log_file)
-      config.log_file = log_file unless log_file.nil?
-      config.log_level = fetch(:ai, :rubyllm, :log_level)&.to_sym || :info
-      config.log_assume_model_exists = fetch(:ai, :rubyllm, :log_assume_model_exists)
+    # Configure external provider libraries based on unified configuration
+    #
+    # Configures external AI provider libraries (RubyLLM and OpenAI gem)
+    # using values from the unified configuration system. This ensures
+    # that all provider libraries are properly initialized with the
+    # correct API keys and settings.
+    #
+    # @return [void]
+    #
+    # @since 0.1.0
+    # @api private
+    def configure_providers
+      configure_rubyllm
+      configure_openai_gem
     end
-  rescue StandardError => e
-    # Can't use BlueprintsCLI.logger here as it may not be initialized yet
-    warn "Error configuring RubyLLM: #{e.message}"
-  end
 
-  # Configure legacy OpenAI gem with settings from unified config system
-  #
-  # Configures the legacy OpenAI gem if it's available in the application.
-  # This provides backward compatibility for code that uses the OpenAI gem
-  # directly rather than through RubyLLM.
-  #
-  # Only configures the gem if it's actually loaded to avoid dependency
-  # issues in environments where it's not needed.
-  #
-  # @return [void]
-  #
-  # @since 0.1.0
-  # @api private
-  def configure_openai_gem
-    return unless defined?(OpenAI)
+    # Configure RubyLLM with settings from unified config system
+    #
+    # Initializes the RubyLLM library with API keys, model defaults,
+    # connection settings, and logging configuration from the unified
+    # configuration system. Handles errors gracefully to avoid blocking
+    # application startup.
+    #
+    # Configuration includes:
+    # - API keys for all supported providers
+    # - Default models for text, embedding, and image generation
+    # - Connection timeouts and retry settings
+    # - Logging configuration
+    #
+    # @return [void]
+    #
+    # @since 0.1.0
+    # @api private
+    def configure_rubyllm
+      RubyLLM.configure do |config|
+        # API Keys - use the existing ai_api_key method that checks environment variables
+        config.openai_api_key = ai_api_key(:openai)
+        config.gemini_api_key = ai_api_key(:gemini)
+        config.anthropic_api_key = ai_api_key(:anthropic)
+        config.deepseek_api_key = ai_api_key(:deepseek)
 
-    OpenAI.configure do |config|
-      # Use environment variables directly for OpenAI gem
-      access_token = ENV['OPENAI_ACCESS_TOKEN'] || ai_api_key(:openai)
-      base_uri = ENV['OPENAI_BASE_URI']
+        # Custom endpoint
+        config.openai_api_base = fetch(:ai, :rubyllm, :openai_api_base)
 
-      config.access_token = access_token if access_token
-      config.uri_base = base_uri if base_uri
-      config.log_errors = fetch(:ai, :openai, :log_errors, default: true)
+        # Default models
+        config.default_model = fetch(:ai, :rubyllm, :default_model)
+        config.default_embedding_model = fetch(:ai, :rubyllm, :default_embedding_model)
+        config.default_image_model = fetch(:ai, :rubyllm, :default_image_model)
+
+        # Connection settings
+        config.request_timeout = fetch(:ai, :rubyllm, :request_timeout)
+        config.max_retries = fetch(:ai, :rubyllm, :max_retries)
+        config.retry_interval = fetch(:ai, :rubyllm, :retry_interval)
+        config.retry_backoff_factor = fetch(:ai, :rubyllm, :retry_backoff_factor)
+        config.retry_interval_randomness = fetch(:ai, :rubyllm, :retry_interval_randomness)
+
+        # Logging settings
+        log_file = fetch(:ai, :rubyllm, :log_file)
+        config.log_file = log_file unless log_file.nil?
+        config.log_level = fetch(:ai, :rubyllm, :log_level)&.to_sym || :info
+        config.log_assume_model_exists = fetch(:ai, :rubyllm, :log_assume_model_exists)
+      end
+    rescue StandardError => e
+      # Can't use BlueprintsCLI.logger here as it may not be initialized yet
+      warn "Error configuring RubyLLM: #{e.message}"
     end
-  rescue StandardError => e
-    # Can't use BlueprintsCLI.logger here as it may not be initialized yet
-    warn "Error configuring OpenAI gem: #{e.message}"
+
+    # Configure legacy OpenAI gem with settings from unified config system
+    #
+    # Configures the legacy OpenAI gem if it's available in the application.
+    # This provides backward compatibility for code that uses the OpenAI gem
+    # directly rather than through RubyLLM.
+    #
+    # Only configures the gem if it's actually loaded to avoid dependency
+    # issues in environments where it's not needed.
+    #
+    # @return [void]
+    #
+    # @since 0.1.0
+    # @api private
+    def configure_openai_gem
+      return unless defined?(OpenAI)
+
+      OpenAI.configure do |config|
+        # Use environment variables directly for OpenAI gem
+        access_token = ENV['OPENAI_ACCESS_TOKEN'] || ai_api_key(:openai)
+        base_uri = ENV['OPENAI_BASE_URI']
+
+        config.access_token = access_token if access_token
+        config.uri_base = base_uri if base_uri
+        config.log_errors = fetch(:ai, :openai, :log_errors, default: true)
+      end
+    rescue StandardError => e
+      # Can't use BlueprintsCLI.logger here as it may not be initialized yet
+      warn "Error configuring OpenAI gem: #{e.message}"
+    end
   end
 end
