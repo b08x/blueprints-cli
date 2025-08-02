@@ -118,15 +118,17 @@ module BlueprintsCLI
       if matching_commands.size == 1 && matching_commands.first == @command
         # Complete subcommands with context-aware filtering
         subcommands = COMMANDS.dig(@command, :subcommands) || []
-        
+
         if @subcommand.nil? || @subcommand.empty?
-          # Return all available subcommands
           return subcommands.map { |sub| "/#{@command} #{sub}" }
-        else
-          # Filter subcommands based on partial input
-          matching_subcommands = subcommands.select { |sub| sub.start_with?(@subcommand) }
-          return matching_subcommands.map { |sub| "/#{@command} #{sub}" }
         end
+
+        # Return all available subcommands
+
+        # Filter subcommands based on partial input
+        matching_subcommands = subcommands.select { |sub| sub.start_with?(@subcommand) }
+        return matching_subcommands.map { |sub| "/#{@command} #{sub}" }
+
       elsif matching_commands.size > 1
         # Complete command names
         return matching_commands.map { |cmd| "/#{cmd}" }
@@ -141,8 +143,8 @@ module BlueprintsCLI
 
     # Get contextual help for current completion state
     def completion_context
-      return "Available commands" if @command.nil? || @command.empty?
-      
+      return 'Available commands' if @command.nil? || @command.empty?
+
       if COMMANDS.key?(@command)
         if @subcommand.nil? || @subcommand.empty?
           "Subcommands for #{@command}"
@@ -150,7 +152,7 @@ module BlueprintsCLI
           "Options for #{@command} #{@subcommand}"
         end
       else
-        "Did you mean...?"
+        'Did you mean...?'
       end
     end
 
@@ -295,9 +297,9 @@ module BlueprintsCLI
       # Simple similarity based on shared prefixes and substrings
       suggestions = COMMANDS.keys.select do |cmd|
         # Commands that contain our input or our input contains them
-        cmd.include?(@command) || @command.include?(cmd) || 
-        # Commands with similar starting characters
-        (cmd.length > 2 && @command.length > 2 && cmd[0..1] == @command[0..1])
+        cmd.include?(@command) || @command.include?(cmd) ||
+          # Commands with similar starting characters
+          (cmd.length > 2 && @command.length > 2 && cmd[0..1] == @command[0..1])
       end
 
       suggestions.map { |cmd| "/#{cmd}" }.first(3)

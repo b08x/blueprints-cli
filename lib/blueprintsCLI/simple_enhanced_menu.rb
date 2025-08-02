@@ -37,10 +37,10 @@ module BlueprintsCLI
     def setup_autocomplete
       # Initialize readline with our autocomplete handler
       success = ReadlineIntegration.setup_readline(@autocomplete_handler)
-      
-      unless success
-        puts "\e[33mNote: Autocomplete functionality not available, using basic input.\e[0m"
-      end
+
+      return if success
+
+      puts "\e[33mNote: Autocomplete functionality not available, using basic input.\e[0m"
     end
 
     def show_welcome_banner
@@ -85,10 +85,10 @@ module BlueprintsCLI
     def get_user_input
       puts ''
       prompt = "\e[36mblueprintsCLI\e[0m \e[34m>\e[0m "
-      
+
       # Use readline integration for autocomplete support
       input = ReadlineIntegration.readline_input(prompt, true)
-      
+
       if input.nil?
         @running = false
         return nil

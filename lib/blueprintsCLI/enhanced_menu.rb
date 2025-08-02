@@ -40,11 +40,11 @@ module BlueprintsCLI
     def setup_autocomplete
       # Initialize readline with our autocomplete handler
       success = ReadlineIntegration.setup_readline(@autocomplete_handler)
-      
+
       if success
-        BlueprintsCLI.logger.debug("Autocomplete functionality enabled")
+        BlueprintsCLI.logger.debug('Autocomplete functionality enabled')
       else
-        BlueprintsCLI.logger.warn("Autocomplete functionality not available, falling back to basic input")
+        BlueprintsCLI.logger.warn('Autocomplete functionality not available, falling back to basic input')
       end
     end
 
@@ -89,7 +89,7 @@ module BlueprintsCLI
       # Custom prompt with slash command support and autocomplete
       CLIUIIntegration.raw_puts('')
       prompt = "#{::CLI::UI.fmt('{{cyan:blueprintsCLI}}')} #{::CLI::UI.fmt('{{blue:>}}')} "
-      
+
       # Use readline integration for autocomplete support
       ReadlineIntegration.readline_input(prompt, true)
     end

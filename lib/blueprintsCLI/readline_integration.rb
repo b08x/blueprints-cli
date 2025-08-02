@@ -20,7 +20,7 @@ module BlueprintsCLI
       # Mark the autocomplete handler as readline ready
       @autocomplete_handler.readline_ready! if @autocomplete_handler.respond_to?(:readline_ready!)
 
-      safe_log_debug("Readline autocomplete initialized successfully")
+      safe_log_debug('Readline autocomplete initialized successfully')
       true
     rescue StandardError => e
       safe_log_warn("Failed to initialize readline autocomplete: #{e.message}")
@@ -65,21 +65,19 @@ module BlueprintsCLI
 
     def configure_completion_proc
       Readline.completion_proc = proc do |input|
-        begin
-          completions = @autocomplete_handler.completions_for(input)
-          BlueprintsCLI.logger.debug("Generated #{completions.size} completions for: '#{input}'")
-          completions
-        rescue StandardError => e
-          BlueprintsCLI.logger.debug("Completion error: #{e.message}")
-          []
-        end
+        completions = @autocomplete_handler.completions_for(input)
+        BlueprintsCLI.logger.debug("Generated #{completions.size} completions for: '#{input}'")
+        completions
+      rescue StandardError => e
+        BlueprintsCLI.logger.debug("Completion error: #{e.message}")
+        []
       end
     end
 
     def configure_readline_settings
       # Configure completion behavior
       Readline.completion_append_character = ' '
-      
+
       # Set up history file if supported
       setup_history_file if Readline.respond_to?(:HISTORY)
     end
@@ -89,17 +87,17 @@ module BlueprintsCLI
 
       # Limit history size to prevent memory issues
       max_history_size = 1000
-      
+
       # Clear old history if it gets too long
-      if Readline::HISTORY.length > max_history_size
-        excess = Readline::HISTORY.length - max_history_size
-        excess.times { Readline::HISTORY.shift }
-      end
+      return unless Readline::HISTORY.length > max_history_size
+
+      excess = Readline::HISTORY.length - max_history_size
+      excess.times { Readline::HISTORY.shift }
     end
 
     def setup_history_file
       history_file = File.join(Dir.home, '.blueprintscli_history')
-      
+
       # Load existing history
       if File.exist?(history_file)
         File.readlines(history_file).each { |line| Readline::HISTORY << line.chomp }
@@ -122,13 +120,17 @@ module BlueprintsCLI
 
     # Safe logging methods that won't fail if logger isn't available
     def safe_log_debug(message)
-      BlueprintsCLI.logger.debug(message) if defined?(BlueprintsCLI) && BlueprintsCLI.respond_to?(:logger)
+      if defined?(BlueprintsCLI) && BlueprintsCLI.respond_to?(:logger)
+        BlueprintsCLI.logger.debug(message)
+      end
     rescue StandardError
       # Silently ignore logging errors during initialization
     end
 
     def safe_log_warn(message)
-      BlueprintsCLI.logger.warn(message) if defined?(BlueprintsCLI) && BlueprintsCLI.respond_to?(:logger)
+      if defined?(BlueprintsCLI) && BlueprintsCLI.respond_to?(:logger)
+        BlueprintsCLI.logger.warn(message)
+      end
     rescue StandardError
       # Silently ignore logging errors during initialization
     end
