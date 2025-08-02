@@ -304,7 +304,8 @@ module BlueprintsCLI
       @config.write(force: force, create: create)
       true
     rescue TTY::Config::WriteError => e
-      BlueprintsCLI.logger.failure("Failed to write configuration: #{e.message}")
+      # Can't use BlueprintsCLI.logger here as it may not be initialized yet
+      warn("Failed to write configuration: #{e.message}")
       false
     end
 
@@ -699,7 +700,8 @@ module BlueprintsCLI
 
     true
   rescue StandardError => e
-    BlueprintsCLI.logger.failure("Error during interactive setup: #{e.message}")
+    # Can't use BlueprintsCLI.logger here as it may not be initialized yet
+    warn("Error during interactive setup: #{e.message}")
     false
   end
 
