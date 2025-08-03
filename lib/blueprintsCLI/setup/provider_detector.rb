@@ -50,7 +50,7 @@ module BlueprintsCLI
           name: 'DeepSeek',
           env_vars: %w[DEEPSEEK_API_KEY],
           description: 'High-performance reasoning models at low cost',
-          models: ['deepseek-chat', 'deepseek-coder'],
+          models: %w[deepseek-chat deepseek-coder],
           capabilities: %w[chat tools],
           pricing: 'Very low-cost',
           notes: 'Excellent reasoning capabilities'
@@ -72,11 +72,11 @@ module BlueprintsCLI
       #
       # @return [Boolean] True if at least one provider was configured
       def detect_and_configure
-        @logger.info("Scanning for AI provider API keys...")
-        
+        @logger.info('Scanning for AI provider API keys...')
+
         scan_environment_variables
         display_detected_providers
-        
+
         if @detected_providers.any?
           configure_detected_providers
         else
@@ -92,15 +92,15 @@ module BlueprintsCLI
       def scan_environment_variables
         PROVIDERS.each do |provider_key, provider_info|
           provider_info[:env_vars].each do |env_var|
-            if ENV[env_var] && !ENV[env_var].empty?
-              @detected_providers[provider_key] = {
-                info: provider_info,
-                api_key: ENV[env_var],
-                env_var: env_var
-              }
-              @logger.success("Found #{provider_info[:name]} API key (#{env_var})")
-              break # Use first found key for this provider
-            end
+            next unless ENV[env_var] && !ENV[env_var].empty?
+
+            @detected_providers[provider_key] = {
+              info: provider_info,
+              api_key: ENV.fetch(env_var, nil),
+              env_var: env_var
+            }
+            @logger.success("Found #{provider_info[:name]} API key (#{env_var})")
+            break # Use first found key for this provider
           end
         end
       end
@@ -109,12 +109,12 @@ module BlueprintsCLI
       def display_detected_providers
         if @detected_providers.any?
           puts "\n🔍 Detected AI Providers:"
-          @detected_providers.each do |provider_key, config|
+          @detected_providers.each_value do |config|
             info = config[:info]
             puts "  ✓ #{info[:name]} - #{info[:description]}"
             puts "    Models: #{info[:models].join(', ')}"
             puts "    Pricing: #{info[:pricing]}"
-            puts ""
+            puts ''
           end
         else
           puts "\n❌ No AI provider API keys found in environment variables."
@@ -146,24 +146,24 @@ module BlueprintsCLI
       # @return [Hash] Selected providers configuration
       def prompt_provider_selection
         selected = {}
-        
+
         puts "\n🤖 Multiple AI providers detected. Choose which ones to configure:"
-        
+
         @detected_providers.each do |provider_key, config|
           info = config[:info]
           use_provider = @prompt.yes?("Configure #{info[:name]}?", default: true)
-          
-          if use_provider
-            selected[provider_key] = config
-            
-            # Test the provider connection
-            if test_provider_connection(provider_key, config[:api_key])
-              @logger.success("#{info[:name]} connection verified!")
-            else
-              @logger.failure("#{info[:name]} connection failed")
-              use_anyway = @prompt.yes?("Continue with #{info[:name]} anyway?", default: false)
-              selected.delete(provider_key) unless use_anyway
-            end
+
+          next unless use_provider
+
+          selected[provider_key] = config
+
+          # Test the provider connection
+          if test_provider_connection(provider_key, config[:api_key])
+            @logger.success("#{info[:name]} connection verified!")
+          else
+            @logger.failure("#{info[:name]} connection failed")
+            use_anyway = @prompt.yes?("Continue with #{info[:name]} anyway?", default: false)
+            selected.delete(provider_key) unless use_anyway
           end
         end
 
@@ -175,15 +175,15 @@ module BlueprintsCLI
       # @return [Boolean] True if manual configuration completed
       def guide_manual_configuration
         puts "\n🔧 Manual Provider Configuration"
-        puts "Please choose an AI provider to configure:"
+        puts 'Please choose an AI provider to configure:'
 
         # Display all available providers
         provider_choices = PROVIDERS.map do |key, info|
           { name: "#{info[:name]} - #{info[:description]}", value: key }
         end
-        provider_choices << { name: "Skip provider setup for now", value: :skip }
+        provider_choices << { name: 'Skip provider setup for now', value: :skip }
 
-        selected_provider = @prompt.select("Select a provider:", provider_choices)
+        selected_provider = @prompt.select('Select a provider:', provider_choices)
         return true if selected_provider == :skip
 
         configure_manual_provider(selected_provider)
@@ -195,14 +195,14 @@ module BlueprintsCLI
       # @return [Boolean] True if configuration completed
       def configure_manual_provider(provider_key)
         provider_info = PROVIDERS[provider_key]
-        
+
         puts "\n📋 Configuring #{provider_info[:name]}"
         puts "Description: #{provider_info[:description]}"
         puts "Required environment variable: #{provider_info[:env_vars].first}"
-        puts ""
+        puts ''
 
         api_key = @prompt.mask("Enter your #{provider_info[:name]} API key:")
-        
+
         if api_key.empty?
           @logger.warn("No API key provided for #{provider_info[:name]}")
           return false
@@ -215,7 +215,7 @@ module BlueprintsCLI
           true
         else
           @logger.failure("Failed to connect to #{provider_info[:name]}")
-          retry_config = @prompt.yes?("Retry configuration?", default: true)
+          retry_config = @prompt.yes?('Retry configuration?', default: true)
           retry_config ? configure_manual_provider(provider_key) : false
         end
       end
@@ -239,7 +239,7 @@ module BlueprintsCLI
       # @return [Boolean] True if connection successful
       def test_provider_connection(provider_key, api_key)
         @logger.info("Testing #{PROVIDERS[provider_key][:name]} connection...")
-        
+
         # Configure RubyLLM for testing
         original_config = backup_rubyllm_config
         configure_rubyllm_for_test(provider_key, api_key)
@@ -251,7 +251,7 @@ module BlueprintsCLI
             provider: map_provider_for_rubyllm(provider_key)
           )
           response = chat.ask("Hello! Please respond with just 'OK'")
-          
+
           success = response&.content&.include?('OK')
           @logger.debug("Test response: #{response&.content}") if ENV['DEBUG']
           success
@@ -370,16 +370,16 @@ module BlueprintsCLI
             choices = @setup_data[:providers].map do |key, config|
               { name: config[:name], value: key }
             end
-            primary_provider = @prompt.select("Select primary AI provider:", choices)
+            primary_provider = @prompt.select('Select primary AI provider:', choices)
           end
 
           @setup_data[:primary_provider] = primary_provider
-          @logger.success("Provider configuration completed!")
+          @logger.success('Provider configuration completed!')
           @logger.info("Primary provider: #{@setup_data[:providers][primary_provider][:name]}")
-          
+
           true
         else
-          @logger.warn("No AI providers configured. Some features may not work.")
+          @logger.warn('No AI providers configured. Some features may not work.')
           false
         end
       end

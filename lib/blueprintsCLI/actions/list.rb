@@ -204,42 +204,88 @@ module BlueprintsCLI
             add_spacing(2)
           end
           
-          puts '=' * 80
-          puts '📚 Blueprint Browser'.colorize(:blue)
-          puts "Found #{blueprints.length} blueprints"
-          puts '=' * 80
-
-          # Prepare choices for the prompt
-          choices = prepare_blueprint_choices(blueprints)
-
-          # Add action options
-          choices << { name: '🔍 Search blueprints'.colorize(:blue), value: :search }
-          choices << { name: '📊 Show summary'.colorize(:yellow), value: :summary }
-          choices << { name: '➕ Submit new blueprint'.colorize(:green), value: :submit }
-          choices << { name: '🚪 Exit'.colorize(:red), value: :exit }
-
+          display_browser_header(blueprints)
+          choices = build_browser_choices(blueprints)
           selected = prompt.select('Select a blueprint or action:', choices, per_page: 15)
 
-          case selected
-          when Hash
-            # A blueprint was selected
-            handle_selected_blueprint(selected, prompt)
-          when :search
-            handle_search_action(prompt)
-          when :summary
-            display_summary(blueprints)
-            prompt.keypress('Press any key to continue...')
-          when :submit
-            submission_success = handle_submit_action(prompt)
-            # Refresh blueprints if submission was successful
-            if submission_success
-              blueprints = BlueprintsCLI.database.all_blueprints
-            end
-          when :exit
-            puts '👋 Goodbye!'.colorize(:green)
-            break
-          end
+          break if handle_browser_selection(selected, blueprints, prompt)
         end
+      end
+
+      ##
+      # Displays the browser header with blueprint count.
+      #
+      # @param blueprints [Array<Hash>] The collection of blueprints being browsed
+      # @return [void]
+      def display_browser_header(blueprints)
+        puts '=' * 80
+        puts '📚 Blueprint Browser'.colorize(:blue)
+        puts "Found #{blueprints.length} blueprints"
+        puts '=' * 80
+      end
+
+      ##
+      # Builds the choices array for the blueprint browser prompt.
+      #
+      # Combines blueprint choices with action options.
+      #
+      # @param blueprints [Array<Hash>] The collection of blueprints to browse
+      # @return [Array<Hash>] Complete choices array for the prompt
+      def build_browser_choices(blueprints)
+        choices = prepare_blueprint_choices(blueprints)
+
+        # Add action options
+        choices << { name: '🔍 Search blueprints'.colorize(:blue), value: :search }
+        choices << { name: '📊 Show summary'.colorize(:yellow), value: :summary }
+        choices << { name: '➕ Submit new blueprint'.colorize(:green), value: :submit }
+        choices << { name: '🚪 Exit'.colorize(:red), value: :exit }
+
+        choices
+      end
+
+      ##
+      # Handles the user's selection from the browser menu.
+      #
+      # Routes to appropriate handlers based on the selection type.
+      #
+      # @param selected [Hash, Symbol] The user's selection from the prompt
+      # @param blueprints [Array<Hash>] The collection of blueprints (passed by reference for updates)
+      # @param prompt [TTY::Prompt] The prompt instance for user interaction
+      # @return [Boolean] Returns true if the browser should exit, false to continue
+      def handle_browser_selection(selected, blueprints, prompt)
+        case selected
+        when Hash
+          # A blueprint was selected
+          handle_selected_blueprint(selected, prompt)
+          false
+        when :search
+          handle_search_action(prompt)
+          false
+        when :summary
+          display_summary(blueprints)
+          prompt.keypress('Press any key to continue...')
+          false
+        when :submit
+          submission_success = handle_submit_action(prompt)
+          # Refresh blueprints if submission was successful
+          if submission_success
+            blueprints.replace(refresh_blueprint_list)
+          end
+          false
+        when :exit
+          puts '👋 Goodbye!'.colorize(:green)
+          true
+        else
+          false
+        end
+      end
+
+      ##
+      # Refreshes the blueprint list from the database.
+      #
+      # @return [Array<Hash>] Updated collection of blueprints
+      def refresh_blueprint_list
+        @db.list_blueprints(limit: @limit)
       end
 
       ##
@@ -267,17 +313,17 @@ module BlueprintsCLI
       ##
       # Handles actions for a selected blueprint in interactive mode.
       #
-      # Provides options to view, edit, export, analyze, or copy the blueprint ID.
+      # Provides options to view (with AI analysis), edit, export, or copy the blueprint ID.
+      # The view action launches the enhanced interactive two-column viewer with AI suggestions.
       #
       # @param blueprint [Hash] The selected blueprint
       # @param prompt [TTY::Prompt] The prompt instance for user interaction
       # @return [void]
       def handle_selected_blueprint(blueprint, prompt)
         actions = [
-          { name: '👁️  View details', value: :view },
+          { name: '👁️  View details (with AI analysis)', value: :view },
           { name: '✏️  Edit blueprint', value: :edit },
           { name: '💾 Export code', value: :export },
-          { name: '🔍 View with AI analysis', value: :analyze },
           { name: '📋 Copy ID', value: :copy_id },
           { name: '↩️  Back to list', value: :back }
         ]
@@ -288,9 +334,9 @@ module BlueprintsCLI
         when :view
           BlueprintsCLI::Actions::View.new(
             id: blueprint[:id],
-            format: :detailed
+            format: :interactive,
+            with_suggestions: true
           ).call
-          prompt.keypress('Press any key to continue...')
         when :edit
           BlueprintsCLI::Actions::Edit.new(
             id: blueprint[:id]
@@ -301,13 +347,6 @@ module BlueprintsCLI
           BlueprintsCLI::Actions::Export.new(
             id: blueprint[:id],
             output_path: filename
-          ).call
-          prompt.keypress('Press any key to continue...')
-        when :analyze
-          BlueprintsCLI::Actions::View.new(
-            id: blueprint[:id],
-            format: :detailed,
-            with_suggestions: true
           ).call
           prompt.keypress('Press any key to continue...')
         when :copy_id

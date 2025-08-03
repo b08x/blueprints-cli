@@ -8,13 +8,14 @@ Gem::Specification.new do |spec|
   spec.authors = ['Robert Pannick']
   spec.email = ['rwpannick@gmail.com']
 
-  spec.summary = 'Summary of your project'
-  spec.description = 'Longer description of your project'
+  spec.summary = 'AI-powered code blueprint management and generation system'
+  spec.description = 'BlueprintsCLI is an intelligent code management tool that combines semantic search ' \
+                     'with AI-powered code generation. Built on the Sublayer framework, it transforms ' \
+                     'code snippets into searchable blueprints and generates new code using your ' \
+                     'existing patterns as context.'
   spec.homepage = 'https://github.com/b08x/blueprints-cli'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 3.1.0'
-
-  spec.metadata['allowed_push_host'] = "TODO: Set to your gem server 'https://example.com'"
 
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/b08x/blueprints-cli'

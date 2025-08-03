@@ -5,7 +5,7 @@
 require 'bundler/setup'
 Bundler.require
 
-# Set up database connection using unified configuration
+# Set up database connection using environment variables with fallback
 ENV['RACK_ENV'] ||= 'development'
 require_relative '../configuration'
 config = BlueprintsCLI::Configuration.new

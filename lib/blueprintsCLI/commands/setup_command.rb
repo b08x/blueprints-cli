@@ -51,30 +51,30 @@ module BlueprintsCLI
       #
       # @return [Boolean] True if setup completed successfully
       def run_setup_wizard
-        log_step("Starting BlueprintsCLI setup wizard...")
+        log_step('Starting BlueprintsCLI setup wizard...')
 
         begin
           setup_manager = BlueprintsCLI::Setup::SetupManager.new
-          
+
           # Check if setup is needed
           unless setup_manager.setup_required?
-            log_info("Setup skipped by user")
+            log_info('Setup skipped by user')
             return true
           end
 
           # Run complete setup
           success = setup_manager.run
-          
+
           if success
-            log_success("Setup completed successfully!")
+            log_success('Setup completed successfully!')
             display_next_steps
           else
-            log_failure("Setup was not completed")
+            log_failure('Setup was not completed')
           end
 
           success
         rescue BlueprintsCLI::Setup::SetupManager::SetupCancelledError
-          log_info("Setup cancelled by user")
+          log_info('Setup cancelled by user')
           true
         rescue StandardError => e
           log_failure("Setup failed: #{e.message}")
@@ -87,16 +87,16 @@ module BlueprintsCLI
       #
       # @return [Boolean] True if provider setup completed
       def setup_providers_only
-        log_step("Setting up AI providers...")
+        log_step('Setting up AI providers...')
 
         begin
           setup_manager = BlueprintsCLI::Setup::SetupManager.new
           success = setup_manager.setup_providers
-          
+
           if success
-            log_success("Provider setup completed!")
+            log_success('Provider setup completed!')
           else
-            log_failure("Provider setup failed")
+            log_failure('Provider setup failed')
           end
 
           success
@@ -111,16 +111,16 @@ module BlueprintsCLI
       #
       # @return [Boolean] True if database setup completed
       def setup_database_only
-        log_step("Setting up database...")
+        log_step('Setting up database...')
 
         begin
           setup_manager = BlueprintsCLI::Setup::SetupManager.new
           success = setup_manager.setup_database
-          
+
           if success
-            log_success("Database setup completed!")
+            log_success('Database setup completed!')
           else
-            log_failure("Database setup failed")
+            log_failure('Database setup failed')
           end
 
           success
@@ -135,16 +135,16 @@ module BlueprintsCLI
       #
       # @return [Boolean] True if model setup completed
       def setup_models_only
-        log_step("Setting up AI models...")
+        log_step('Setting up AI models...')
 
         begin
           setup_manager = BlueprintsCLI::Setup::SetupManager.new
           success = setup_manager.setup_models
-          
+
           if success
-            log_success("Model setup completed!")
+            log_success('Model setup completed!')
           else
-            log_failure("Model setup failed")
+            log_failure('Model setup failed')
           end
 
           success
@@ -159,16 +159,16 @@ module BlueprintsCLI
       #
       # @return [Boolean] True if verification passed
       def verify_setup
-        log_step("Verifying BlueprintsCLI setup...")
+        log_step('Verifying BlueprintsCLI setup...')
 
         begin
           config = BlueprintsCLI::Configuration.new
-          
+
           # Check configuration file exists
           if config.exist?
-            log_success("✓ Configuration file found")
+            log_success('✓ Configuration file found')
           else
-            log_failure("✗ Configuration file missing")
+            log_failure('✗ Configuration file missing')
             log_tip("Run 'bin/blueprintsCLI setup' to create configuration")
             return false
           end
@@ -176,10 +176,10 @@ module BlueprintsCLI
           # Check database configuration
           database_url = config.database_url
           if database_url
-            log_success("✓ Database URL configured")
+            log_success('✓ Database URL configured')
             verify_database_connection(database_url)
           else
-            log_failure("✗ Database URL not configured")
+            log_failure('✗ Database URL not configured')
           end
 
           # Check AI provider configuration
@@ -188,7 +188,7 @@ module BlueprintsCLI
           # Check required directories
           verify_directories
 
-          log_success("Setup verification completed!")
+          log_success('Setup verification completed!')
           true
         rescue StandardError => e
           log_failure("Setup verification failed: #{e.message}")
@@ -201,15 +201,13 @@ module BlueprintsCLI
       #
       # @param database_url [String] Database URL to test
       def verify_database_connection(database_url)
-        begin
-          require 'sequel'
-          db = Sequel.connect(database_url)
-          db.test_connection
-          log_success("✓ Database connection successful")
-          db.disconnect
-        rescue StandardError => e
-          log_failure("✗ Database connection failed: #{e.message}")
-        end
+        require 'sequel'
+        db = Sequel.connect(database_url)
+        db.test_connection
+        log_success('✓ Database connection successful')
+        db.disconnect
+      rescue StandardError => e
+        log_failure("✗ Database connection failed: #{e.message}")
       end
 
       # Verify AI provider configuration
@@ -228,8 +226,8 @@ module BlueprintsCLI
         end
 
         if found_providers.empty?
-          log_failure("✗ No AI provider API keys found")
-          log_tip("Set environment variables for your AI providers")
+          log_failure('✗ No AI provider API keys found')
+          log_tip('Set environment variables for your AI providers')
         else
           log_info("Found #{found_providers.size} configured AI provider(s)")
         end
@@ -237,13 +235,14 @@ module BlueprintsCLI
 
       # Verify required directories exist
       def verify_directories
-        log_file_dir = File.dirname(BlueprintsCLI.configuration.fetch(:logger, :file_path, default: '/tmp/app.log'))
-        
+        log_file_dir = File.dirname(BlueprintsCLI.configuration.fetch(:logger, :file_path,
+                                                                      default: '/tmp/app.log'))
+
         if Dir.exist?(log_file_dir)
-          log_success("✓ Log directory exists")
+          log_success('✓ Log directory exists')
         else
           log_warning("⚠ Log directory missing: #{log_file_dir}")
-          log_tip("Directory will be created automatically when needed")
+          log_tip('Directory will be created automatically when needed')
         end
       end
 

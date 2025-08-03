@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
+require 'ruby_llm'
+require 'pgvector'
 require_relative 'db/interface'
+# Temporarily comment out enhanced RAG for testing
+# require_relative 'nlp/enhanced_rag_service'
+# require_relative 'models/cache_models'
+# require_relative 'services/informers_embedding_service'
 
 module BlueprintsCLI
   # Provides a direct database interface for managing "blueprints" (code snippets).
@@ -17,14 +23,13 @@ module BlueprintsCLI
   class BlueprintDatabase
     include BlueprintsCLI::Interfaces::DatabaseInterface
 
-    # The Google Gemini model used for generating text embeddings.
-    EMBEDDING_MODEL = 'text-embedding-004'
-    # The number of dimensions for the text embedding vectors.
-    EMBEDDING_DIMENSIONS = 768
-
     # @!attribute [r] db
     #   @return [Sequel::Database] The active Sequel database connection instance.
-    attr_reader :db
+    # @!attribute [r] rag_service
+    #   @return [BlueprintsCLI::NLP::EnhancedRagService] The enhanced RAG service for NLP processing.
+    # @!attribute [r] cache_manager
+    #   @return [BlueprintsCLI::Models::CacheManager] The cache manager for intelligent caching.
+    attr_reader :db, :rag_service, :cache_manager
 
     #
     # Initializes the database connection and validates the schema.
@@ -41,12 +46,17 @@ module BlueprintsCLI
     # @raise [StandardError] If the database connection fails or a required
     #   table is missing from the schema.
     #
-    def initialize(database_url: nil)
+    def initialize(database_url: nil, rag_config: {})
       @database_url = database_url || load_database_url
       @db = connect_to_database
-      @gemini_api_key = load_gemini_api_key
+      # Temporarily disable enhanced RAG for testing
+      # @cache_manager = Models::CacheManager.new
+      # @rag_service = NLP::EnhancedRagService.new(rag_config)
 
       validate_database_schema
+
+      # Temporarily disable search index rebuilding
+      # rebuild_search_index
     end
 
     #
@@ -74,22 +84,61 @@ module BlueprintsCLI
     #   )
     #   # => {id: 1, code: "...", name: "...", ..., categories: [{id: 1, title: "Ruby"}, ...]}
     #
-    def create_blueprint(code:, name: nil, description: nil, categories: [])
+    def create_blueprint(code:, name: nil, description: nil, categories: [], language: 'ruby',
+                         file_type: '.rb', blueprint_type: 'code', parser_type: 'ruby')
       @db.transaction do
-        # Insert blueprint record
+        # Prepare blueprint data for enhanced processing
+        {
+          code: code,
+          name: name,
+          description: description,
+          categories: categories
+        }
+
+        # Process through enhanced RAG pipeline
+        # rag_result = @rag_service.process_blueprint(blueprint_data)
+
+        # Use traditional embedding generation (enhanced RAG disabled)
+        content_to_embed = { name: name, description: description }.to_json
+        begin
+          embedding_result = RubyLLM.embed(content_to_embed)
+          # Extract the actual vector array from the result
+          embedding_vector = embedding_result.vectors
+        rescue RubyLLM::Error => e
+          # Fallback to a zero vector if embedding fails
+          BlueprintsCLI.logger.warn("RubyLLM embedding failed: #{e.message}, using zero vector")
+          embedding_vector = Array.new(768, 0.0)
+        rescue StandardError => e
+          # Handle other errors
+          BlueprintsCLI.logger.warn("Embedding generation failed: #{e.message}, using zero vector")
+          embedding_vector = Array.new(768, 0.0)
+        end
+
+        # Insert blueprint record with enhanced metadata
         blueprint_id = @db[:blueprints].insert(
           code: code,
           name: name,
           description: description,
-          embedding: generate_embedding(name: name, description: description),
+          language: language || 'ruby',
+          file_type: file_type || '.rb',
+          blueprint_type: blueprint_type || 'code',
+          parser_type: parser_type || 'ruby',
+          embedding: Pgvector.encode(embedding_vector),
           created_at: Time.now,
           updated_at: Time.now
         )
 
+        # Store in cache for future access (disabled for now)
+        # @cache_manager.store(:pipeline, blueprint_data.to_json, @rag_service.config, rag_result)
+
         # Handle categories if provided
         insert_blueprint_categories(blueprint_id, categories) if categories.any?
 
-        # Return the created blueprint
+        # Update search index (disabled for now)
+        # blueprint_data.merge(id: blueprint_id)
+        # @rag_service.update_search_index(blueprint_id, rag_result)
+
+        # Return the blueprint
         get_blueprint(blueprint_id)
       end
     rescue StandardError => e
@@ -115,6 +164,9 @@ module BlueprintsCLI
 
       # Add categories
       blueprint[:categories] = get_blueprint_categories(id)
+
+      # Enhanced NLP metadata is disabled - skip parsing
+
       blueprint
     end
 
@@ -170,26 +222,13 @@ module BlueprintsCLI
     #   results = db.search_blueprints(query: "http server in ruby", limit: 5)
     #   # => [{id: 12, ..., distance: 0.18}, {id: 34, ..., distance: 0.21}]
     #
-    def search_blueprints(query:, limit: 10)
-      # Generate embedding for the search query
-      query_embedding = generate_embedding_for_text(query)
-      return [] unless query_embedding
-
-      # Perform vector similarity search using pgvector
-      results = @db.fetch(
-        "SELECT *, embedding <-> ? AS distance
-           FROM blueprints
-           ORDER BY embedding <-> ?
-           LIMIT ?",
-        query_embedding, query_embedding, limit
-      ).all
-
-      # Add categories for each result
-      results.each do |blueprint|
-        blueprint[:categories] = get_blueprint_categories(blueprint[:id])
-      end
-
-      results
+    def search_blueprints(query:, limit: 10, enhanced: false)
+      # Enhanced RAG search is temporarily disabled, use traditional vector search
+      traditional_vector_search(query, limit)
+    rescue StandardError => e
+      BlueprintsCLI.logger.failure("Error in search: #{e.message}")
+      # Return empty array if search fails completely
+      []
     end
 
     #
@@ -246,7 +285,18 @@ module BlueprintsCLI
         current = get_blueprint(id)
         new_name = name || current[:name]
         new_description = description || current[:description]
-        updates[:embedding] = generate_embedding(name: new_name, description: new_description)
+        content_to_embed = { name: new_name, description: new_description }.to_json
+        begin
+          embedding_result = RubyLLM.embed(content_to_embed)
+          embedding_vector = embedding_result.vectors
+          updates[:embedding] = Pgvector.encode(embedding_vector)
+        rescue RubyLLM::Error => e
+          BlueprintsCLI.logger.warn("Update embedding failed: #{e.message}")
+          # Skip embedding update on failure
+        rescue StandardError => e
+          BlueprintsCLI.logger.warn("Update embedding generation failed: #{e.message}")
+          # Skip embedding update on failure
+        end
       end
 
       @db.transaction do
@@ -312,8 +362,60 @@ module BlueprintsCLI
       {
         total_blueprints: @db[:blueprints].count,
         total_categories: @db[:categories].count,
-        database_url: @database_url.gsub(/:[^:@]*@/, ':***@') # Hide password
+        database_url: @database_url.gsub(/:[^:@]*@/, ':***@'), # Hide password
+        enhanced_features: {
+          rag_service: 'disabled',
+          cache_performance: 'disabled',
+          nlp_enabled: false,
+          search_index_size: {}
+        }
       }
+    rescue StandardError => e
+      BlueprintsCLI.logger.warn("Error gathering stats: #{e.message}")
+      {
+        total_blueprints: 0,
+        total_categories: 0,
+        database_url: 'unknown',
+        enhanced_features: { status: 'error' }
+      }
+    end
+
+    # Find similar blueprints - disabled for now, returns empty array
+    def find_similar_blueprints(blueprint_id, options = {})
+      BlueprintsCLI.logger.info('Similar blueprints search disabled (enhanced RAG offline)')
+      []
+    end
+
+    # Analyze code patterns - disabled for now, returns empty hash
+    def analyze_blueprint_patterns(blueprint_id)
+      BlueprintsCLI.logger.info('Pattern analysis disabled (enhanced RAG offline)')
+      {}
+    end
+
+    # Rebuild search index - disabled for now
+    def rebuild_search_index
+      BlueprintsCLI.logger.info('Search index rebuild disabled (enhanced RAG offline)')
+    end
+
+    # Get search suggestions - simplified fallback
+    def get_search_suggestions(partial_query, limit: 5)
+      # Simple database-based suggestions using blueprint names
+      @db[:blueprints]
+        .where(Sequel.ilike(:name, "%#{partial_query}%"))
+        .select(:name)
+        .limit(limit)
+        .map { |row| row[:name] }
+    rescue StandardError => e
+      BlueprintsCLI.logger.warn("Error getting search suggestions: #{e.message}")
+      []
+    end
+
+    # Get recommendations - fallback to recent blueprints
+    def get_recommendations(user_context = {}, limit: 5)
+      list_blueprints(limit: limit)
+    rescue StandardError => e
+      BlueprintsCLI.logger.warn("Error getting recommendations: #{e.message}")
+      []
     end
 
     private
@@ -326,16 +428,6 @@ module BlueprintsCLI
     #
     def load_database_url
       BlueprintsCLI.configuration.database_url
-    end
-
-    #
-    # Loads the Gemini API key from the unified configuration system.
-    #
-    # @!visibility private
-    # @return [String, nil] The API key.
-    #
-    def load_gemini_api_key
-      BlueprintsCLI.configuration.ai_api_key('gemini')
     end
 
     #
@@ -370,69 +462,6 @@ module BlueprintsCLI
       return if @db.fetch("SELECT 1 FROM pg_extension WHERE extname = 'vector'").first
 
       BlueprintsCLI.logger.warn('pgvector extension not found. Vector search may not work.')
-    end
-
-    #
-    # Generates an embedding vector for a name and description combination.
-    #
-    # @!visibility private
-    # @param name [String] The name of the blueprint.
-    # @param description [String] The description of the blueprint.
-    # @return [String, nil] A string representation of the vector `"[d1,d2,...]"`.
-    #
-    def generate_embedding(name:, description:)
-      content = { name: name, description: description }.to_json
-      generate_embedding_for_text(content)
-    end
-
-    #
-    # Generates an embedding vector for arbitrary text using the Google Gemini API.
-    #
-    # @!visibility private
-    # @param text [String] The text to embed.
-    # @return [String, nil] A string representation of the vector `"[d1,d2,...]"`,
-    #   or `nil` if the API call fails or a key is missing.
-    #
-    def generate_embedding_for_text(text)
-      unless @gemini_api_key
-        BlueprintsCLI.logger.warn('No Gemini API key found. Skipping embedding generation.')
-        return nil
-      end
-
-      uri = URI("https://generativelanguage.googleapis.com/v1beta/models/#{EMBEDDING_MODEL}:embedContent")
-      uri.query = URI.encode_www_form(key: @gemini_api_key)
-
-      request = Net::HTTP::Post.new(uri)
-      request['Content-Type'] = 'application/json'
-      request.body = {
-        model: "models/#{EMBEDDING_MODEL}",
-        content: {
-          parts: [{ text: text }]
-        }
-      }.to_json
-
-      response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
-        http.request(request)
-      end
-
-      if response.code == '200'
-        data = JSON.parse(response.body)
-        embedding = data.dig('embedding', 'values')
-
-        if embedding && embedding.length == EMBEDDING_DIMENSIONS
-          "[#{embedding.join(',')}]" # Format as PostgreSQL vector
-        else
-          puts '⚠️  Warning: Invalid embedding dimensions received'.colorize(:yellow)
-          nil
-        end
-      else
-        BlueprintsCLI.logger.failure("Error generating embedding: #{response.code} #{response.message}")
-        BlueprintsCLI.logger.debug(response.body) if ENV['DEBUG']
-        nil
-      end
-    rescue StandardError => e
-      BlueprintsCLI.logger.failure("Error calling Gemini API: #{e.message}")
-      nil
     end
 
     #
@@ -480,6 +509,60 @@ module BlueprintsCLI
           category_id: category_id
         )
       end
+    end
+
+    # Traditional vector search fallback
+    def traditional_vector_search(query, limit)
+      # Generate embedding for the search query
+      begin
+        query_embedding_result = RubyLLM.embed(query)
+        query_embedding_vector = query_embedding_result.vectors
+      rescue RubyLLM::Error => e
+        BlueprintsCLI.logger.warn("Search embedding failed: #{e.message}")
+        return []
+      rescue StandardError => e
+        BlueprintsCLI.logger.warn("Search embedding generation failed: #{e.message}")
+        return []
+      end
+
+      return [] unless query_embedding_vector&.any?
+
+      query_embedding = Pgvector.encode(query_embedding_vector)
+
+      # Perform vector similarity search using pgvector
+      results = @db.fetch(
+        "SELECT *, embedding <-> ? AS distance
+           FROM blueprints
+           ORDER BY embedding <-> ?
+           LIMIT ?",
+        query_embedding, query_embedding, limit
+      ).all
+
+      # Add categories for each result
+      results.each do |blueprint|
+        blueprint[:categories] = get_blueprint_categories(blueprint[:id])
+      end
+
+      results
+    end
+
+    # Generate fallback embedding using RubyLLM
+    def generate_fallback_embedding(blueprint_data)
+      content_to_embed = {
+        name: blueprint_data[:name],
+        description: blueprint_data[:description]
+      }.to_json
+
+      embedding_result = RubyLLM.embed(content_to_embed)
+      embedding_result.vectors
+    rescue RubyLLM::Error => e
+      BlueprintsCLI.logger.warn("RubyLLM fallback embedding failed: #{e.message}")
+      # Return zero vector as last resort
+      Array.new(768, 0.0)
+    rescue StandardError => e
+      BlueprintsCLI.logger.warn("Error generating fallback embedding: #{e.message}")
+      # Return zero vector as last resort
+      Array.new(768, 0.0)
     end
   end
 end

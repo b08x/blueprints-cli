@@ -68,7 +68,7 @@ module BlueprintsCLI
       #
       # @return [EnhancedLogger] the configured enhanced logger instance
       def logger
-        @context_logger ||= create_context_logger
+        @logger ||= create_context_logger
       end
 
       private

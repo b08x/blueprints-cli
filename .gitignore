@@ -21,3 +21,5 @@
 /.claude/
 /.qodo/
 /.ruby-lsp/
+/.vscode/
+.ruby-gemset

@@ -321,11 +321,29 @@ module BlueprintsCLI
       end
 
       # Handles the blueprint submission process.
-      # Prompts the user for input and options, then executes the submit command.
+      # Prompts the user for input method and options, then executes the submit command.
       #
       # @return [void]
       def handle_blueprint_submit
-        input = @prompt.ask('📁 Enter file path or code string:')
+        # Let user choose input method
+        input_method = @prompt.select('📝 How would you like to provide the code?') do |menu|
+          menu.choice 'File path', :file
+          menu.choice 'Single line input', :single_line
+          menu.choice 'Multi-line input (Ctrl+D to finish)', :multiline
+          menu.choice 'Open in editor', :editor
+        end
+
+        input = case input_method
+                when :file
+                  get_file_input
+                when :single_line
+                  get_single_line_input
+                when :multiline
+                  get_multiline_input
+                when :editor
+                  get_editor_input
+                end
+
         return if input.nil? || input.empty?
 
         auto_describe = @prompt.yes?('🤖 Auto-generate description?')
@@ -338,6 +356,85 @@ module BlueprintsCLI
 
         blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new(options)
         blueprint_command.execute('submit', *args)
+      end
+
+      # Gets file path input from user
+      #
+      # @return [String, nil] File path or nil if cancelled
+      def get_file_input
+        @prompt.ask('📁 Enter file path:') do |q|
+          q.required true
+          q.validate(->(input) { File.exist?(input) }, 'File must exist')
+        end
+      end
+
+      # Gets single line code input from user
+      #
+      # @return [String, nil] Code string or nil if cancelled
+      def get_single_line_input
+        @prompt.ask('📝 Enter code:') do |q|
+          q.required true
+        end
+      end
+
+      # Gets multiline code input from user
+      #
+      # @return [String, nil] Joined code lines or nil if cancelled
+      def get_multiline_input
+        puts '📝 Enter your code (press Ctrl+D when finished):'
+        code_lines = @prompt.multiline('', help: 'Press Ctrl+D to finish input')
+
+        if code_lines && !code_lines.empty?
+          joined_code = code_lines.join("\n").strip
+          return joined_code.empty? ? nil : joined_code
+        end
+
+        nil
+      end
+
+      # Gets code input via external editor
+      #
+      # @return [String, nil] Editor content or nil if cancelled
+      def get_editor_input
+        require 'tty-editor'
+        require 'tempfile'
+
+        # Create a temporary file with appropriate extension
+        temp_file = Tempfile.new(['blueprint_', '.rb'])
+        temp_file.write("# Enter your code here\n")
+        temp_file.close
+
+        begin
+          # Get configured editor or use default
+          config = BlueprintsCLI::Configuration.new
+          editor = config.fetch(:editor, :command) || ENV['EDITOR'] || 'nano'
+
+          puts "🖊️  Opening editor (#{editor})..."
+
+          # Open the editor
+          if TTY::Editor.open(temp_file.path, command: editor)
+            content = File.read(temp_file.path).strip
+
+            # Remove the default comment if user didn't add anything else
+            if content == '# Enter your code here'
+              puts '❌ No code entered in editor'
+              return nil
+            end
+
+            # Remove the default comment line if it's still there
+            content = content.gsub(/^# Enter your code here\n?/, '').strip
+
+            content.empty? ? nil : content
+          else
+            puts '❌ Editor session cancelled or failed'
+            nil
+          end
+        rescue StandardError => e
+          puts "❌ Error opening editor: #{e.message}"
+          nil
+        ensure
+          temp_file&.unlink
+        end
       end
 
       # Handles listing blueprints with various format options.
@@ -622,7 +719,7 @@ module BlueprintsCLI
           unit_index += 1
         end
 
-        if unit_index == 0
+        if unit_index.zero?
           "#{size_float.to_i} #{units[unit_index]}"
         else
           "#{'%.1f' % size_float} #{units[unit_index]}"
