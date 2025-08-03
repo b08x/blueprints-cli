@@ -108,7 +108,7 @@ module BlueprintsCLI
       return [] unless slash_command?
 
       if @command.nil? || @command.empty?
-        # Complete command names
+        # Complete command names with descriptions as context
         return COMMANDS.keys.map { |cmd| "/#{cmd}" }
       end
 
@@ -116,15 +116,44 @@ module BlueprintsCLI
       matching_commands = COMMANDS.keys.select { |cmd| cmd.start_with?(@command) }
 
       if matching_commands.size == 1 && matching_commands.first == @command
-        # Complete subcommands
+        # Complete subcommands with context-aware filtering
         subcommands = COMMANDS.dig(@command, :subcommands) || []
-        return subcommands.map { |sub| "/#{@command} #{sub}" }
+
+        if @subcommand.nil? || @subcommand.empty?
+          return subcommands.map { |sub| "/#{@command} #{sub}" }
+        end
+
+        # Return all available subcommands
+
+        # Filter subcommands based on partial input
+        matching_subcommands = subcommands.select { |sub| sub.start_with?(@subcommand) }
+        return matching_subcommands.map { |sub| "/#{@command} #{sub}" }
+
       elsif matching_commands.size > 1
         # Complete command names
         return matching_commands.map { |cmd| "/#{cmd}" }
+      elsif @command && !matching_commands.empty?
+        # Partial command match - show the completion
+        return ["/#{matching_commands.first}"]
       end
 
-      []
+      # No matches found - could suggest similar commands
+      suggest_similar_commands
+    end
+
+    # Get contextual help for current completion state
+    def completion_context
+      return 'Available commands' if @command.nil? || @command.empty?
+
+      if COMMANDS.key?(@command)
+        if @subcommand.nil? || @subcommand.empty?
+          "Subcommands for #{@command}"
+        else
+          "Options for #{@command} #{@subcommand}"
+        end
+      else
+        'Did you mean...?'
+      end
     end
 
     # Get help text for commands
@@ -259,6 +288,21 @@ module BlueprintsCLI
       help += '  • Use {{blue:/exit}} to quit the application'
 
       help
+    end
+
+    # Suggest similar commands using basic string similarity
+    def suggest_similar_commands
+      return [] if @command.nil? || @command.empty?
+
+      # Simple similarity based on shared prefixes and substrings
+      suggestions = COMMANDS.keys.select do |cmd|
+        # Commands that contain our input or our input contains them
+        cmd.include?(@command) || @command.include?(cmd) ||
+          # Commands with similar starting characters
+          (cmd.length > 2 && @command.length > 2 && cmd[0..1] == @command[0..1])
+      end
+
+      suggestions.map { |cmd| "/#{cmd}" }.first(3)
     end
   end
 end

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    blueprintsCLI (0.1.0)
+    blueprintsCLI (0.5.0)
       sublayer (~> 0.2.9)
       thor (~> 1.2)
 
@@ -286,7 +286,7 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
     rspec-support (3.13.4)
-    rubocop (1.79.0)
+    rubocop (1.79.1)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.1.0)
@@ -296,7 +296,6 @@ GEM
       regexp_parser (>= 2.9.3, < 3.0)
       rubocop-ast (>= 1.46.0, < 2.0)
       ruby-progressbar (~> 1.7)
-      tsort (>= 0.2.0)
       unicode-display_width (>= 2.4.0, < 4.0)
     rubocop-ast (1.46.0)
       parser (>= 3.3.7.2)
@@ -350,7 +349,7 @@ GEM
       pycall (~> 1.5.1)
       ruby-openai
       terminal-table (~> 3.0.1)
-    ruby_llm (1.4.0)
+    ruby_llm (1.5.1)
       base64
       event_stream_parser (~> 1)
       faraday (>= 1.10.0)
@@ -369,7 +368,7 @@ GEM
       progressbar (>= 0.10.0)
       rubyzip (~> 0.9.9)
     securerandom (0.4.1)
-    sequel (5.94.0)
+    sequel (5.95.0)
       bigdecimal
     sod (0.20.0)
       cogger (~> 0.31)
@@ -439,7 +438,6 @@ GEM
       birch
       schiphol
       yomu
-    tsort (0.2.0)
     tty-box (0.7.0)
       pastel (~> 0.8)
       strings (~> 0.2.0)

@@ -1,12 +1,16 @@
 # frozen_string_literal: true
 
 require_relative 'slash_command_parser'
+require_relative 'autocomplete_handler'
+require_relative 'readline_integration'
 
 module BlueprintsCLI
   # SimpleEnhancedMenu provides slash command functionality without CLI-UI conflicts
   class SimpleEnhancedMenu
     def initialize
       @running = true
+      @autocomplete_handler = AutocompleteHandler.new
+      setup_autocomplete
     end
 
     # Start the enhanced interactive session
@@ -30,6 +34,15 @@ module BlueprintsCLI
 
     private
 
+    def setup_autocomplete
+      # Initialize readline with our autocomplete handler
+      success = ReadlineIntegration.setup_readline(@autocomplete_handler)
+
+      return if success
+
+      puts "\e[33mNote: Autocomplete functionality not available, using basic input.\e[0m"
+    end
+
     def show_welcome_banner
       puts "\e[36m#{'=' * 70}\e[0m"
       puts "\e[36m🚀 BlueprintsCLI Enhanced Interactive Mode\e[0m"
@@ -39,6 +52,7 @@ module BlueprintsCLI
       puts ''
       puts "\e[33m💡 Tips:\e[0m"
       puts "  • Use slash commands: \e[34m/blueprint submit\e[0m, \e[34m/search ruby\e[0m"
+      puts "  • Press \e[34mTAB\e[0m for autocomplete"
       puts "  • Type \e[34m/help\e[0m for available commands"
       puts "  • Type \e[34m/exit\e[0m or press \e[34mCtrl+C\e[0m to quit"
       puts ''
@@ -70,17 +84,18 @@ module BlueprintsCLI
 
     def get_user_input
       puts ''
-      print "\e[36mblueprintsCLI\e[0m \e[34m>\e[0m "
+      prompt = "\e[36mblueprintsCLI\e[0m \e[34m>\e[0m "
 
-      input = $stdin.gets
+      # Use readline integration for autocomplete support
+      input = ReadlineIntegration.readline_input(prompt, true)
+
       if input.nil?
         @running = false
         return nil
       end
 
-      input.chomp.strip
+      input
     end
-
 
     def handle_invalid_slash_command(parser)
       puts "\e[31mInvalid command: #{parser.input}\e[0m"

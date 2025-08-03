@@ -34,6 +34,7 @@ end
 ```
 
 **What happens automatically:**
+
 - 🤖 AI generates a descriptive name
 - 📝 Creates detailed description from code analysis  
 - 🏷️ Assigns relevant categories
@@ -71,6 +72,7 @@ bin/blueprintsCLI generate --prompt "Create tests for user model" --limit 10
 ```
 
 **Generation Process:**
+
 1. **Context Discovery** - Searches your blueprints for relevant patterns
 2. **AI Generation** - Uses Google Gemini with your blueprints as context
 3. **Multi-file Output** - Creates structured project files
@@ -79,19 +81,24 @@ bin/blueprintsCLI generate --prompt "Create tests for user model" --limit 10
 ## 🎛️ Interactive vs. Direct Usage
 
 ### Interactive Menu System
+
 Launch the guided interface:
+
 ```bash
 bin/blueprintsCLI
 ```
 
 Features:
+
 - Step-by-step blueprint submission
 - Guided search and discovery
 - Interactive code generation workflow
 - Real-time preview and editing
 
 ### Direct CLI Commands
+
 For scripting and automation:
+
 ```bash
 bin/blueprintsCLI blueprint submit code.rb
 bin/blueprintsCLI blueprint search "authentication"
@@ -101,37 +108,44 @@ bin/blueprintsCLI generate --prompt "API client"
 ## 🧠 AI-Powered Features
 
 ### Sublayer Framework Integration
+
 BlueprintsCLI's AI capabilities are powered by Sublayer's modular components:
 
 #### Intelligent Actions
+
 - **Submit Action**: Auto-generates metadata using AI Generators
 - **Generate Action**: Orchestrates code creation with blueprint context
 - **Search Action**: Performs semantic search with vector similarity
 
 #### Specialized Generators  
+
 - **Description Generator**: Creates clear, developer-focused explanations
 - **Name Generator**: Produces meaningful names from code analysis
 - **Category Generator**: Automatically assigns relevant tags
 - **Improvement Generator**: Suggests code enhancements
 
 #### Future Agent Capabilities
+
 - **File Monitoring**: Detect and update blueprints on code changes
 - **Quality Assurance**: Continuous code improvement suggestions
 - **Test Integration**: Automated testing of generated code
 
 ### Automatic Metadata Generation
+
 - **Smart Naming**: Generates meaningful names from code analysis
 - **Rich Descriptions**: Creates detailed explanations of functionality
 - **Category Assignment**: Automatically tags with relevant categories
 - **Type Detection**: Identifies language, framework, and architectural patterns
 
 ### Context-Aware Code Generation
+
 - **Pattern Recognition**: Learns from your existing code style
 - **Technology Consistency**: Uses frameworks and libraries from your blueprints
 - **Architectural Alignment**: Follows your project structure patterns
 - **Best Practices**: Incorporates security and performance patterns from your code
 
 ### Vector-Based Similarity Search
+
 - Uses Google's text-embedding-004 model
 - 768-dimensional vector space for precise matching
 - Semantic understanding beyond keyword matching
@@ -150,26 +164,33 @@ Blueprints are automatically organized by:
 ## 🎨 Code Generation Examples
 
 ### Web API Generation
+
 ```bash
 bin/blueprintsCLI generate --prompt "Create a REST API for user management with JWT authentication"
 ```
+
 **Output**: Multi-file project with routes, models, middleware, and tests
 
 ### Algorithm Implementation
+
 ```bash
 bin/blueprintsCLI generate --prompt "Implement a binary search tree with traversal methods"
 ```
+
 **Output**: Complete class with insertion, deletion, and traversal algorithms
 
 ### Data Processing Pipeline
+
 ```bash
 bin/blueprintsCLI generate --prompt "Build a CSV processor with validation and transformation"
 ```
+
 **Output**: Modular pipeline with error handling and logging
 
 ## 🔧 Advanced Blueprint Management
 
 ### Viewing and Analysis
+
 ```bash
 # View blueprint with AI analysis
 bin/blueprintsCLI blueprint view 42 --analyze
@@ -182,6 +203,7 @@ bin/blueprintsCLI blueprint edit 42
 ```
 
 ### Batch Operations
+
 ```bash
 # List with filtering
 bin/blueprintsCLI blueprint list --format json | jq '.[] | select(.language == "ruby")'
@@ -193,11 +215,13 @@ bin/blueprintsCLI blueprint search "database" --limit 20
 ## 🛠️ Setup and Configuration
 
 ### Requirements
-- Ruby 3.0+
+
+- Ruby 3.1+
 - PostgreSQL with pgvector extension
 - Google Gemini API key
 
 ### Quick Start
+
 ```bash
 # Clone and install
 git clone <repository-url>
@@ -217,6 +241,7 @@ bin/blueprintsCLI blueprint submit "puts 'Hello, BlueprintsCLI!'"
 ```
 
 ### Configuration Options
+
 ```yaml
 # ~/.config/BlueprintsCLI/config.yml
 ai:
@@ -245,21 +270,25 @@ Rails, Sinatra, Flask, Django, React, Vue, Express, Spring, and many others
 ## 🎯 Use Cases
 
 ### Personal Code Library
+
 - Store and organize your utility functions
 - Build a searchable knowledge base of solutions
 - Generate variations of your proven patterns
 
 ### Team Knowledge Sharing
+
 - Centralize team coding patterns and best practices
 - Accelerate onboarding with contextual code examples
 - Maintain consistency across projects
 
 ### Rapid Prototyping
+
 - Generate boilerplate code from natural language
 - Combine existing patterns into new solutions
 - Iterate quickly with AI-assisted development
 
 ### Learning and Education
+
 - Analyze code patterns and improvements
 - Generate examples for specific concepts
 - Build understanding through contextual exploration
@@ -271,6 +300,7 @@ Rails, Sinatra, Flask, Django, React, Vue, Express, Spring, and many others
 BlueprintsCLI is architected using the [Sublayer](https://github.com/sublayerapp/sublayer) framework, a model-agnostic Ruby AI Agent framework that provides modular, intelligent components:
 
 #### 🎭 Actions (`Sublayer::Actions::Base`)
+
 Actions perform specific operations and handle business logic without complex decision-making:
 
 - **`Submit`** - Processes blueprint submission with AI-enhanced metadata generation
@@ -280,6 +310,7 @@ Actions perform specific operations and handle business logic without complex de
 - **`Config`** - Manages configuration setup and validation
 
 Example Action implementation:
+
 ```ruby
 class Submit < Sublayer::Actions::Base
   def call
@@ -291,6 +322,7 @@ end
 ```
 
 #### 🏭 Generators (`Sublayer::Generators::Base`)
+
 Generators focus on single AI generation tasks, producing specific outputs:
 
 - **`Description`** - Generates clear, developer-focused code descriptions
@@ -299,6 +331,7 @@ Generators focus on single AI generation tasks, producing specific outputs:
 - **`Improvement`** - Suggests code enhancements and optimizations
 
 Example Generator implementation:
+
 ```ruby
 class Description < Sublayer::Generators::Base
   llm_output_adapter type: :single_string,
@@ -312,6 +345,7 @@ end
 ```
 
 #### 🤖 Agents (`Sublayer::Agents::Base`)
+
 Autonomous entities for monitoring and automated tasks (extensible for future features):
 
 - **File change monitoring** - Automatically update blueprints when source files change
@@ -319,6 +353,7 @@ Autonomous entities for monitoring and automated tasks (extensible for future fe
 - **Code quality** - Monitor and suggest blueprint improvements
 
 #### 🔄 Model-Agnostic AI Integration
+
 Sublayer's flexible provider system supports multiple AI models:
 
 - **Google Gemini** (default) - `gemini-2.0-flash` for generation, `text-embedding-004` for embeddings
@@ -327,6 +362,7 @@ Sublayer's flexible provider system supports multiple AI models:
 - **Local models** - Via Ollama integration
 
 Configuration example:
+
 ```yaml
 ai:
   sublayer:
@@ -365,6 +401,7 @@ bundle exec pry
 BlueprintsCLI's Sublayer architecture makes it easy to add new AI-powered features:
 
 #### Creating Custom Generators
+
 ```ruby
 class CustomGenerator < Sublayer::Generators::Base
   llm_output_adapter type: :single_string,
@@ -382,6 +419,7 @@ end
 ```
 
 #### Adding New Actions
+
 ```ruby
 class CustomAction < Sublayer::Actions::Base
   def initialize(params)
@@ -397,6 +435,7 @@ end
 ```
 
 #### Building Autonomous Agents
+
 ```ruby
 class MonitoringAgent < Sublayer::Agents::Base
   trigger_on_files_changed { ["**/*.rb"] }
@@ -414,6 +453,7 @@ end
 ## 📖 Documentation Generation
 
 Generate AI-powered YARD documentation:
+
 ```bash
 bin/blueprintsCLI docs generate lib/my_class.rb
 ```

@@ -382,19 +382,19 @@ module BlueprintsCLI
 
     # Find similar blueprints - disabled for now, returns empty array
     def find_similar_blueprints(blueprint_id, options = {})
-      BlueprintsCLI.logger.info("Similar blueprints search disabled (enhanced RAG offline)")
+      BlueprintsCLI.logger.info('Similar blueprints search disabled (enhanced RAG offline)')
       []
     end
 
     # Analyze code patterns - disabled for now, returns empty hash
     def analyze_blueprint_patterns(blueprint_id)
-      BlueprintsCLI.logger.info("Pattern analysis disabled (enhanced RAG offline)")
+      BlueprintsCLI.logger.info('Pattern analysis disabled (enhanced RAG offline)')
       {}
     end
 
     # Rebuild search index - disabled for now
     def rebuild_search_index
-      BlueprintsCLI.logger.info("Search index rebuild disabled (enhanced RAG offline)")
+      BlueprintsCLI.logger.info('Search index rebuild disabled (enhanced RAG offline)')
     end
 
     # Get search suggestions - simplified fallback
