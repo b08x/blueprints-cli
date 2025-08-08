@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative '../models/blueprint'
-require_relative '../models/category'
+require_relative '../db/models/blueprint'
+require_relative '../db/models/category'
 require 'ruby_llm'
 require 'pgvector'
 

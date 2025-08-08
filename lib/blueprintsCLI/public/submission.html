@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Stitch Design</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+        :root {
+            --primary-background: #3D2B3D;
+            --surface-panels: rgba(255, 255, 255, 0.05);
+            --primary-accent-ctas: #B22222;
+            --secondary-accent: #D97925;
+            --text-light-gray: #C0C5CE;
+        }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--primary-background);
+            color: var(--text-light-gray);
+        }
+        .surface-panel {
+            background-color: var(--surface-panels);
+        }
+        .primary-accent {
+            background-color: var(--primary-accent-ctas);
+        }
+        .primary-accent:hover {
+            background-color: #9B1B1B;}
+        .secondary-accent {
+            color: var(--secondary-accent);
+        }
+        .input-field {
+             background-color: var(--surface-panels);
+             border-color: rgba(255, 255, 255, 0.1);
+        }
+        .input-field::placeholder {
+            color: rgba(192, 197, 206, 0.5);
+        }
+        .input-field:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--secondary-accent);
+            border-color: var(--secondary-accent);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+<div class="flex flex-col h-full">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[rgba(255,255,255,0.1)] px-10 py-4">
+<div class="flex items-center gap-4 text-[var(--text-light-gray)]">
+<svg class="h-8 w-8 text-[var(--secondary-accent)]" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+</svg>
+<h1 class="text-xl font-bold">Blueprints-CLI</h1>
+</div>
+<nav class="flex items-center gap-8">
+<a class="text-sm font-medium hover:text-[var(--secondary-accent)] transition-colors" href="#">Home</a>
+<a class="text-sm font-medium text-[var(--secondary-accent)]" href="#">Submit Blueprint</a>
+<a class="text-sm font-medium hover:text-[var(--secondary-accent)] transition-colors" href="#">Browse</a>
+<a class="text-sm font-medium hover:text-[var(--secondary-accent)] transition-colors" href="#">Docs</a>
+</nav>
+<div class="flex items-center gap-4">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBIDPVrrifNmDacXpVlRqdsQyPhaoMpvfBiaqd5ycdQdkTdrMbWFXbV1AYDzBhRjAGKdSefRJ_g_DcgaKiMW2mJKj1WSsjC8GGwweIHQHLpNll3jYO605Cr8TiantvgOQmsuvBIVqyUjZ9dKjJSJyLGEBR9BG8qCoMfhw04K1whbC8yxT6ci7lC0iXCmFqy6hOmyMfP_jyfnxSiM617sI4FjtPsuH8oug9Cwmp7D-i1SpqQtA4h9srhbd2G7DYcQr3sN0vYX6RYh_k");'></div>
+</div>
+</header>
+<main class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
+<div class="flex flex-col gap-6 surface-panel p-6 rounded-lg">
+<h2 class="text-2xl font-bold">Submit a Blueprint</h2>
+<div>
+<textarea class="w-full h-96 p-4 rounded-md input-field resize-none text-sm font-mono" placeholder="Paste your code snippet here..."></textarea>
+</div>
+<div class="flex justify-end">
+<button class="primary-accent text-white font-bold py-2 px-6 rounded-lg transition-colors">
+                        Generate Metadata
+                    </button>
+</div>
+</div>
+<div class="flex flex-col gap-6 surface-panel p-6 rounded-lg">
+<h2 class="text-2xl font-bold">AI Generated Metadata</h2>
+<div class="flex flex-col gap-4">
+<div>
+<label class="block text-sm font-medium mb-2" for="blueprint-name">Blueprint Name</label>
+<input class="w-full p-3 rounded-md input-field" id="blueprint-name" placeholder="e.g., 'React Fetch Hook'" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-medium mb-2" for="description">Description</label>
+<textarea class="w-full p-3 rounded-md input-field resize-none" id="description" placeholder="A concise summary of what the blueprint does." rows="5"></textarea>
+</div>
+<div>
+<label class="block text-sm font-medium mb-2" for="categories">Categories</label>
+<input class="w-full p-3 rounded-md input-field" id="categories" placeholder="e.g., 'react, hooks, api, frontend'" type="text"/>
+<p class="text-xs text-[rgba(192,197,206,0.6)] mt-2">Comma-separated list of relevant tags.</p>
+</div>
+</div>
+<div class="mt-auto flex justify-end">
+<button class="w-full primary-accent text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                        Submit Blueprint
+                    </button>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

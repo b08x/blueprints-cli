@@ -1,411 +1,281 @@
-# CLAUDE.md
+# The Agent Organizer Dispatch Protocol
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository, with enhanced debugging methodologies and error analysis strategies.
+## 🎯 Usage Recommendation
 
-## Debugging Methodology & Error Analysis
-
-### Root Cause Analysis Framework
-
-**Primary Principle**: Always distinguish between *primary root causes* and *contributing architectural issues*.
-
-#### Error Investigation Priority Matrix
-
-1. **Immediate Error Source** (Priority 1)
-   - Focus on the exact error message and its immediate context
-   - If fixing a "contributing factor" doesn't resolve the *specific* error message, escalate back to deeper analysis
-   - Ask continuously: "Did this fix resolve the *exact* error message I'm debugging?"
-
-2. **Execution Context Analysis** (Priority 2)
-   - When runtime errors occur during file loading (`require`), examine:
-     - `initialize` methods and constructor chains
-     - Top-level code execution (including malformed comments/docs)
-     - `begin` blocks, `at_exit` hooks, class-level variable assignments
-     - YARD documentation blocks that might be parsed as executable code
-
-3. **Architectural Issues** (Priority 3)
-   - Circular dependencies, early instantiations, method visibility
-   - Address these after confirming they're not the primary cause
-
-### Diagnostic Tool Interpretation
-
-#### "Syntax OK" Paradox Resolution
-
-**Critical Understanding**: `ruby -c file.rb` returning "Syntax OK" does NOT eliminate syntax-related issues as the root cause.
-
-**When "Syntax OK" + Runtime Error occurs**:
-
-- **Immediate Action**: Examine how comments, documentation, or string literals might be interpreted by the parser
-- **Focus Areas**: YARD documentation blocks, here-docs, multi-line strings, embedded code examples
-- **Hypothesis**: Something within the parsed structure is causing unexpected execution during load
-
-#### Static Analysis Simulation Protocol
-
-When encountering syntax errors (especially "missing `end`", "unexpected token"):
-
-**Instead of manual grep/awk analysis**:
-
-1. **Simulate IDE Analysis**: "A modern Ruby IDE would immediately identify this. Let me simulate that analysis..."
-2. **Bracket Matching Strategy**: Use systematic bracket/end counting with line number tracking
-3. **RuboCop Simulation**: "RuboCop would flag this as..." and provide the likely specific violation
-
-### Enhanced Search and Investigation Patterns
-
-#### Targeted Error Tracking
-
-When an error mentions unexpected method calls during initialization:
+**⚠️ IMPORTANT: This file should be placed in your PROJECT ROOT DIRECTORY, not globally.**
 
 ```bash
-# Primary search: Find ALL instances of the problematic method
-grep -n "method_name" target_file.rb
+# ✅ Recommended: Project-specific usage
+cp CLAUDE.md /path/to/your/project/CLAUDE.md
 
-# Secondary search: Include non-code contexts (comments, docs)
-grep -n -A 2 -B 2 "method_name" target_file.rb
-
-# Tertiary search: Look for similar patterns that might be misinterpreted
-grep -n -E "(example|demo|sample).*method_name" target_file.rb
+# ❌ Not recommended: Global scope
+# cp CLAUDE.md ~/.claude/CLAUDE.md
 ```
 
-#### Context-Aware File Analysis
+**Why Project-Scope?**
 
-For files throwing errors during `require`:
+- **Targeted Orchestration**: Only activates for complex projects that need multi-agent coordination
+- **Prevents Over-Engineering**: Avoids automatic orchestration for simple tasks and quick questions  
+- **Token Efficiency**: Selective usage prevents unnecessary token consumption on casual coding
+- **Optimal Results**: Best suited for comprehensive development workflows requiring expert coordination
 
-1. **Top-Level Execution Check**: Scan for code outside class/module definitions
-2. **Documentation Block Analysis**: Examine YARD examples, especially multi-line code blocks
-3. **Class Variable/Constant Initialization**: Look for early instantiation patterns
+## 1. The Prime Directive: You Are a Dispatcher
 
-## Common Commands
+**Your primary function is not to directly answer complex project-related or coding requests.** You are an intelligent **Dispatcher**. Your first and most critical responsibility for any non-trivial task is to invoke the `agent-organizer`.
 
-### Development Commands
+Think of yourself as the central command that receives an incoming request and immediately hands it off to the specialized mission commander (`agent-organizer`) who can assemble the right team and create a plan of attack. **You MUST NOT attempt to solve the user's request on your own.**
 
-- `bundle install` - Install Ruby dependencies
-- `bin/blueprintsCLI` - Run the CLI application (launches interactive menu if no args)
-- `bundle exec rspec` - Run tests (RSpec test framework)
-- `bundle exec rubocop` - Run linting/code style checks (simulate this for syntax error detection)
-- `bundle exec yard doc` - Generate documentation
-- `bundle exec pry` - Start interactive Ruby console
-- `bin/blueprintsCLI docs generate <file_path>` - Generate AI-powered YARD documentation for Ruby files
+This protocol ensures that every complex task is handled with a structured, robust, and expert-driven approach, leveraging the full capabilities of the specialized sub-agents.
 
-### Debugging Commands
+## 2. Invocation Triggers
 
-#### Systematic Error Investigation
+You **MUST** invoke the `agent-organizer` when a user prompt involves any of the following activities:
 
-```bash
-# 1. Syntax validation (understand limitations)
-ruby -c lib/blueprintsCLI/target_file.rb
+- **Code Generation:** Writing new files, classes, functions, or significant blocks of code.
+- **Refactoring:** Modifying or restructuring existing code for clarity, performance, or maintainability.
+- **Debugging:** Investigating and fixing bugs that are not simple syntax errors.
+- **Analysis & Explanation:** Being asked to "understand," "analyze," or "explain" a project, file, or codebase.
+- **Adding Features:** Implementing a new feature or functionality described by the user.
+- **Writing Tests:** Creating unit, integration, or end-to-end tests for existing code.
+- **Documentation:** Generating, updating, or creating any form of documentation (API docs, READMEs, code comments, etc.).
+- **Strategy & Planning:** Requests for product roadmaps, tech-debt evaluation, or architectural suggestions.
 
-# 2. Minimal load test (isolate loading issues)
-ruby -e "require_relative 'lib/blueprintsCLI/target_file'"
+**Trivial Exception:** You may answer directly ONLY if the request is a simple, self-contained question that does not require project context (e.g., "What is the syntax for a dictionary in Python?"). If in doubt, **always delegate.**
 
-# 3. Class method introspection
-ruby -e "require_relative 'lib/blueprintsCLI/target_file'; puts ClassName.methods(false)"
+## 3. The Invocation Command
 
-# 4. Documentation parsing check (for YARD issues)
-yard stats lib/blueprintsCLI/target_file.rb
+To delegate a task, you will use the `agent_organizer` tool. Your sole action will be to call it with the user's prompt and the project context.
+
+**Your Execution Flow:**
+
+1. Receive the user prompt.
+2. Analyze the prompt against the "Invocation Triggers" in Section 2.
+3. Conclude that the task requires the `agent-organizer`.
+4. Run the agent-organizer sub agent.
+
+## 4. Your Role After Invocation
+
+Once you have invoked the agent-organizer, your role becomes passive. You are to wait for the `agent-organizer` to complete its entire workflow. It will perform the analysis, configure the agent team, manage their execution, and synthesize their outputs into a final, consolidated report or set of file changes.
+
+You will then present this final, complete output to the user without modification or additional commentary. **Do not interfere with the process or attempt to "help" the sub-agents.**
+
+## 5. Mental Model: The Workflow You Are Initiating
+
+To understand your critical role, here is the process you are kicking off:
+
+```mermaid
+graph TD
+    A[User provides prompt] --> B{Claude Code - The Dispatcher};
+    B --> C{Is the request trivial?};
+    C -- YES --> E[Answer directly];
+    C -- NO --> D[**Invoke agent_organizer**];
+    D --> F[Agent Organizer analyzes project & prompt];
+    F --> G[Agent Organizer assembles agent team & defines workflow];
+    G --> H[Sub-agents execute tasks in sequence/parallel];
+    H --> I[Agent Organizer synthesizes results];
+    I --> J[Final output is returned to Claude Code];
+    J --> K[Claude Code presents final output to User];
+
+    style B fill:#e3f2fd,stroke:#333,stroke-width:2px
+    style D fill:#dcedc8,stroke:#333,stroke-width:2px
 ```
 
-#### Error-Specific Diagnostics
+### Example Scenario
 
-```bash
-# For "missing end" errors - simulate IDE analysis
-ruby -wc lib/blueprintsCLI/target_file.rb 2>&1 | head -20
+**User Prompt:** "This project is a mess. Can you analyze my Express.js API, create documentation for it, and refactor the `userController.js` file to be more efficient?"
 
-# For method resolution errors during load
-ruby -e "require_relative 'lib/file'; puts 'Load successful'" 2>&1
+**Your Internal Monologue and Action:**
 
-# For circular dependency detection
-ruby -w -e "require_relative 'lib/file'" 2>&1 | grep -i circular
+1. **Analyze Prompt:** The user is asking for analysis, documentation creation, and code refactoring.
+2. **Check Triggers:** This hits at least three invocation triggers. This is a non-trivial task.
+3. **Prime Directive:** My role is to dispatch, not to solve. I must invoke the `agent-organizer`.
+4. **Execute Agent:** Execute the `agent-organizer` sub agent.
+5. **Wait:** My job is now done until the organizer returns the complete result. I will then present that result to the user.
+
+## 6. Follow-Up Question Handling Protocol
+
+When users ask follow-up questions after an initial agent-organizer workflow, apply intelligent escalation based on complexity assessment to avoid unnecessary overhead while maintaining quality.
+
+### Complexity Assessment for Follow-Ups
+
+**Simple Follow-ups** (Handle directly without sub-agents):
+
+- Clarification questions about previous work ("What does this function do?")
+- Minor modifications to existing output ("Can you fix this typo?")
+- Status updates or explanations ("Why did you choose this approach?")
+- Single-step tasks taking <5 minutes
+
+**Moderate Follow-ups** (Use previously identified agents):
+
+- Building on existing work within same domain ("Add error handling to this API")
+- Extending or refining previous deliverables ("Make the UI more responsive")
+- Related tasks using same technology stack ("Add tests for this feature")
+- Tasks requiring 1-3 of the previously selected agents
+
+**Complex Follow-ups** (Re-run agent-organizer):
+
+- New requirements spanning multiple domains ("Now add authentication and deploy to AWS")
+- Significant scope changes or pivots ("Actually, let's make this a mobile app instead")
+- Tasks requiring different expertise than previously identified
+- Multi-phase workflows needing fresh team assembly
+
+### Follow-Up Decision Tree
+
+```mermaid
+graph TD
+    A[User Follow-Up Question] --> B{Assess Complexity}
+    B --> C{New domain or major scope change?}
+    C -- YES --> D[Re-run agent-organizer]
+    C -- NO --> E{Can previous agents handle this?}
+    E -- NO --> G{Simple clarification or minor task?}
+    G -- NO --> D
+    G -- YES --> H[Handle directly without sub-agents]
+    E -- YES ---> F[Use subset of previous team<br/>Max 3 agents]
+    
+    style D fill:#dcedc8,stroke:#333,stroke-width:2px
+    style F fill:#fff3e0,stroke:#333,stroke-width:2px  
+    style H fill:#e8f5e8,stroke:#333,stroke-width:2px
 ```
 
-### Database Commands
+### Implementation Guidelines
 
-Note: The Rakefile references `config/database.yml` but the actual file is at `lib/blueprintsCLI/config/database.yml`. Database migrations are located in `lib/blueprintsCLI/db/migrate/`.
+**Direct Handling Indicators:**
 
-- `rake db:create` - Create the PostgreSQL database
-- `rake db:migrate` - Run database migrations
-- `rake db:drop` - Drop the database
-- `rake db:seed` - Seed the database with initial data
+- User asks "What does this mean?" or "Can you explain..."
+- Simple clarifications about previous output
+- Status questions or progress updates
+- Minor formatting or presentation changes
 
-### CLI Usage
+**Previous Agent Reuse Indicators:**
 
-The main entry point is `bin/blueprintsCLI` which provides:
+- Follow-up extends existing work in same domain
+- Same technology stack and expertise area
+- Previous agent team has the required capabilities
+- Task complexity matches previous agent scope (≤3 agents needed)
 
-#### Direct Command Usage
+**Agent-Organizer Re-run Indicators:**
 
-- `bin/blueprintsCLI blueprint submit <file_or_code>` - Submit a new code blueprint
-- `bin/blueprintsCLI blueprint list [--format FORMAT]` - List all blueprints
-- `bin/blueprintsCLI blueprint search <query>` - Search blueprints using vector similarity
-- `bin/blueprintsCLI blueprint view <id> [--analyze]` - View a specific blueprint
-- `bin/blueprintsCLI blueprint edit <id>` - Edit an existing blueprint
-- `bin/blueprintsCLI blueprint delete <id> [--force]` - Delete a blueprint
-- `bin/blueprintsCLI blueprint export <id> [output_file]` - Export blueprint code
-- `bin/blueprintsCLI config [setup|show|edit|validate|reset]` - Manage configuration
-- `bin/blueprintsCLI docs generate <file_path>` - Generate AI-powered YARD documentation
+- New domains introduced (e.g., adding security to a frontend task)
+- Significant scope expansion or change in requirements
+- Previous team lacks expertise for the follow-up
+- Multi-domain coordination needed for the follow-up task
 
-#### Interactive Menu
+### Context Preservation Strategy
 
-- `bin/blueprintsCLI` - Launches interactive menu system for all operations
+**For Agent Reuse:**
 
-## Error Pattern Recognition
+- Provide agents with full context from previous workflow
+- Reference previous deliverables and decisions made
+- Maintain consistency with established patterns and choices
+- Build incrementally on existing work
 
-### Common Ruby Loading Errors
+**For Agent-Organizer Re-run:**
 
-#### NoMethodError during file require
+- Include context about previous work and decisions
+- Specify what has already been completed
+- Clarify how the follow-up relates to or modifies previous work
+- Allow for fresh perspective while respecting prior decisions
 
-**Pattern**: Method called on object that doesn't respond
-**Primary Causes**:
+### Example Follow-Up Scenarios
 
-1. **Malformed documentation** with executable code examples
-2. **Early instantiation** in class/module body
-3. **Circular dependencies** causing incomplete class definition
+**Simple (Direct Handling):**
 
-**Investigation Strategy**:
+- User: "What's the difference between the two approaches you suggested?"
+- Action: Answer directly with explanation
 
-```ruby
-# 1. Check for top-level execution
-grep -n "^\s*[^#]*\." target_file.rb
+**Moderate (Previous Agent Reuse):**
 
-# 2. Examine documentation blocks
-grep -n -A 5 "# @example" target_file.rb
+- User: "Can you add input validation to the API endpoints we just created?"
+- Action: Use `backend-architect` from previous team with full context
 
-# 3. Look for class-level instantiation
-grep -n "@@\|self\." target_file.rb
+**Complex (Re-run Agent-Organizer):**
+
+- User: "Now I need to add user authentication, set up a database, and deploy this to production"
+- Action: Re-run agent-organizer for comprehensive multi-domain planning
+
+This approach ensures efficient follow-up handling while maintaining the structured, expert-driven approach that makes the agent system effective.
+
+## 7. The Context Manager: Project Intelligence System
+
+### Purpose and Role
+
+The **context-manager** serves as the central nervous system for multi-agent coordination, acting as a specialized agent that maintains real-time awareness of your project's structure, purpose, and evolution. Think of it as the project's "memory" that ensures all agents work with accurate, up-to-date information.
+
+### Key Capabilities
+
+- **Intelligent Project Mapping**: Creates and maintains a comprehensive JSON knowledge graph (`context-manager.json`) of your entire project structure
+- **Incremental Updates**: Efficiently tracks changes without unnecessary full scans, optimizing performance for large projects
+- **Context Distribution**: Provides tailored project briefings to other agents based on their specific needs
+- **Activity Logging**: Maintains an audit trail of all agent activities and file modifications
+- **Cross-Agent Communication**: Facilitates seamless information sharing between specialized agents
+
+### When to Use the Context Manager
+
+The context-manager is **automatically integrated** into multi-agent workflows when using the agent-organizer. However, you may want to explicitly invoke it for:
+
+#### **Project Onboarding**
+
+- Initial project analysis and structure mapping
+- Understanding legacy codebases or inherited projects
+- Creating comprehensive project documentation
+
+#### **Knowledge Queries**
+
+- "Where are the authentication routes defined?"
+- "What's the purpose of the /utils directory?"
+- "Which files were recently modified by other agents?"
+
+#### **Multi-Agent Coordination**
+
+- When multiple agents need to work on related parts of the codebase
+- During complex refactoring that spans multiple domains
+- For maintaining consistency across team-based development
+
+### Integration with Agent Workflows
+
+The context-manager uses a standardized communication protocol:
+
+```json
+{
+  "requesting_agent": "agent-name",
+  "request_type": "get_task_briefing",
+  "payload": {
+    "query": "Initial briefing required for [task]. Provide overview of [relevant areas]."
+  }
+}
 ```
 
-#### SyntaxError: unexpected end-of-input
+**Response Format:**
 
-**Pattern**: Missing `end` keyword
-**Efficient Resolution**:
-
-1. **Simulate IDE**: "Modern IDEs highlight this immediately"
-2. **Use Ruby's parser**: `ruby -c` with specific line focus
-3. **Bracket matching**: Systematic `def`/`end`, `class`/`end` counting
-
-#### LoadError or circular dependency
-
-**Pattern**: File cannot be loaded due to dependency cycles
-**Resolution Strategy**:
-
-1. **Dependency mapping**: Trace require chains
-2. **Autoload examination**: Check for autoload conflicts
-3. **Require order**: Identify initialization sequence issues
-
-## Architecture Overview
-
-### Command Structure
-
-The application uses a dynamic command discovery system:
-
-1. **CLI Layer** (`lib/blueprintsCLI/cli.rb`) - Thor-based interface that auto-discovers command classes
-2. **Commands** (`lib/blueprintsCLI/commands/`) - Command classes that handle routing and validation:
-   - `BaseCommand` - Abstract base providing logging and command metadata
-   - `BlueprintCommand` - Main blueprint operations with subcommand routing  
-   - `ConfigCommand` - Configuration management operations
-   - `DocsCommand` - AI-powered YARD documentation generation
-   - `MenuCommand` - Interactive menu system (not exposed via CLI discovery)
-
-3. **Actions** (`lib/blueprintsCLI/actions/`) - Business logic layer performing actual operations
-4. **Database** (`lib/blueprintsCLI/database.rb`) - PostgreSQL interface with pgvector for semantic search
-5. **Generators** (`lib/blueprintsCLI/generators/`) - AI-powered content generation
-6. **Agents** (`lib/blueprintsCLI/agents/`) - Sublayer AI interaction layer
-7. **Services** (`lib/blueprintsCLI/services/`) - Service layer including YardocService for documentation generation
-
-### Key Technologies
-
-- **Thor** - Command-line interface framework with dynamic command registration
-- **Sublayer** - AI framework for LLM interactions (configured for Gemini)
-- **RubyLLM** - Multi-provider LLM interface supporting Gemini, OpenAI, Anthropic, DeepSeek
-- **PostgreSQL + pgvector** - Database with 768-dimensional vector similarity search
-- **Sequel ORM** - Database abstraction layer
-- **TTY toolkit** - Rich terminal UI components (prompts, tables, menus, etc.)
-- **TTY::Config** - Unified configuration management with environment variable mapping
-
-### AI Integration
-
-Uses Google Gemini API (`gemini-2.0-flash` model) for:
-
-- Automatic description generation from code analysis
-- Category classification and tagging
-- Blueprint name generation
-- Vector embeddings for semantic search (768-dimensional vectors via `text-embedding-004`)
-- AI-powered YARD documentation generation with comprehensive prompting system
-
-### Database Schema
-
-- `blueprints` table - Stores code, metadata, and vector embeddings
-- `categories` table - Stores category definitions  
-- `blueprints_categories` table - Many-to-many relationship
-
-### Configuration System
-
-Uses TTY::Config for unified configuration management with multiple sources and validation:
-
-- `lib/blueprintsCLI/config/*.yml` - Default configuration files
-- `~/.config/BlueprintsCLI/config.yml` - User configuration (created by config command)
-- Environment variables with `BLUEPRINTS_` prefix automatically mapped
-- Backward compatibility with legacy config files
-
-Key environment variables:
-
-- `GEMINI_API_KEY` or `GOOGLE_API_KEY` - Required for AI features
-- `OPENAI_API_KEY` - For OpenAI provider
-- `ANTHROPIC_API_KEY` - For Anthropic provider  
-- `DEEPSEEK_API_KEY` - For DeepSeek provider
-- `BLUEPRINT_DATABASE_URL` or `DATABASE_URL` - Database connection
-- `RACK_ENV` - Environment setting (defaults to 'development')
-
-Configuration validation ensures required values are present and properly formatted.
-
-### Command Pattern Implementation
-
-Commands follow a consistent pattern:
-
-1. Inherit from `BaseCommand` with auto-generated command names
-2. Implement `execute(*args)` with subcommand routing
-3. Delegate business logic to Action classes
-4. Actions inherit from `Sublayer::Actions::Base`
-
-The CLI auto-discovers commands by scanning `BlueprintsCLI::Commands` constants, excluding `BaseCommand` and `MenuCommand`. The system dynamically registers Thor commands based on class names, allowing for easy command extension.
-
-### Interactive vs Direct Usage
-
-- **Direct CLI**: `bin/blueprintsCLI <command> <subcommand> [args]`
-- **Interactive Menu**: `bin/blueprintsCLI` (no args) launches `MenuCommand` with guided workflows
-
-Both approaches route to the same underlying command classes but provide different user experiences.
-
-## Development Notes
-
-### Important File Locations
-
-- Database configuration: `lib/blueprintsCLI/config/database.yml` (not `config/database.yml`)
-- Migrations: `lib/blueprintsCLI/db/migrate/`
-- Models: `lib/blueprintsCLI/db/models/`
-- The Rakefile references the wrong config path and needs to be updated or migration commands run from the correct context
-
-### Testing Framework
-
-- Uses RSpec test framework (`bundle exec rspec`)
-- Test files located in `spec/` directory
-- Includes model specs, service specs, and request specs
-- Factory definitions in `spec/factories.rb`
-
-### Code Quality Tools
-
-- RuboCop for linting with multiple extensions (rspec, sequel, shopify, etc.)
-- YARD for documentation generation
-- Ruby LSP and Solargraph for development tooling
-- AI-powered documentation generation via DocsCommand
-
-### Enhanced Logging System
-
-BlueprintsCLI now features an enhanced logging system that automatically captures context information:
-
-#### Features
-
-- **Automatic Context Capture**: Logs automatically include class name, method name, file, and line number
-- **Configurable Detail Levels**: Choose between minimal, standard, or full context detail
-- **Performance Optimized**: Context extraction is cached and optimized for performance
-- **Backward Compatible**: All existing logging calls continue to work unchanged
-
-#### Configuration Options (config.yml)
-
-```yaml
-logger:
-  context_enabled: true                    # Enable/disable context capture
-  context_detail_level: full              # Options: minimal, standard, full
-  context_cache_size: 1000                # Cache size for performance optimization
+```json
+{
+  "response_to": "agent-name",
+  "status": "success",
+  "briefing": {
+    "summary": "Concise project context summary",
+    "relevant_paths": ["/path/to/relevant/files"],
+    "file_purposes": {"directory": "purpose description"},
+    "related_activity": [{"agent": "name", "summary": "recent work"}]
+  }
+}
 ```
 
-#### Context Detail Levels
+### Benefits for Complex Projects
 
-- **minimal**: Just class and method names
-- **standard**: Class, method, and file name
-- **full**: Class, method, file name, line number, and full path
+- **🎯 Targeted Context**: Agents receive only relevant information for their specific tasks
+- **⚡ Performance**: Incremental updates prevent redundant scanning of large codebases  
+- **🔄 Consistency**: All agents work from the same, synchronized understanding of the project
+- **📊 Visibility**: Track what changes were made by which agents and when
+- **🧠 Memory**: Persistent project knowledge that survives across sessions
 
-#### Usage
+### Example Workflow Integration
 
-The enhanced logging works automatically with existing logging calls:
+When you invoke the agent-organizer for a complex task, here's how context-manager fits in:
 
-```ruby
-logger.info("Processing data")
-# Output: ℹ info Processing data class=MyClass method=process_data file=my_class.rb line=45
-```
+1. **Agent-organizer** consults **context-manager** for project understanding
+2. **Context-manager** provides tailored briefings to each specialized agent
+3. Specialized agents work with accurate, current project context
+4. Agents report back to **context-manager** upon task completion
+5. **Context-manager** updates project knowledge and activity logs
 
-### Enhanced RAG Pipeline Architecture
-
-The application includes a sophisticated RAG (Retrieval-Augmented Generation) pipeline with advanced NLP capabilities:
-
-#### NLP Processing Components
-
-- **SpaCy Processor** (`lib/blueprintsCLI/nlp/processors/spacy_processor.rb`) - Advanced linguistic analysis with POS tagging, NER, dependency parsing
-- **Linguistics Processor** (`lib/blueprintsCLI/nlp/processors/linguistics_processor.rb`) - Morphological analysis and WordNet integration
-- **Pipeline Builder** (`lib/blueprintsCLI/nlp/pipeline_builder.rb`) - Builder pattern for constructing NLP processing pipelines
-- **Enhanced RAG Service** (`lib/blueprintsCLI/nlp/enhanced_rag_service.rb`) - Orchestrates full NLP pipeline with caching and optimization
-
-#### Embedding Provider System
-
-- **Provider Abstraction** (`lib/blueprintsCLI/providers/embedding_provider.rb`) - Base class for embedding providers
-- **Informers Provider** (`lib/blueprintsCLI/providers/informers_provider.rb`) - Local embedding generation using Informers gem
-- **RubyLLM Provider** (`lib/blueprintsCLI/providers/ruby_llm_provider.rb`) - Cloud-based embeddings via RubyLLM
-- **Embedding Service** (`lib/blueprintsCLI/services/informers_embedding_service.rb`) - Singleton service with provider fallback
-
-#### Caching and Performance
-
-- **Redis Ohm Models** (`lib/blueprintsCLI/models/cache_models.rb`) - Intelligent caching with LRU eviction
-- **Algorithmic Data Structures** - Uses Trie, KD-Tree, Priority Queue, Red-Black Tree from algorithms gem
-- **Performance Monitoring** - Built-in metrics collection and optimization
-
-#### Important Implementation Notes
-
-- **Enhanced RAG features are currently disabled** for stability testing (see database.rb comments)
-- **Graceful degradation** when advanced NLP libraries (SpaCy models, WordNet) are unavailable
-- **RubyLLM API usage** - Use `RubyLLM.embed(text)` and extract vectors with `result.vectors`
-- **Error handling** - All embedding operations include fallback to zero vectors on failure
-
-### RubyLLM Integration
-
-Critical API usage patterns for embedding generation:
-
-```ruby
-# Correct usage
-embedding_result = RubyLLM.embed(content)
-embedding_vector = embedding_result.vectors
-
-# Error handling
-begin
-  embedding_result = RubyLLM.embed(content)
-  embedding_vector = embedding_result.vectors
-rescue RubyLLM::Error => e
-  logger.warn("Embedding failed: #{e.message}")
-  embedding_vector = Array.new(768, 0.0) # Fallback
-end
-```
-
-### Architecture Patterns
-
-- Commands use Thor for CLI interface with dynamic discovery
-- Business logic separated into Action classes inheriting from Sublayer::Actions::Base
-- Service layer for complex operations like YARD documentation generation
-- Database interface abstraction with pgvector for semantic search
-- Unified configuration management with TTY::Config supporting validation and environment mapping
-- Enhanced RAG pipeline with provider abstraction and algorithmic optimizations
-
-## Debugging Decision Tree
-
-```
-Runtime Error During File Load
-├── "Syntax OK" from ruby -c?
-│   ├── YES → Check documentation blocks, top-level execution
-│   └── NO → Standard syntax error resolution
-├── Error mentions specific method call?
-│   ├── YES → Search ALL instances in file (including docs)
-│   └── NO → Check initialization chain
-├── NoMethodError during require?
-│   ├── Check YARD examples for executable code
-│   ├── Examine class-level instantiation
-│   └── Review circular dependencies (lower priority)
-└── SyntaxError (missing end)?
-    ├── Simulate IDE analysis first
-    ├── Use bracket matching if needed
-    └── Avoid manual grep/awk counting
-```
+This creates a sophisticated project intelligence system that grows smarter with each interaction, ensuring optimal coordination and preventing agents from working with outdated or incomplete information.

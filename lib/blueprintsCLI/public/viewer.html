@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Blueprints CLI</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script defer="" src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"></script>
+<link href="/css/app.css" rel="stylesheet"/>
+<script src="/js/app.js"></script>
+<script src="/js/viewer.js"></script>
+<style type="text/tailwindcss">
+        :root {
+            --primary-background: #3D2B3D;
+            --surface-panels: rgba(255, 255, 255, 0.05);
+            --primary-accent: #B22222;
+            --secondary-accent: #D97925;
+            --text-light-gray: #C0C5CE;
+            --text-secondary: #8A8F98;
+        }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--primary-background);
+            color: var(--text-light-gray);
+        }
+        .search-input {
+            @apply bg-[var(--surface-panels)] border-none text-[var(--text-light-gray)] placeholder:text-[var(--text-secondary)] focus:ring-0 focus:border-none rounded-lg;
+        }
+        .blueprint-list-item {
+            @apply flex items-center gap-4 p-4 rounded-lg cursor-pointer transition-colors duration-200;
+        }
+        .blueprint-list-item.active, .blueprint-list-item:hover {
+            @apply bg-[var(--surface-panels)];
+        }
+        .metadata-row {
+            @apply grid grid-cols-[150px_1fr] gap-4 py-4 border-b border-[rgba(255,255,255,0.1)];
+        }
+        .code-block {
+            @apply bg-[var(--surface-panels)] p-4 rounded-lg text-sm font-mono overflow-x-auto;
+        }
+        .form-checkbox {
+            @apply w-5 h-5 rounded bg-[var(--surface-panels)] border-[var(--surface-panels)] text-[var(--secondary-accent)] focus:ring-[var(--secondary-accent)] focus:ring-offset-0 focus:ring-opacity-50;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+<div class="flex h-screen w-full">
+<aside class="w-[320px] bg-[rgba(0,0,0,0.1)] flex flex-col border-r border-[var(--surface-panels)] shrink-0">
+<header class="flex items-center gap-3 p-4 border-b border-[var(--surface-panels)] shrink-0">
+<svg class="h-8 w-8 text-[var(--secondary-accent)]" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path clip-rule="evenodd" d="M39.475 21.6262C40.358 21.4363 40.6863 21.5589 40.7581 21.5934C40.7876 21.655 40.8547 21.857 40.8082 22.3336C40.7408 23.0255 40.4502 24.0046 39.8572 25.2301C38.6799 27.6631 36.5085 30.6631 33.5858 33.5858C30.6631 36.5085 27.6632 38.6799 25.2301 39.8572C24.0046 40.4502 23.0255 40.7407 22.3336 40.8082C21.8571 40.8547 21.6551 40.7875 21.5934 40.7581C21.5589 40.6863 21.4363 40.358 21.6262 39.475C21.8562 38.4054 22.4689 36.9657 23.5038 35.2817C24.7575 33.2417 26.5497 30.9744 28.7621 28.762C30.9744 26.5497 33.2417 24.7574 35.2817 23.5037C36.9657 22.4689 38.4054 21.8562 39.475 21.6262ZM4.41189 29.2403L18.7597 43.5881C19.8813 44.7097 21.4027 44.9179 22.7217 44.7893C24.0585 44.659 25.5148 44.1631 26.9723 43.4579C29.9052 42.0387 33.2618 39.5667 36.4142 36.4142C39.5667 33.2618 42.0387 29.9052 43.4579 26.9723C44.1631 25.5148 44.659 24.0585 44.7893 22.7217C44.9179 21.4027 44.7097 19.8813 43.5881 18.7597L29.2403 4.41187C27.8527 3.02428 25.8765 3.02573 24.2861 3.36776C22.6081 3.72863 20.7334 4.58419 18.8396 5.74801C16.4978 7.18716 13.9881 9.18353 11.5858 11.5858C9.18354 13.988 7.18717 16.4978 5.74802 18.8396C4.58421 20.7334 3.72865 22.6081 3.36778 24.2861C3.02574 25.8765 3.02429 27.8527 4.41189 29.2403Z" fill="currentColor" fill-rule="evenodd"></path></svg>
+<h1 class="text-xl font-bold text-white">Blueprints</h1>
+</header>
+<div class="p-4">
+<div class="relative">
+<svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-secondary)]" fill="currentColor" height="24" viewBox="0 0 256 256" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path></svg>
+<input class="search-input w-full pl-10 pr-4 py-2" placeholder="Search blueprints..." type="search"/>
+</div>
+</div>
+<nav class="flex-1 overflow-y-auto px-4 pb-4 space-y-1">
+<a class="blueprint-list-item active" href="#">
+<div class="flex-shrink-0 size-10 rounded-lg bg-[var(--surface-panels)] flex items-center justify-center">
+<svg class="h-6 w-6 text-[var(--text-light-gray)]" fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg"><path d="M181.66,146.34a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32-11.32L164.69,152l-18.35-18.34a8,8,0,0,1,11.32-11.32Zm-72-24a8,8,0,0,0-11.32,0l-24,24a8,8,0,0,0,0,11.32l24,24a8,8,0,0,0,11.32-11.32L91.31,152l18.35-18.34A8,8,0,0,0,109.66,122.34ZM216,88V216a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V40A16,16,0,0,1,56,24h96a8,8,0,0,1,5.66,2.34l56,56A8,8,0,0,1,216,88Zm-56-8h28.69L160,51.31Zm40,136V96H152a8,8,0,0,1-8-8V40H56V216H200Z"></path></svg>
+</div>
+<div>
+<p class="font-medium text-[var(--text-light-gray)]">React Component with Props</p>
+<p class="text-sm text-[var(--text-secondary)]">Last updated 2 days ago</p>
+</div>
+</a>
+<a class="blueprint-list-item" href="#">
+<div class="flex-shrink-0 size-10 rounded-lg bg-[var(--surface-panels)] flex items-center justify-center">
+<svg class="h-6 w-6 text-[var(--text-light-gray)]" fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg"><path d="M181.66,146.34a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32-11.32L164.69,152l-18.35-18.34a8,8,0,0,1,11.32-11.32Zm-72-24a8,8,0,0,0-11.32,0l-24,24a8,8,0,0,0,0,11.32l24,24a8,8,0,0,0,11.32-11.32L91.31,152l18.35-18.34A8,8,0,0,0,109.66,122.34ZM216,88V216a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V40A16,16,0,0,1,56,24h96a8,8,0,0,1,5.66,2.34l56,56A8,8,0,0,1,216,88Zm-56-8h28.69L160,51.31Zm40,136V96H152a8,8,0,0,1-8-8V40H56V216H200Z"></path></svg>
+</div>
+<div>
+<p class="font-medium text-[var(--text-light-gray)]">Node.js Server Setup</p>
+<p class="text-sm text-[var(--text-secondary)]">Last updated 1 week ago</p>
+</div>
+</a>
+<a class="blueprint-list-item" href="#">
+<div class="flex-shrink-0 size-10 rounded-lg bg-[var(--surface-panels)] flex items-center justify-center">
+<svg class="h-6 w-6 text-[var(--text-light-gray)]" fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg"><path d="M181.66,146.34a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32-11.32L164.69,152l-18.35-18.34a8,8,0,0,1,11.32-11.32Zm-72-24a8,8,0,0,0-11.32,0l-24,24a8,8,0,0,0,0,11.32l24,24a8,8,0,0,0,11.32-11.32L91.31,152l18.35-18.34A8,8,0,0,0,109.66,122.34ZM216,88V216a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V40A16,16,0,0,1,56,24h96a8,8,0,0,1,5.66,2.34l56,56A8,8,0,0,1,216,88Zm-56-8h28.69L160,51.31Zm40,136V96H152a8,8,0,0,1-8-8V40H56V216H200Z"></path></svg>
+</div>
+<div>
+<p class="font-medium text-[var(--text-light-gray)]">Python Script for Data</p>
+<p class="text-sm text-[var(--text-secondary)]">Last updated 3 weeks ago</p>
+</div>
+</a>
+</nav>
+</aside>
+<main class="flex-1 flex flex-col" x-data="{ sidebarOpen: true }">
+<header class="flex items-center justify-end p-4 border-b border-[var(--surface-panels)] shrink-0 h-[69px]">
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--primary-accent)] hover:bg-opacity-80 transition-colors text-white font-semibold">
+<svg fill="currentColor" height="20px" viewBox="0 0 256 256" width="20px" xmlns="http://www.w3.org/2000/svg"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path></svg>
+                        New Blueprint
+                </button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAU4oQsGVvNM_8g9bhqZzKlBuRTULyuCZeueMmh-ytt3oTLY4-EjsUjgjDWhSptusWs-BIGSVw5kLs1f-heeQZ6MYmxi7BhAUAauuOvYsiggtrmVwMz-yXd1HtokNYbJeEml4tnE6HUiGobz0GWbZCWfj7CqhewMsAFaXMc5x1TnCDSO0jCqcaimINV16RcxFLVpK5YeoqW1GccLnUVQzZdkqWw_1RMaXyCpzuuOWp7ajgGuvJN2YrpXrTTF1GOE2uGCLTUT3DS7ok");'></div>
+<button @click="sidebarOpen = !sidebarOpen" class="p-2 rounded-md hover:bg-[var(--surface-panels)] transition-colors">
+<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 6h16M4 12h16M4 18h7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+</header>
+<div class="flex-1 flex overflow-hidden">
+<div class="flex-1 overflow-y-auto p-8">
+<div class="max-w-4xl mx-auto">
+<div class="mb-8">
+<h2 class="text-3xl font-bold text-white mb-1">React Component with Props</h2>
+<p class="text-[var(--text-secondary)]">Last updated 2 days ago</p>
+</div>
+<section class="mb-8">
+<h3 class="text-xl font-semibold text-white mb-4 border-b border-[rgba(255,255,255,0.1)] pb-2">Metadata</h3>
+<div class="space-y-4">
+<div class="metadata-row">
+<p class="text-[var(--text-secondary)] font-medium">Description</p>
+<p class="text-[var(--text-light-gray)]">A reusable React component that accepts props for customization.</p>
+</div>
+<div class="metadata-row">
+<p class="text-[var(--text-secondary)] font-medium">Language</p>
+<p class="text-[var(--text-light-gray)]">JavaScript</p>
+</div>
+<div class="metadata-row">
+<p class="text-[var(--text-secondary)] font-medium">Framework</p>
+<p class="text-[var(--text-light-gray)]">React</p>
+</div>
+<div class="metadata-row">
+<p class="text-[var(--text-secondary)] font-medium">Tags</p>
+<div class="flex gap-2 flex-wrap">
+<span class="bg-[var(--secondary-accent)] bg-opacity-20 text-[var(--secondary-accent)] text-xs font-semibold px-2.5 py-1 rounded-full">component</span>
+<span class="bg-[var(--secondary-accent)] bg-opacity-20 text-[var(--secondary-accent)] text-xs font-semibold px-2.5 py-1 rounded-full">props</span>
+<span class="bg-[var(--secondary-accent)] bg-opacity-20 text-[var(--secondary-accent)] text-xs font-semibold px-2.5 py-1 rounded-full">reusable</span>
+</div>
+</div>
+</div>
+</section>
+<section class="mb-8">
+<div class="flex justify-between items-center mb-4 border-b border-[rgba(255,255,255,0.1)] pb-2">
+<h3 class="text-xl font-semibold text-white">Code</h3>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--secondary-accent)] hover:bg-opacity-80 transition-colors text-white font-semibold text-sm">
+<svg class="lucide lucide-sparkles" fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="16" xmlns="http://www.w3.org/2000/svg"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path><path d="M5 3v4"></path><path d="M19 17v4"></path><path d="M3 5h4"></path><path d="M17 19h4"></path></svg>
+                                Regenerate Blueprint
+                            </button>
+</div>
+<div class="code-block">
+<pre><code>
+import React from 'react';
+const CustomComponent = ({ title, children }) =&gt; {
+  return (
+    &lt;div className="p-4 border rounded-lg"&gt;
+      &lt;h1 className="text-xl font-bold"&gt;{title}&lt;/h1&gt;
+      &lt;div className="mt-2"&gt;
+        {children}
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+};
+export default CustomComponent;
+</code></pre>
+</div>
+</section>
+<div class="mt-8 flex justify-end gap-4">
+<button class="px-6 py-2 rounded-lg bg-[var(--surface-panels)] hover:bg-opacity-80 transition-colors font-semibold text-[var(--text-light-gray)]">Edit</button>
+<button class="px-6 py-2 rounded-lg bg-[var(--primary-accent)] hover:bg-opacity-80 transition-colors font-semibold text-white">Generate</button>
+</div>
+</div>
+</div>
+<aside :class="{'w-0 p-0 overflow-hidden': !sidebarOpen, 'p-6': sidebarOpen}" class="w-[350px] bg-[rgba(0,0,0,0.1)] flex flex-col border-l border-[var(--surface-panels)] transition-all duration-300">
+<div class="flex-1 overflow-y-auto" x-show="sidebarOpen">
+<h3 class="text-xl font-semibold text-white mb-4">AI Suggestions</h3>
+<div class="bg-[var(--surface-panels)] p-4 rounded-lg">
+<p class="text-[var(--text-secondary)] mb-4 text-sm">The AI has identified the following potential improvements:</p>
+<ol class="list-decimal list-inside space-y-4 text-[var(--text-light-gray)] text-sm">
+<li>
+<label class="flex items-start gap-3">
+<input checked="" class="form-checkbox mt-1 flex-shrink-0" type="checkbox"/>
+<span>Add PropTypes for type checking of props, improving component robustness and developer experience.</span>
+</label>
+</li>
+<li>
+<label class="flex items-start gap-3">
+<input class="form-checkbox mt-1 flex-shrink-0" type="checkbox"/>
+<span>Destructure props with default values to prevent rendering errors if props are not provided.</span>
+</label>
+</li>
+<li>
+<label class="flex items-start gap-3">
+<input checked="" class="form-checkbox mt-1 flex-shrink-0" type="checkbox"/>
+<span>Convert to a functional component with React Hooks if state or lifecycle methods are needed in the future. It is already a functional component, but explicitly stating this could be a reminder of best practices.</span>
+</label>
+</li>
+</ol>
+</div>
+<div class="mt-6 flex flex-col gap-3">
+<button class="w-full px-4 py-2 rounded-lg bg-[var(--primary-accent)] hover:bg-opacity-80 transition-colors font-semibold text-white">Apply Suggestions</button>
+<button class="w-full px-4 py-2 rounded-lg bg-[var(--surface-panels)] hover:bg-opacity-80 transition-colors font-semibold text-[var(--text-light-gray)]">Dismiss All</button>
+</div>
+</div>
+</aside>
+</div>
+</main>
+</div>
+
+</body></html>

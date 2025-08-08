@@ -47,7 +47,7 @@ gem 'rack', '~> 3.1'
 gem 'rack-test', '~> 2.2'
 gem 'rake', '~> 13.3'
 gem 'rbs'
-gem 'ruby_llm', '~> 1.3'
+gem 'ruby_llm'
 gem 'ruby-spacy', '~> 0.2.0'
 gem 'rwordnet', '~> 0.1.0'
 gem 'sequel', '~> 5.94'
@@ -71,3 +71,8 @@ gem 'tty-spinner', '~> 0.9.3'
 gem 'tty-table', '~> 0.12'
 gem 'tty-tree', '~> 0.4.0'
 gem 'tty-which', '~> 0.5.0'
+gem 'sinatra', '~> 4.1'
+gem 'falcon', '~> 0.45'
+
+gem "rackup", "~> 2.2"
+gem "puma", "~> 6.6"
