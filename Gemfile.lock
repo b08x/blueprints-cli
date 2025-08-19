@@ -1,3 +1,10 @@
+PATH
+  remote: .
+  specs:
+    blueprintsCLI (0.5.0)
+      sublayer (~> 0.2.9)
+      thor (~> 1.2)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -614,6 +621,7 @@ PLATFORMS
 
 DEPENDENCIES
   algorithms (~> 1.0)
+  blueprintsCLI!
   bm25f (~> 0.1.0)
   caliber (~> 0.67.0)
   circuit_breaker (~> 1.1)

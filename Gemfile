@@ -2,7 +2,7 @@
 
 source 'https://rubygems.org'
 
-# gemspec
+gemspec
 
 group :development, :test do
   gem 'rdoc'

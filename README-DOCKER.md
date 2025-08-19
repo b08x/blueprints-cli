@@ -2,13 +2,11 @@
 
 ## Overview
 
-The BlueprintsCLI application has been restructured into a microservices architecture with proper separation of concerns:
+The BlueprintsCLI application is containerized as a Ruby gem-based application with supporting services:
 
-- **Frontend**: Static web assets served by Nginx
-- **Backend**: Ruby API-only service  
+- **Backend**: Ruby CLI/API application built from gemspec
 - **Database**: PostgreSQL with pgvector extension
 - **Cache**: Redis for caching and background jobs
-- **Reverse Proxy**: Nginx for routing and load balancing
 
 ## Quick Start
 
@@ -22,8 +20,8 @@ rake docker:setup_env
 # Start development with hot-reload
 rake docker:dev:up
 
-# Start with admin tools
-rake docker:dev:up PROFILES=with-adminer,with-mail
+# Start with database admin tools
+rake docker:dev:up PROFILES=with-adminer
 ```
 
 ### Production Environment
@@ -35,33 +33,25 @@ rake docker:prod:deploy
 ## New Directory Structure
 
 ```
-docker/                          # ← NEW: Organized Docker configuration
+docker/                          # ← Organized Docker configuration
 ├── docker-compose.yml          # Production environment
 ├── docker-compose.dev.yml      # Development environment  
 ├── docker-compose.override.yml # Local customizations
 ├── .env.example                # Environment template
+├── Dockerfile                  # Production Ruby app container
+├── Dockerfile.dev              # Development Ruby app container
 ├── configs/
-│   ├── nginx/
-│   │   ├── production.conf     # Production Nginx config
-│   │   └── development.conf    # Development Nginx config
 │   └── postgres/
 │       └── init-scripts/       # Database initialization
 └── README.md                   # Comprehensive Docker guide
 
-frontend/                        # Frontend service
-├── pages/                      # HTML pages
-├── public/                     # CSS, JS, and static assets
-├── nginx.conf                  # (deprecated - moved to docker/configs/)
-└── Dockerfile                  # Frontend container
+lib/                            # BlueprintsCLI gem source code
+├── blueprintsCLI/             # Main application modules
+└── BlueprintsCLI.rb           # Main entry point
 
-backend/                         # Backend API service
-├── lib/                        # API application code
-├── config.ru                   # Rack configuration
-├── Gemfile                     # Ruby dependencies
-├── Dockerfile                  # Production container
-└── Dockerfile.dev              # Development container
-
-lib/                            # Original BlueprintsCLI code (mounted in backend)
+Gemfile                         # Ruby dependencies
+Gemfile.lock                   # Locked gem versions
+blueprintsCLI.gemspec          # Gem specification
 ```
 
 ## Comprehensive Rake Task Management
@@ -119,16 +109,13 @@ rake docker:help                # Show all available tasks
 
 ### Hot Reloading & Debugging
 - **Backend**: Automatic restart on code changes via `rerun`
-- **Frontend**: Live volume mounts for instant updates
+- **Code Volumes**: Live volume mounts for instant updates
 - **Debug Access**: Ruby debug port exposed (9229)
 - **Database Tools**: Adminer web interface available
-- **Email Testing**: MailCatcher for development emails
 
 ### Service Profiles
 Development environment supports optional profiles:
 - `with-adminer`: Database admin interface at http://localhost:8081
-- `with-mail`: Email testing at http://localhost:1080
-- `with-proxy`: Nginx reverse proxy testing
 
 ### Environment Configuration
 - **Template**: `docker/.env.example` with all options documented
@@ -157,27 +144,27 @@ Development environment supports optional profiles:
 
 ## Migration Benefits
 
-### From Old Setup
-- **Centralized Configuration**: All Docker files in one place
-- **Consistent Environments**: Standardized dev/prod configurations
-- **Task Automation**: Comprehensive Rake task coverage
-- **Better Documentation**: Detailed setup and troubleshooting guides
-- **Improved Performance**: Optimized configurations for both environments
+### Key Improvements
+- **Gem-based Build**: Proper bundle install using gemspec
+- **Security**: Non-root user implementation
+- **Simplicity**: Focused on essential services only
+- **Performance**: Optimized layer caching and build process
+- **Development**: Hot-reloading with volume mounts
 
 ### Preserved Features
-- **No Code Changes**: All existing functionality preserved
-- **Backward Compatibility**: Original `lib/blueprintsCLI/` code mounted
-- **Same API Endpoints**: All existing endpoints still available
+- **No Code Changes**: All existing CLI functionality preserved
+- **Gem Structure**: Standard Ruby gem layout maintained
+- **Database Integration**: PostgreSQL with pgvector support
 - **Data Persistence**: Database and Redis data preserved across updates
 
 ## What's New
 
-1. **Organized Structure**: Clean separation of Docker components
-2. **Comprehensive Rake Tasks**: 30+ tasks for Docker management
-3. **Environment Management**: Proper `.env` handling and validation
-4. **Production Optimizations**: Security, performance, and monitoring
-5. **Development Tools**: Adminer, MailCatcher, debug access
-6. **Documentation**: Detailed guides in `docker/README.md`
+1. **Simplified Architecture**: Focus on Ruby gem with essential services
+2. **Proper Gem Build**: Uses gemspec for correct dependency management
+3. **Security First**: Non-root containers and proper user permissions
+4. **Development Optimized**: Hot-reloading and debugging support
+5. **Clean Structure**: Removed unnecessary frontend/nginx complexity
+6. **Production Ready**: Efficient multi-stage builds with health checks
 
 ## Next Steps
 

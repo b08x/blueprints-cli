@@ -10,29 +10,12 @@ version: "3.8"
 # - Simplified networking for debugging
 
 services:
-  # Development Frontend Server
-  frontend-dev:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
-    container_name: blueprintscli_frontend_dev
-    restart: unless-stopped
-    volumes:
-      - ../frontend/pages:/usr/share/nginx/html/pages
-      - ../frontend/public:/usr/share/nginx/html/public
-      - ./configs/nginx/development.conf:/etc/nginx/conf.d/default.conf:ro
-    ports:
-      - "${FRONTEND_DEV_PORT:-8080}:8080"
-    networks:
-      - blueprintscli-dev
-    depends_on:
-      - backend-dev
 
   # Development Backend API with Hot Reloading
   backend-dev:
     build:
       context: ..
-      dockerfile: Dockerfile.dev
+      dockerfile: docker/Dockerfile.dev
     container_name: blueprintscli_backend_dev
     restart: unless-stopped
     environment:
@@ -150,37 +133,7 @@ services:
       - with-adminer
     logging: *logging-dev
 
-  # Mail Catcher for Development Email Testing
-  mailcatcher:
-    image: dockage/mailcatcher:latest
-    container_name: blueprintscli_mailcatcher
-    restart: unless-stopped
-    ports:
-      - "${MAILCATCHER_WEB_PORT:-1080}:1080" # Web interface
-      - "${MAILCATCHER_SMTP_PORT:-1025}:1025" # SMTP server
-    networks:
-      - blueprintscli-dev
-    profiles:
-      - with-mail
-    logging: *logging-dev
 
-  # Development Reverse Proxy (Optional, for testing production-like routing)
-  nginx-dev:
-    image: nginx:alpine
-    container_name: blueprintscli_nginx_dev
-    restart: unless-stopped
-    ports:
-      - "${NGINX_DEV_PORT:-8000}:80"
-    volumes:
-      - ./configs/nginx/development.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - backend-dev
-      - frontend-dev
-    networks:
-      - blueprintscli-dev
-    profiles:
-      - with-proxy
-    logging: *logging-dev
 
 volumes:
   postgres_dev_data:
@@ -204,18 +157,13 @@ networks:
 # Start with database admin tool:
 # docker compose -f docker/docker-compose.dev.yml --profile with-adminer up
 #
-# Start with all development tools:
-# docker compose -f docker/docker-compose.dev.yml --profile with-adminer --profile with-mail up
-#
 # Reset development database:
 # docker compose -f docker/docker-compose.dev.yml down postgres-dev
 # docker volume rm blueprintscli_postgres_dev_data
 # docker compose -f docker/docker-compose.dev.yml up postgres-dev
 #
 # Access services:
-# - Frontend: http://localhost:8080
 # - Backend API: http://localhost:3000/api
 # - Database: localhost:5433 (postgres/dev_password)
 # - Redis: localhost:6380
 # - Adminer: http://localhost:8081 (with --profile with-adminer)
-# - MailCatcher: http://localhost:1080 (with --profile with-mail)

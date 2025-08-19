@@ -4,24 +4,36 @@ FROM ruby:3.3-alpine
 RUN apk add --no-cache \
     build-base \
     postgresql-dev \
+    libffi-dev \
+    yaml-dev \
     git \
     curl \
     bash
 
+# Create non-root user for security
+RUN addgroup -g 1000 -S app && \
+    adduser -u 1000 -S app -G app
+
 # Set working directory  
 WORKDIR /app
 
-# Copy Gemfile and install gems
-COPY ../Gemfile ../Gemfile.lock ./
-RUN bundle config set --local deployment 'true' && \
-    bundle config set --local without 'development test' && \
-    bundle install
+# Copy Gemfile, gemspec and install gems
+COPY Gemfile Gemfile.lock blueprintsCLI.gemspec ./
+COPY lib/blueprintsCLI/version.rb ./lib/blueprintsCLI/
 
-# # Create directories for logs and tmp
-# RUN mkdir -p log tmp
+RUN bundle config set --local without 'test' && \
+    bundle install --jobs 4 --retry 3
 
-# Expose port 3000
+# Create directories and set ownership
+RUN mkdir -p log tmp && \
+    chown -R app:app /app
+
+# Switch to non-root user
+USER app
+
+# Expose port 3000 and debug port
 EXPOSE 3000
+EXPOSE 9229
 
 # For development, we'll mount the code as a volume
 # and use rerun for auto-reloading
