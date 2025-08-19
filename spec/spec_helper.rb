@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
 # spec/spec_helper.rb
+require 'simplecov'
+SimpleCov.start
 
 # Set the environment to "test"
 ENV['RACK_ENV'] = 'test'
 
-# Load the application environment
-require 'blueprintsCLI/config/environment'
+# Load the application
+require_relative '../lib/BlueprintsCLI'
+require_relative '../lib/blueprintsCLI/database'
 
 # Load RSpec and Rack::Test
 require 'rspec'
@@ -29,13 +32,16 @@ RSpec.configure do |config|
   # Database cleaning strategy
   config.before(:suite) do
     # Run migrations before the test suite starts
+    db_instance = BlueprintsCLI::BlueprintDatabase.new
     Sequel.extension :migration
-    Sequel::Migrator.run(DB, 'lib/blueprintsCLI/db/migrate')
+    db_path = File.expand_path('../lib/blueprintsCLI/db/migrate', __dir__)
+    Sequel::Migrator.run(db_instance.db, db_path)
   end
 
   config.around(:each) do |example|
     # Use a database transaction for each test
-    DB.transaction(rollback: :always, auto_savepoint: true) do
+    db_instance = BlueprintsCLI::BlueprintDatabase.new
+    db_instance.db.transaction(rollback: :always, auto_savepoint: true) do
       example.run
     end
   end
@@ -55,6 +61,6 @@ RSpec.configure do |config|
 
   # Function to define the app for Rack::Test
   def app
-    App.new
+    BlueprintsCLI::WebApp
   end
 end

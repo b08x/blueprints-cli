@@ -3,7 +3,7 @@
 # spec/services/blueprint_service_spec.rb
 
 require 'spec_helper'
-require_relative '../../app/services/blueprint_service'
+require_relative '../../backend/lib/services/blueprint_service'
 
 RSpec.describe BlueprintService do
   let(:service) { BlueprintService.new }

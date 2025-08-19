@@ -21,16 +21,34 @@ CONFIG = BlueprintsCLI::Configuration.new
 namespace :db do
   desc 'Create the database'
   task :create do
+    require 'pg'
     require 'uri'
     uri = URI.parse(CONFIG.database_url)
-    `createdb #{uri.path[1..]}` # Remove leading slash from path
+    db_name = uri.path[1..]
+    begin
+      PG.connect(dbname: 'postgres', user: uri.user, password: uri.password, host: uri.host, port: uri.port) do |conn|
+        conn.exec("CREATE DATABASE #{db_name}")
+      end
+      puts "Database '#{db_name}' created."
+    rescue PG::DuplicateDatabase
+      puts "Database '#{db_name}' already exists."
+    end
   end
 
   desc 'Drop the database'
   task :drop do
+    require 'pg'
     require 'uri'
     uri = URI.parse(CONFIG.database_url)
-    `dropdb #{uri.path[1..]}` # Remove leading slash from path
+    db_name = uri.path[1..]
+    begin
+      PG.connect(dbname: 'postgres', user: uri.user, password: uri.password, host: uri.host, port: uri.port) do |conn|
+        conn.exec("DROP DATABASE IF EXISTS #{db_name}")
+      end
+      puts "Database '#{db_name}' dropped."
+    rescue PG::InvalidCatalogName
+      puts "Database '#{db_name}' does not exist."
+    end
   end
 
   desc 'Migrate the database'
@@ -43,6 +61,15 @@ namespace :db do
   desc 'Seed the database'
   task :seed do
     require 'blueprintsCLI/db/seeds' if File.exist?('lib/blueprintsCLI/db/seeds.rb')
+  end
+
+  desc 'Rebuild the database'
+  task rebuild: %i[drop create migrate]
+
+  desc 'Reset the test database'
+  task :reset_test do
+    ENV['RACK_ENV'] = 'test'
+    Rake::Task['db:rebuild'].invoke
   end
 end
 
