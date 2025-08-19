@@ -31,7 +31,7 @@ services:
   # Development Backend API with Hot Reloading
   backend-dev:
     build:
-      context: ../backend
+      context: ..
       dockerfile: Dockerfile.dev
     container_name: blueprintscli_backend_dev
     restart: unless-stopped
@@ -67,7 +67,7 @@ services:
       redis-dev:
         condition: service_started
     volumes:
-      - ../backend:/app
+      - ..:/app
       - backend_dev_gems:/usr/local/bundle
       - backend_dev_logs:/app/log
     networks:
@@ -78,7 +78,7 @@ services:
         bundle exec rake db:create &&
         bundle exec rake db:migrate &&
         echo 'Starting application server...' &&
-        bundle exec rerun --background --signal TERM 'rackup config.ru -o 0.0.0.0 -p 3000 -s webrick'
+        bundle exec rerun --background --signal TERM 'rackup lib/blueprintsCLI/web_config.ru -o 0.0.0.0 -p 3000 -s webrick'
       "
 
   # Development Database with Sample Data

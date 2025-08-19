@@ -60,7 +60,7 @@ services:
   # Backend API Service
   backend-api:
     build:
-      context: ../backend
+      context: ..
       dockerfile: Dockerfile
     container_name: blueprintscli_api
     restart: unless-stopped
@@ -91,13 +91,13 @@ services:
       redis:
         condition: service_started
     volumes:
-      - ../lib:/app/lib:ro  # Mount original lib directory for access to models/services
+      - ../lib:/app/lib:ro  # Mount lib directory for access to models/services
       - backend_logs:/app/log
       - backend_uploads:/app/uploads
     networks:
       - blueprintscli
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3

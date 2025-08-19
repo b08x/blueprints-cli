@@ -10,7 +10,7 @@ GEM
   specs:
     aasm (5.5.1)
       concurrent-ruby (~> 1.0)
-    activesupport (8.0.2)
+    activesupport (8.0.2.1)
       base64
       benchmark (>= 0.3)
       bigdecimal
@@ -27,7 +27,7 @@ GEM
       public_suffix (>= 2.0.2, < 7.0)
     algorithms (1.0.1)
     ast (2.4.3)
-    async (2.27.0)
+    async (2.27.3)
       console (~> 1.29)
       fiber-annotation
       io-event (~> 1.11)
@@ -41,9 +41,9 @@ GEM
       io-endpoint
       io-stream
       memory-leak (~> 0.5)
-    async-http (0.89.0)
+    async-http (0.91.0)
       async (>= 2.10.2)
-      async-pool (~> 0.9)
+      async-pool (~> 0.11)
       io-endpoint (~> 0.14)
       io-stream (~> 0.6)
       metrics (~> 0.12)
@@ -55,7 +55,7 @@ GEM
       async-http (~> 0.56)
     async-pool (0.11.0)
       async (>= 2.0)
-    async-service (0.13.0)
+    async-service (0.14.1)
       async
       async-container (~> 0.16)
     backport (1.2.0)
@@ -146,9 +146,9 @@ GEM
       versionaire (~> 13.10)
       zeitwerk (~> 2.7)
     event_stream_parser (1.0.0)
-    factory_bot (6.5.4)
+    factory_bot (6.5.5)
       activesupport (>= 6.1.0)
-    falcon (0.52.0)
+    falcon (0.52.3)
       async
       async-container (~> 0.20)
       async-container-supervisor (~> 0.5.0)
@@ -307,7 +307,7 @@ GEM
     process_executer (1.3.0)
     progressbar (1.13.0)
     protocol-hpack (1.5.1)
-    protocol-http (0.51.0)
+    protocol-http (0.52.0)
     protocol-http1 (0.34.1)
       protocol-http (~> 0.22)
     protocol-http2 (0.22.1)
@@ -357,7 +357,7 @@ GEM
     redic (1.5.3)
       hiredis
     refinements (12.11.0)
-    regexp_parser (2.11.0)
+    regexp_parser (2.11.2)
     reverse_markdown (3.0.0)
       nokogiri
     rexml (3.4.1)
@@ -374,8 +374,8 @@ GEM
     rspec-mocks (3.13.5)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
-    rspec-support (3.13.4)
-    rubocop (1.79.1)
+    rspec-support (3.13.5)
+    rubocop (1.79.2)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.1.0)
@@ -428,7 +428,7 @@ GEM
       language_server-protocol (~> 3.17.0)
       prism (>= 1.2, < 2.0)
       rbs (>= 3, < 5)
-    ruby-openai (8.1.0)
+    ruby-openai (8.2.0)
       event_stream_parser (>= 0.3.0, < 2.0.0)
       faraday (>= 1)
       faraday-multipart (>= 1)
@@ -439,7 +439,7 @@ GEM
       ruby-openai
       terminal-table (~> 3.0.1)
     ruby2_keywords (0.0.5)
-    ruby_llm (1.5.1)
+    ruby_llm (1.6.2)
       base64
       event_stream_parser (~> 1)
       faraday (>= 1.10.0)
@@ -461,7 +461,7 @@ GEM
       progressbar (>= 0.10.0)
       rubyzip (~> 0.9.9)
     securerandom (0.4.1)
-    sequel (5.95.0)
+    sequel (5.95.1)
       bigdecimal
     simplecov (0.22.0)
       docile (~> 1.1)
@@ -540,7 +540,7 @@ GEM
     tone (1.10.0)
       refinements (~> 12.10)
       zeitwerk (~> 2.7)
-    traces (0.16.2)
+    traces (0.17.0)
     treat (2.1.0)
       birch
       schiphol

@@ -26,7 +26,8 @@ namespace :db do
     uri = URI.parse(CONFIG.database_url)
     db_name = uri.path[1..]
     begin
-      PG.connect(dbname: 'postgres', user: uri.user, password: uri.password, host: uri.host, port: uri.port) do |conn|
+      PG.connect(dbname: 'postgres', user: uri.user, password: uri.password, host: uri.host,
+                 port: uri.port) do |conn|
         conn.exec("CREATE DATABASE #{db_name}")
       end
       puts "Database '#{db_name}' created."
@@ -42,7 +43,8 @@ namespace :db do
     uri = URI.parse(CONFIG.database_url)
     db_name = uri.path[1..]
     begin
-      PG.connect(dbname: 'postgres', user: uri.user, password: uri.password, host: uri.host, port: uri.port) do |conn|
+      PG.connect(dbname: 'postgres', user: uri.user, password: uri.password, host: uri.host,
+                 port: uri.port) do |conn|
         conn.exec("DROP DATABASE IF EXISTS #{db_name}")
       end
       puts "Database '#{db_name}' dropped."
@@ -410,10 +412,10 @@ namespace :docker do
 
       Development Environment:
         rake docker:dev:up             - Start development environment
-        rake docker:dev:down           - Stop development environment  
+        rake docker:dev:down           - Stop development environment#{'  '}
         rake docker:dev:restart        - Restart development environment
         rake docker:dev:logs           - Show development logs
-        rake docker:dev:shell          - Open shell in backend container
+        rake docker:dev:shell          - Open shell in API container
         rake docker:dev:db_shell       - Open psql shell (development)
         rake docker:dev:redis_cli      - Open redis-cli (development)
 
@@ -456,7 +458,7 @@ namespace :docker do
   task :setup_env do
     env_file = 'docker/.env'
     env_example = 'docker/.env.example'
-    
+
     if File.exist?(env_file)
       puts "⚠️  #{env_file} already exists. Remove it first if you want to recreate."
     elsif File.exist?(env_example)
@@ -473,13 +475,13 @@ namespace :docker do
   task :check_env do
     required_vars = %w[POSTGRES_DB POSTGRES_USER POSTGRES_PASSWORD]
     env_file = 'docker/.env'
-    
+
     if File.exist?(env_file)
       env_vars = File.readlines(env_file).map { |line| line.split('=')[0] }
       missing_vars = required_vars - env_vars
-      
+
       if missing_vars.empty?
-        puts "✅ All required environment variables are configured"
+        puts '✅ All required environment variables are configured'
       else
         puts "❌ Missing required environment variables: #{missing_vars.join(', ')}"
         exit 1
@@ -497,22 +499,22 @@ namespace :docker do
       profiles = ENV['PROFILES']&.split(',')
       cmd = "docker compose -f #{DOCKER_COMPOSE_DEV_FILE}"
       cmd += " --profile #{profiles.join(' --profile ')}" if profiles
-      cmd += " up -d"
-      
-      puts "🚀 Starting development environment..."
+      cmd += ' up -d'
+
+      puts '🚀 Starting development environment...'
       system(cmd) || exit(1)
-      puts "✅ Development environment started!"
-      puts "🌐 Frontend: http://localhost:8080"
-      puts "🔧 Backend API: http://localhost:3000"
-      puts "🗄️  Database: localhost:5433"
-      puts "📊 Adminer: http://localhost:8081 (if --profile with-adminer was used)"
+      puts '✅ Development environment started!'
+      puts '🌐 Frontend: http://localhost:8080'
+      puts '🔧 Backend API: http://localhost:3000'
+      puts '🗄️  Database: localhost:5433'
+      puts '📊 Adminer: http://localhost:8081 (if --profile with-adminer was used)'
     end
 
     desc 'Stop development environment'
     task :down do
-      puts "🛑 Stopping development environment..."
+      puts '🛑 Stopping development environment...'
       system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} down") || exit(1)
-      puts "✅ Development environment stopped!"
+      puts '✅ Development environment stopped!'
     end
 
     desc 'Restart development environment'
@@ -530,21 +532,21 @@ namespace :docker do
       system(cmd)
     end
 
-    desc 'Open shell in backend development container'
+    desc 'Open shell in API development container'
     task :shell do
-      puts "🐚 Opening shell in backend development container..."
+      puts '🐚 Opening shell in API development container...'
       system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} exec backend-dev /bin/bash")
     end
 
     desc 'Open PostgreSQL shell (development)'
     task :db_shell do
-      puts "🗄️  Opening PostgreSQL shell (development)..."
+      puts '🗄️  Opening PostgreSQL shell (development)...'
       system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} exec postgres-dev psql -U postgres -d blueprints_cli_development")
     end
 
     desc 'Open Redis CLI (development)'
     task :redis_cli do
-      puts "📊 Opening Redis CLI (development)..."
+      puts '📊 Opening Redis CLI (development)...'
       system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} exec redis-dev redis-cli")
     end
   end
@@ -553,17 +555,17 @@ namespace :docker do
   namespace :prod do
     desc 'Start production environment'
     task :up do
-      puts "🚀 Starting production environment..."
+      puts '🚀 Starting production environment...'
       system("docker compose -f #{DOCKER_COMPOSE_FILE} up -d") || exit(1)
-      puts "✅ Production environment started!"
-      puts "🌐 Application: http://localhost"
+      puts '✅ Production environment started!'
+      puts '🌐 Application: http://localhost'
     end
 
     desc 'Stop production environment'
     task :down do
-      puts "🛑 Stopping production environment..."
+      puts '🛑 Stopping production environment...'
       system("docker compose -f #{DOCKER_COMPOSE_FILE} down") || exit(1)
-      puts "✅ Production environment stopped!"
+      puts '✅ Production environment stopped!'
     end
 
     desc 'Restart production environment'
@@ -583,21 +585,21 @@ namespace :docker do
 
     desc 'Deploy production environment with health checks'
     task :deploy do
-      puts "🚀 Deploying production environment..."
-      
+      puts '🚀 Deploying production environment...'
+
       # Build images
       system("docker compose -f #{DOCKER_COMPOSE_FILE} build") || exit(1)
-      
+
       # Start services
       system("docker compose -f #{DOCKER_COMPOSE_FILE} up -d") || exit(1)
-      
+
       # Wait for health checks
-      puts "⏳ Waiting for services to become healthy..."
+      puts '⏳ Waiting for services to become healthy...'
       sleep 30
-      
+
       # Check health
       Rake::Task['docker:health'].invoke
-      puts "✅ Production deployment completed!"
+      puts '✅ Production deployment completed!'
     end
   end
 
@@ -607,8 +609,8 @@ namespace :docker do
     task :backup do
       timestamp = Time.now.strftime('%Y%m%d_%H%M%S')
       backup_file = "docker/data/backups/backup_#{timestamp}.sql"
-      
-      puts "💾 Creating database backup..."
+
+      puts '💾 Creating database backup...'
       FileUtils.mkdir_p('docker/data/backups')
       system("docker compose -f #{DOCKER_COMPOSE_FILE} exec -T postgres pg_dump -U postgres blueprints_cli_production > #{backup_file}") || exit(1)
       puts "✅ Database backup saved to #{backup_file}"
@@ -616,32 +618,32 @@ namespace :docker do
 
     desc 'Restore database from backup'
     task :restore do
-      backup_file = ENV['BACKUP_FILE']
+      backup_file = ENV.fetch('BACKUP_FILE', nil)
       if backup_file.nil? || !File.exist?(backup_file)
-        puts "❌ Please specify BACKUP_FILE environment variable with valid backup file"
+        puts '❌ Please specify BACKUP_FILE environment variable with valid backup file'
         exit 1
       end
-      
-      puts "⚠️  This will replace the current database. Continue? (y/N)"
+
+      puts '⚠️  This will replace the current database. Continue? (y/N)'
       response = STDIN.gets.chomp.downcase
       exit unless response == 'y'
-      
+
       puts "🔄 Restoring database from #{backup_file}..."
       system("docker compose -f #{DOCKER_COMPOSE_FILE} exec -T postgres psql -U postgres blueprints_cli_production < #{backup_file}") || exit(1)
-      puts "✅ Database restored successfully!"
+      puts '✅ Database restored successfully!'
     end
 
     desc 'Reset development database'
     task :reset do
-      puts "⚠️  This will destroy the development database. Continue? (y/N)"
+      puts '⚠️  This will destroy the development database. Continue? (y/N)'
       response = STDIN.gets.chomp.downcase
       exit unless response == 'y'
-      
-      puts "🔄 Resetting development database..."
+
+      puts '🔄 Resetting development database...'
       system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} down postgres-dev")
-      system("docker volume rm blueprintscli_postgres_dev_data 2>/dev/null || true")
+      system('docker volume rm blueprintscli_postgres_dev_data 2>/dev/null || true')
       system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} up -d postgres-dev")
-      puts "✅ Development database reset!"
+      puts '✅ Development database reset!'
     end
 
     desc 'Run migrations in container'
@@ -649,10 +651,10 @@ namespace :docker do
       env = ENV['RAILS_ENV'] || 'development'
       compose_file = env == 'production' ? DOCKER_COMPOSE_FILE : DOCKER_COMPOSE_DEV_FILE
       service = env == 'production' ? 'backend-api' : 'backend-dev'
-      
+
       puts "🔄 Running database migrations (#{env})..."
       system("docker compose -f #{compose_file} exec #{service} bundle exec rake db:migrate") || exit(1)
-      puts "✅ Migrations completed!"
+      puts '✅ Migrations completed!'
     end
 
     desc 'Seed database in container'
@@ -660,92 +662,92 @@ namespace :docker do
       env = ENV['RAILS_ENV'] || 'development'
       compose_file = env == 'production' ? DOCKER_COMPOSE_FILE : DOCKER_COMPOSE_DEV_FILE
       service = env == 'production' ? 'backend-api' : 'backend-dev'
-      
+
       puts "🌱 Seeding database (#{env})..."
       system("docker compose -f #{compose_file} exec #{service} bundle exec rake db:seed") || exit(1)
-      puts "✅ Database seeding completed!"
+      puts '✅ Database seeding completed!'
     end
   end
 
   # Utility tasks
   desc 'Build all Docker images'
   task :build do
-    puts "🔨 Building all Docker images..."
+    puts '🔨 Building all Docker images...'
     system("docker compose -f #{DOCKER_COMPOSE_FILE} build") || exit(1)
     system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} build") || exit(1)
-    puts "✅ All images built successfully!"
+    puts '✅ All images built successfully!'
   end
 
   namespace :build do
     desc 'Force rebuild all Docker images'
     task :force do
-      puts "🔨 Force rebuilding all Docker images..."
+      puts '🔨 Force rebuilding all Docker images...'
       system("docker compose -f #{DOCKER_COMPOSE_FILE} build --no-cache") || exit(1)
       system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} build --no-cache") || exit(1)
-      puts "✅ All images force rebuilt successfully!"
+      puts '✅ All images force rebuilt successfully!'
     end
   end
 
   desc 'Clean unused Docker images and volumes'
   task :clean do
-    puts "🧹 Cleaning unused Docker resources..."
-    system("docker system prune -f")
-    system("docker volume prune -f")
-    puts "✅ Docker cleanup completed!"
+    puts '🧹 Cleaning unused Docker resources...'
+    system('docker system prune -f')
+    system('docker volume prune -f')
+    puts '✅ Docker cleanup completed!'
   end
 
   desc 'Show running containers'
   task :ps do
-    puts "📋 Running containers:"
+    puts '📋 Running containers:'
     system("docker compose -f #{DOCKER_COMPOSE_FILE} ps")
     system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} ps")
   end
 
   desc 'Check service health'
   task :health do
-    puts "🏥 Checking service health..."
-    
+    puts '🏥 Checking service health...'
+
     # Check production services
     puts "\n📊 Production Services:"
     system("docker compose -f #{DOCKER_COMPOSE_FILE} ps")
-    
-    # Check development services  
+
+    # Check development services
     puts "\n🔧 Development Services:"
     system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} ps")
-    
+
     # Test endpoints
     puts "\n🌐 Testing endpoints..."
-    system("curl -f http://localhost:3000/health 2>/dev/null && echo '✅ Backend API healthy' || echo '❌ Backend API unhealthy'")
+    system("curl -f http://localhost:3000/api/health 2>/dev/null && echo '✅ Backend API healthy' || echo '❌ Backend API unhealthy'")
     system("curl -f http://localhost:8080/ 2>/dev/null && echo '✅ Frontend healthy' || echo '❌ Frontend unhealthy'")
   end
 
   desc 'Show container resource usage'
   task :stats do
-    puts "📊 Container resource usage:"
-    system("docker stats --no-stream")
+    puts '📊 Container resource usage:'
+    system('docker stats --no-stream')
   end
 
   # Testing tasks
   namespace :test do
     desc 'Setup test environment'
     task :setup do
-      puts "🧪 Setting up test environment..."
+      puts '🧪 Setting up test environment...'
       # This could be expanded to create test-specific compose files
-      puts "✅ Test environment setup completed!"
+      puts '✅ Test environment setup completed!'
     end
 
     desc 'Run tests in containers'
     task :run do
-      puts "🧪 Running tests in containers..."
+      puts '🧪 Running tests in containers...'
       system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} exec backend-dev bundle exec rspec") || exit(1)
-      puts "✅ Tests completed!"
+      puts '✅ Tests completed!'
     end
 
     desc 'Clean up test containers'
     task :clean do
-      puts "🧹 Cleaning up test containers..."
+      puts '🧹 Cleaning up test containers...'
       system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} down --remove-orphans")
-      puts "✅ Test cleanup completed!"
+      puts '✅ Test cleanup completed!'
     end
   end
 end

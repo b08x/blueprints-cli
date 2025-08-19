@@ -12,18 +12,16 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy Gemfile and install gems (including development gems)
-COPY Gemfile Gemfile.lock ./
+COPY Gemfile Gemfile.lock blueprintsCLI.gemspec ./
 RUN bundle config set --local without 'production' && \
     bundle install
 
 # Create directories for logs and tmp
-RUN mkdir -p log tmp blueprintsCLI
-
-COPY ../lib /app/blueprintsCLI/
+RUN mkdir -p log tmp
 
 # Expose port 3000
 EXPOSE 3000
 
 # For development, we'll mount the code as a volume
 # and use rerun for auto-reloading
-CMD ["bundle", "exec", "rerun", "--background", "--signal", "TERM", "rackup config.ru -o 0.0.0.0 -p 3000"]
+CMD ["bundle", "exec", "rerun", "--background", "--signal", "TERM", "rackup lib/blueprintsCLI/web_config.ru -o 0.0.0.0 -p 3000"]
