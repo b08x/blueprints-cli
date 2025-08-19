@@ -14,6 +14,7 @@ The BlueprintsCLI application is containerized as a modern web application with 
 The Docker configuration has been completely reorganized for better maintainability. All Docker components are now in the `docker/` directory with comprehensive Rake task management.
 
 ### Development Environment
+
 ```bash
 # Setup environment
 rake docker:setup_env
@@ -26,6 +27,7 @@ rake docker:dev:up PROFILES=with-adminer
 ```
 
 ### Production Environment
+
 ```bash
 # Deploy production
 rake docker:prod:deploy
@@ -33,7 +35,7 @@ rake docker:prod:deploy
 
 ## New Directory Structure
 
-```
+```shell
 docker/                          # ← Organized Docker configuration
 ├── docker-compose.yml          # Production environment
 ├── docker-compose.dev.yml      # Development environment  
@@ -71,6 +73,7 @@ blueprintsCLI.gemspec          # Gem specification
 The new setup includes extensive Rake tasks for Docker management:
 
 ### Development Tasks
+
 ```bash
 rake docker:dev:up              # Start development environment (backend + frontend)
 rake docker:dev:down            # Stop development environment
@@ -91,6 +94,7 @@ rake dev:down                   # → docker:dev:down
 ```
 
 ### Production Tasks
+
 ```bash
 rake docker:prod:up             # Start production environment
 rake docker:prod:down           # Stop production environment
@@ -103,6 +107,7 @@ rake prod:down                  # → docker:prod:down
 ```
 
 ### Database Management
+
 ```bash
 rake docker:db:backup           # Backup database
 rake docker:db:restore          # Restore database from backup
@@ -112,6 +117,7 @@ rake docker:db:seed             # Seed database in container
 ```
 
 ### Utility Tasks
+
 ```bash
 rake docker:build               # Build all images
 rake docker:build:force         # Force rebuild all images
@@ -125,6 +131,7 @@ rake docker:help                # Show all available tasks
 ## Enhanced Development Experience
 
 ### Hot Reloading & Debugging
+
 - **Frontend**: Live reload via nginx volume mounts for instant HTML/CSS/JS updates
 - **Backend**: Automatic restart on code changes via `rerun`
 - **Code Volumes**: Live volume mounts for instant updates
@@ -132,10 +139,13 @@ rake docker:help                # Show all available tasks
 - **Database Tools**: Adminer web interface available
 
 ### Service Profiles
+
 Development environment supports optional profiles:
-- `with-adminer`: Database admin interface at http://localhost:8081
+
+- `with-adminer`: Database admin interface at <http://localhost:8081>
 
 ### Environment Configuration
+
 - **Template**: `docker/.env.example` with all options documented
 - **Validation**: `rake docker:check_env` validates required variables
 - **Overrides**: `docker-compose.override.yml` for local customizations
@@ -143,6 +153,7 @@ Development environment supports optional profiles:
 ## Production Ready Features
 
 ### Security & Performance
+
 - **Security Headers**: Comprehensive security headers in frontend nginx
 - **Rate Limiting**: API and static content rate limiting
 - **Resource Limits**: Memory and CPU limits for all services
@@ -152,12 +163,14 @@ Development environment supports optional profiles:
 - **Asset Optimization**: Gzip compression and caching for static assets
 
 ### Monitoring & Observability
+
 - **Structured Logging**: JSON logging with request tracing
 - **Health Endpoints**: `/health` and `/nginx-health` endpoints
 - **Resource Monitoring**: Real-time container stats via Rake tasks
 - **Log Aggregation**: Centralized logging configuration
 
 ### Backup & Recovery
+
 - **Automated Backups**: `rake docker:db:backup` with timestamps
 - **Point-in-time Recovery**: Restore from any backup
 - **Volume Management**: Persistent data with proper permissions
@@ -165,6 +178,7 @@ Development environment supports optional profiles:
 ## Migration Benefits
 
 ### Key Improvements
+
 - **Complete Web Stack**: Frontend + backend + database integration
 - **Gem-based Build**: Proper bundle install using gemspec
 - **Security**: Non-root user implementation for all services
@@ -173,6 +187,7 @@ Development environment supports optional profiles:
 - **API Integration**: Seamless frontend-backend communication via nginx proxy
 
 ### Preserved Features
+
 - **No Code Changes**: All existing CLI functionality preserved
 - **Gem Structure**: Standard Ruby gem layout maintained
 - **Database Integration**: PostgreSQL with pgvector support
@@ -192,26 +207,32 @@ Development environment supports optional profiles:
 After starting the services, you can access:
 
 ### Production Environment
+
 ```bash
 rake docker:prod:up
 ```
-- **Frontend Web UI**: http://localhost:8080
-- **Backend API**: http://localhost:3000/api
+
+- **Frontend Web UI**: <http://localhost:8080>
+- **Backend API**: <http://localhost:3000/api>
 - **Database**: localhost:5432 (postgres/blueprints)
 - **Redis**: localhost:6379
 
 ### Development Environment
+
 ```bash
 rake docker:dev:up
 ```
-- **Frontend Web UI**: http://localhost:8080 (with hot reload)
-- **Backend API**: http://localhost:3000/api (with debug support)
+
+- **Frontend Web UI**: <http://localhost:8080> (with hot reload)
+- **Backend API**: <http://localhost:3000/api> (with debug support)
 - **Database**: localhost:5433 (postgres/dev_password)
 - **Redis**: localhost:6380
-- **Adminer**: http://localhost:8081 (with --profile with-adminer)
+- **Adminer**: <http://localhost:8081> (with --profile with-adminer)
 
 ### Frontend Features
+
 The frontend provides a modern web interface for:
+
 - **Blueprint Search**: Search through existing code templates
 - **Code Generation**: Generate new code using AI assistance
 - **Blueprint Submission**: Submit new blueprints to the system
@@ -220,6 +241,7 @@ The frontend provides a modern web interface for:
 ## Next Steps
 
 See `docker/README.md` for:
+
 - Detailed setup instructions
 - Troubleshooting guide
 - Customization options

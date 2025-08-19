@@ -11,7 +11,7 @@ RUN apk add --no-cache \
 
 # Create non-root user for security
 RUN addgroup -g 1000 -S app && \
-    adduser -u 1000 -S app -G app
+  adduser -u 1000 -S app -G app
 
 # Set working directory
 WORKDIR /app
@@ -20,15 +20,15 @@ WORKDIR /app
 COPY Gemfile Gemfile.lock blueprintsCLI.gemspec ./
 COPY lib/blueprintsCLI/version.rb ./lib/blueprintsCLI/
 
-RUN bundle config set --local without 'development test' && \
-    bundle install --jobs 4 --retry 3
+RUN bundle config set --local without 'development test' && \ 
+  bundle install --jobs 4 --retry 3
 
 # Copy application code
 COPY . .
 
 # Create directories for logs and tmp, and change ownership to app user
 RUN mkdir -p log tmp && \
-    chown -R app:app /app
+  chown -R app:app /app
 
 # Switch to non-root user
 USER app

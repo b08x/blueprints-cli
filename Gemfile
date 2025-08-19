@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-source 'https://rubygems.org'
-
 gemspec
+
+source 'https://rubygems.org'
 
 group :development, :test do
   gem 'rdoc'
@@ -53,7 +53,8 @@ gem 'rackup', '~> 2.2'
 gem 'rake', '~> 13.3'
 gem 'rbs'
 gem 'ruby_llm'
-gem 'ruby-spacy', '~> 0.2.0'
+# gem 'ruby-spacy', '~> 0.2.0'
+gem 'ffi', '~> 1.17', force_ruby_platform: true
 gem 'rwordnet', '~> 0.1.0'
 gem 'sequel', '~> 5.94'
 gem 'sinatra', '~> 4.1'

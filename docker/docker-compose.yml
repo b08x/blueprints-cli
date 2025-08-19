@@ -8,7 +8,6 @@
 # - Health checks and proper service dependencies
 
 services:
-
   # Frontend Web Application
   frontend:
     build:
@@ -168,17 +167,9 @@ services:
 volumes:
   postgres_data:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DATA_DIR:-./data}/postgres
 
   redis_data:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DATA_DIR:-./data}/redis
 
   backend_uploads:
     driver: local
@@ -188,7 +179,6 @@ volumes:
 
   frontend_logs:
     driver: local
-
 
 networks:
   blueprintscli:

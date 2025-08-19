@@ -43,12 +43,14 @@ docker/
 ### Development Setup
 
 1. **Setup environment variables:**
+
    ```bash
    rake docker:setup_env
    # Edit docker/.env with your values
    ```
 
 2. **Start development environment:**
+
    ```bash
    rake docker:dev:up
    # Or with additional tools:
@@ -56,27 +58,29 @@ docker/
    ```
 
 3. **Access services:**
-   - 🌐 Frontend: http://localhost:8080
-   - 🔧 Backend API: http://localhost:3000/api
+   - 🌐 Frontend: <http://localhost:8080>
+   - 🔧 Backend API: <http://localhost:3000/api>
    - 🗄️ Database: localhost:5433 (postgres/dev_password)
-   - 📊 Adminer: http://localhost:8081 (if using `with-adminer` profile)
-   - 📧 MailCatcher: http://localhost:1080 (if using `with-mail` profile)
+   - 📊 Adminer: <http://localhost:8081> (if using `with-adminer` profile)
+   - 📧 MailCatcher: <http://localhost:1080> (if using `with-mail` profile)
 
 ### Production Deployment
 
 1. **Setup environment variables:**
+
    ```bash
    cp docker/.env.example docker/.env
    # Edit docker/.env with production values
    ```
 
 2. **Deploy with health checks:**
+
    ```bash
    rake docker:prod:deploy
    ```
 
 3. **Access application:**
-   - 🌐 Application: http://localhost
+   - 🌐 Application: <http://localhost>
 
 ## 🛠️ Development Workflow
 
@@ -220,6 +224,7 @@ Development environment supports optional service profiles:
 - `with-proxy`: Nginx reverse proxy for production-like routing
 
 Example:
+
 ```bash
 rake docker:dev:up PROFILES=with-adminer,with-mail
 ```
@@ -229,6 +234,7 @@ rake docker:dev:up PROFILES=with-adminer,with-mail
 ### Common Issues
 
 1. **Port conflicts:**
+
    ```bash
    # Check what's using ports
    netstat -tlnp | grep :3000
@@ -236,12 +242,14 @@ rake docker:dev:up PROFILES=with-adminer,with-mail
    ```
 
 2. **Permission issues:**
+
    ```bash
    # Fix volume permissions
    sudo chown -R $USER:$USER docker/data
    ```
 
 3. **Database connection issues:**
+
    ```bash
    # Check database health
    rake docker:health
@@ -250,6 +258,7 @@ rake docker:dev:up PROFILES=with-adminer,with-mail
    ```
 
 4. **Memory issues:**
+
    ```bash
    # Check resource usage
    rake docker:stats
