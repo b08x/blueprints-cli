@@ -11,13 +11,14 @@ RUN apk add --no-cache \
 # Set working directory  
 WORKDIR /app
 
-# Copy Gemfile and install gems (including development gems)
-COPY Gemfile Gemfile.lock blueprintsCLI.gemspec ./
-RUN bundle config set --local without 'production' && \
+# Copy Gemfile and install gems
+COPY ../Gemfile ../Gemfile.lock ./
+RUN bundle config set --local deployment 'true' && \
+    bundle config set --local without 'development test' && \
     bundle install
 
-# Create directories for logs and tmp
-RUN mkdir -p log tmp
+# # Create directories for logs and tmp
+# RUN mkdir -p log tmp
 
 # Expose port 3000
 EXPOSE 3000

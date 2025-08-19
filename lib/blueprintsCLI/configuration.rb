@@ -1085,7 +1085,7 @@ module BlueprintsCLI
       @config.set_if_empty(:ai, :rubyllm, :retry_backoff_factor, value: 2)
       @config.set_if_empty(:ai, :rubyllm, :retry_interval_randomness, value: 0.5)
       @config.set_if_empty(:ai, :rubyllm, :log_level, value: 'info')
-      @config.set_if_empty(:ai, :rubyllm, :log_assume_model_exists, value: false)
+      
 
       # OpenAI gem defaults
       @config.set_if_empty(:ai, :openai, :log_errors, value: true)
@@ -1241,9 +1241,7 @@ module BlueprintsCLI
       end
 
       # RubyLLM boolean validation
-      @config.validate(:ai, :rubyllm, :log_assume_model_exists) do |key, value|
-        raise ValidationError, "#{key} must be true or false" unless [true, false].include?(value)
-      end
+      
     end
 
     # Validate blueprints configuration section
@@ -1396,7 +1394,7 @@ module BlueprintsCLI
         log_file = fetch(:ai, :rubyllm, :log_file)
         config.log_file = log_file unless log_file.nil?
         config.log_level = fetch(:ai, :rubyllm, :log_level)&.to_sym || :info
-        config.log_assume_model_exists = fetch(:ai, :rubyllm, :log_assume_model_exists)
+        
       end
     rescue StandardError => e
       # Can't use BlueprintsCLI.logger here as it may not be initialized yet

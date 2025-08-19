@@ -2,7 +2,7 @@
 
 source 'https://rubygems.org'
 
-gemspec
+# gemspec
 
 group :development, :test do
   gem 'rdoc'
@@ -58,7 +58,9 @@ gem 'rwordnet', '~> 0.1.0'
 gem 'sequel', '~> 5.94'
 gem 'sinatra', '~> 4.1'
 gem 'solargraph', '~> 0.56.1'
+gem 'sublayer', '~> 0.2.9'
 gem 'terrapin', '~> 1.1'
+gem 'thor', '~> 1.4'
 gem 'tty-box', '~> 0.7'
 gem 'tty-command', '~> 0.10.1'
 gem 'tty-config', '~> 0.5'

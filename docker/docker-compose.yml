@@ -1,6 +1,4 @@
 ---
-
-
 # BlueprintsCLI Production Docker Compose Configuration
 # This configuration provides a complete production-ready setup with:
 # - API Gateway with SSL termination
@@ -60,7 +58,7 @@ services:
   # Backend API Service
   backend-api:
     build:
-      context: ..
+      context: .
       dockerfile: Dockerfile
     container_name: blueprintscli_api
     restart: unless-stopped
@@ -91,7 +89,6 @@ services:
       redis:
         condition: service_started
     volumes:
-      - ../lib:/app/lib:ro  # Mount lib directory for access to models/services
       - backend_logs:/app/log
       - backend_uploads:/app/uploads
     networks:
@@ -134,7 +131,11 @@ services:
       - ./configs/postgres/init-scripts:/docker-entrypoint-initdb.d:ro
       - ../db/schemas:/docker-entrypoint-initdb.d/schemas:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-blueprints_cli_production}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-blueprints_cli_production}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5

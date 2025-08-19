@@ -13,7 +13,7 @@ require 'pathname'
 require 'yard'
 
 require 'sequel'
-require 'blueprintsCLI/configuration'
+require_relative 'lib/blueprintsCLI/configuration'
 
 # Use BlueprintsCLI configuration system
 CONFIG = BlueprintsCLI::Configuration.new
@@ -586,7 +586,6 @@ namespace :docker do
     desc 'Deploy production environment with health checks'
     task :deploy do
       puts '🚀 Deploying production environment...'
-
       # Build images
       system("docker compose -f #{DOCKER_COMPOSE_FILE} build") || exit(1)
 
@@ -706,7 +705,6 @@ namespace :docker do
   desc 'Check service health'
   task :health do
     puts '🏥 Checking service health...'
-
     # Check production services
     puts "\n📊 Production Services:"
     system("docker compose -f #{DOCKER_COMPOSE_FILE} ps")

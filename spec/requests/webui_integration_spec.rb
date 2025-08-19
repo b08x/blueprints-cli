@@ -129,7 +129,8 @@ RSpec.describe 'Web UI Integration', type: :request do
       end
 
       it 'generates code from prompt' do
-        post '/api/blueprints/generate', generation_data.to_json, 'CONTENT_TYPE' => 'application/json'
+        post '/api/blueprints/generate', generation_data.to_json, 
+             'CONTENT_TYPE' => 'application/json'
         
         expect(last_response.status).to eq(200)
         expect(last_response.content_type).to include('application/json')

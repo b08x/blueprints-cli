@@ -64,7 +64,8 @@ class App
     when '/api/blueprints/metadata'
       handle_metadata_generation_request(req)
     else
-      [404, { 'content-type' => 'text/html' }, [load_html_file('404.html') || '<h1>404 - Not Found</h1>']]
+      [404, { 'content-type' => 'text/html' }, 
+        [load_html_file('404.html') || '<h1>404 - Not Found</h1>']]
     end
   end
 

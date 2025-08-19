@@ -11,7 +11,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy Gemfile and install gems
-COPY Gemfile Gemfile.lock blueprintsCLI.gemspec ./
+COPY ../Gemfile ../Gemfile.lock ./
 RUN bundle config set --local deployment 'true' && \
   bundle config set --local without 'development test' && \
   bundle install
