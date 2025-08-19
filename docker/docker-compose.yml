@@ -9,6 +9,40 @@
 
 services:
 
+  # Frontend Web Application
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.production
+    container_name: blueprintscli_frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8080}:8080"
+    depends_on:
+      backend-api:
+        condition: service_healthy
+    volumes:
+      - frontend_logs:/var/log/nginx
+    networks:
+      - blueprintscli
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: &logging-defaults
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+
   # Backend API Service
   backend-api:
     build:
@@ -53,11 +87,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-    logging: &logging-defaults
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *logging-defaults
     deploy:
       resources:
         limits:
@@ -154,6 +184,9 @@ volumes:
     driver: local
 
   backend_logs:
+    driver: local
+
+  frontend_logs:
     driver: local
 
 

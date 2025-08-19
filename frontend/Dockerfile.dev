@@ -1,0 +1,37 @@
+# Development Dockerfile for BlueprintsCLI Frontend
+# Optimized for development workflow with hot reloading
+
+FROM nginx:1.25-alpine
+
+# Install development tools
+RUN apk add --no-cache \
+    curl \
+    inotify-tools \
+    bash \
+    && rm -rf /var/cache/apk/*
+
+# Create app user
+RUN addgroup -g 1001 -S nginx-dev && \
+    adduser -S nginx-dev -u 1001 -G nginx-dev
+
+# Remove default content
+RUN rm -rf /usr/share/nginx/html/* && \
+    rm /etc/nginx/conf.d/default.conf
+
+# Copy development nginx configuration
+COPY nginx.development.conf /etc/nginx/conf.d/default.conf
+
+# Create directories with proper permissions
+RUN mkdir -p /var/log/nginx /var/cache/nginx && \
+    chown -R nginx-dev:nginx-dev /var/log/nginx /var/cache/nginx /usr/share/nginx/html
+
+# Development health check with shorter intervals
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+EXPOSE 8080
+
+# Switch to non-root user
+USER nginx-dev
+
+CMD ["nginx", "-g", "daemon off;"]

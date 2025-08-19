@@ -416,6 +416,7 @@ namespace :docker do
         rake docker:dev:restart        - Restart development environment
         rake docker:dev:logs           - Show development logs
         rake docker:dev:shell          - Open shell in API container
+        rake docker:dev:frontend_shell - Open shell in frontend container
         rake docker:dev:db_shell       - Open psql shell (development)
         rake docker:dev:redis_cli      - Open redis-cli (development)
 
@@ -435,7 +436,11 @@ namespace :docker do
 
       Utility Tasks:
         rake docker:build              - Build all images
+        rake docker:build_frontend     - Build only frontend images
+        rake docker:build_backend      - Build only backend images
         rake docker:build:force        - Force rebuild all images
+        rake docker:build:force_frontend - Force rebuild frontend images
+        rake docker:build:force_backend  - Force rebuild backend images
         rake docker:clean              - Clean unused images/volumes
         rake docker:ps                 - Show running containers
         rake docker:health             - Check service health
@@ -446,10 +451,15 @@ namespace :docker do
         rake docker:test:run           - Run tests in containers
         rake docker:test:clean         - Cleanup test containers
 
+      Frontend Tasks:
+        rake docker:build_frontend     - Build frontend images only
+        rake docker:build:force_frontend - Force rebuild frontend images
+
       Examples:
         rake docker:dev:up             # Start development with hot-reload
-        rake docker:dev:up PROFILES=with-adminer,with-mail  # With extra tools
+        rake docker:dev:up PROFILES=with-adminer  # With database admin tools
         rake docker:prod:deploy        # Production deployment
+        rake docker:build_frontend     # Build only frontend images
     DOCKER_HELP
   end
 
@@ -505,7 +515,7 @@ namespace :docker do
       system(cmd) || exit(1)
       puts '✅ Development environment started!'
       puts '🌐 Frontend: http://localhost:8080'
-      puts '🔧 Backend API: http://localhost:3000'
+      puts '🔧 Backend API: http://localhost:3000/api (direct: http://localhost:3000)'
       puts '🗄️  Database: localhost:5433'
       puts '📊 Adminer: http://localhost:8081 (if --profile with-adminer was used)'
     end
@@ -538,6 +548,12 @@ namespace :docker do
       system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} exec backend-dev /bin/bash")
     end
 
+    desc 'Open shell in frontend development container'
+    task :frontend_shell do
+      puts '🐚 Opening shell in frontend development container...'
+      system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} exec frontend-dev /bin/sh")
+    end
+
     desc 'Open PostgreSQL shell (development)'
     task :db_shell do
       puts '🗄️  Opening PostgreSQL shell (development)...'
@@ -558,7 +574,8 @@ namespace :docker do
       puts '🚀 Starting production environment...'
       system("docker compose -f #{DOCKER_COMPOSE_FILE} up -d") || exit(1)
       puts '✅ Production environment started!'
-      puts '🌐 Application: http://localhost'
+      puts '🌐 Frontend: http://localhost:8080'
+      puts '🔧 Backend API: http://localhost:3000/api (direct: http://localhost:3000)'
     end
 
     desc 'Stop production environment'
@@ -677,6 +694,22 @@ namespace :docker do
     puts '✅ All images built successfully!'
   end
 
+  desc 'Build only frontend images'
+  task :build_frontend do
+    puts '🎨 Building frontend Docker images...'
+    system("docker compose -f #{DOCKER_COMPOSE_FILE} build frontend") || exit(1)
+    system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} build frontend-dev") || exit(1)
+    puts '✅ Frontend images built successfully!'
+  end
+
+  desc 'Build only backend images'
+  task :build_backend do
+    puts '🔧 Building backend Docker images...'
+    system("docker compose -f #{DOCKER_COMPOSE_FILE} build backend-api") || exit(1)
+    system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} build backend-dev") || exit(1)
+    puts '✅ Backend images built successfully!'
+  end
+
   namespace :build do
     desc 'Force rebuild all Docker images'
     task :force do
@@ -684,6 +717,22 @@ namespace :docker do
       system("docker compose -f #{DOCKER_COMPOSE_FILE} build --no-cache") || exit(1)
       system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} build --no-cache") || exit(1)
       puts '✅ All images force rebuilt successfully!'
+    end
+
+    desc 'Force rebuild frontend images only'
+    task :force_frontend do
+      puts '🎨 Force rebuilding frontend Docker images...'
+      system("docker compose -f #{DOCKER_COMPOSE_FILE} build --no-cache frontend") || exit(1)
+      system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} build --no-cache frontend-dev") || exit(1)
+      puts '✅ Frontend images force rebuilt successfully!'
+    end
+
+    desc 'Force rebuild backend images only'
+    task :force_backend do
+      puts '🔧 Force rebuilding backend Docker images...'
+      system("docker compose -f #{DOCKER_COMPOSE_FILE} build --no-cache backend-api") || exit(1)
+      system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} build --no-cache backend-dev") || exit(1)
+      puts '✅ Backend images force rebuilt successfully!'
     end
   end
 
@@ -748,6 +797,50 @@ namespace :docker do
       puts '✅ Test cleanup completed!'
     end
   end
+
+  # Frontend specific tasks
+  namespace :frontend do
+    desc 'Build frontend for development'
+    task :build_dev do
+      puts '🎨 Building frontend for development...'
+      system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} build frontend-dev") || exit(1)
+      puts '✅ Frontend development build completed!'
+    end
+
+    desc 'Build frontend for production'
+    task :build_prod do
+      puts '🎨 Building frontend for production...'
+      system("docker compose -f #{DOCKER_COMPOSE_FILE} build frontend") || exit(1)
+      puts '✅ Frontend production build completed!'
+    end
+
+    desc 'Restart frontend development container'
+    task :restart_dev do
+      puts '🔄 Restarting frontend development container...'
+      system("docker compose -f #{DOCKER_COMPOSE_DEV_FILE} restart frontend-dev")
+      puts '✅ Frontend development container restarted!'
+    end
+
+    desc 'Show frontend container logs'
+    task :logs do
+      env = ENV['ENV'] || 'dev'
+      service = env == 'prod' ? 'frontend' : 'frontend-dev'
+      compose_file = env == 'prod' ? DOCKER_COMPOSE_FILE : DOCKER_COMPOSE_DEV_FILE
+      
+      puts "📋 Showing frontend logs (#{env})..."
+      system("docker compose -f #{compose_file} logs -f #{service}")
+    end
+
+    desc 'Test frontend connectivity'
+    task :test do
+      puts '🧪 Testing frontend connectivity...'
+      puts 'Testing development frontend...'
+      system("curl -f http://localhost:8080/ 2>/dev/null && echo '✅ Development frontend healthy' || echo '❌ Development frontend unhealthy'")
+      
+      puts 'Testing production frontend (if running)...'
+      system("curl -f http://localhost:8080/ 2>/dev/null && echo '✅ Production frontend healthy' || echo '❌ Production frontend not running or unhealthy'")
+    end
+  end
 end
 
 # Convenience aliases for common Docker tasks
@@ -762,6 +855,19 @@ task 'prod:up' => 'docker:prod:up'
 
 desc 'Stop production environment'
 task 'prod:down' => 'docker:prod:down'
+
+# Frontend convenience aliases
+desc 'Build frontend for development'
+task 'frontend:build' => 'docker:frontend:build_dev'
+
+desc 'Build frontend for production'
+task 'frontend:prod' => 'docker:frontend:build_prod'
+
+desc 'Show frontend logs'
+task 'frontend:logs' => 'docker:frontend:logs'
+
+desc 'Test frontend connectivity'
+task 'frontend:test' => 'docker:frontend:test'
 
 # =============================================================================
 # UTILITY TASKS
@@ -778,6 +884,7 @@ task :namespaces do
     docs:       Documentation generation (rdoc, yard, stats, serve, all, clean)
     build:      Build operations (docs, check)
     docker:     Docker environment management (dev, prod, db, build, clean)
+    frontend:   Frontend specific tasks (build_dev, build_prod, restart_dev, logs, test)
     rubocop:    RuboCop specific tasks (auto_correct)
     yard:       YARD specific tasks (stats, serve)
 

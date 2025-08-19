@@ -2,8 +2,9 @@
 
 ## Overview
 
-The BlueprintsCLI application is containerized as a Ruby gem-based application with supporting services:
+The BlueprintsCLI application is containerized as a modern web application with comprehensive services:
 
+- **Frontend**: React-style SPA with nginx serving and API proxy
 - **Backend**: Ruby CLI/API application built from gemspec
 - **Database**: PostgreSQL with pgvector extension
 - **Cache**: Redis for caching and background jobs
@@ -37,13 +38,24 @@ docker/                          # ← Organized Docker configuration
 ├── docker-compose.yml          # Production environment
 ├── docker-compose.dev.yml      # Development environment  
 ├── docker-compose.override.yml # Local customizations
-├── .env.example                # Environment template
+├── .env.example                # Backend environment template
+├── .env.frontend.example       # Frontend environment template
 ├── Dockerfile                  # Production Ruby app container
 ├── Dockerfile.dev              # Development Ruby app container
 ├── configs/
 │   └── postgres/
 │       └── init-scripts/       # Database initialization
 └── README.md                   # Comprehensive Docker guide
+
+frontend/                       # Frontend web application
+├── Dockerfile.production       # Production frontend container
+├── Dockerfile.dev              # Development frontend container
+├── nginx.production.conf       # Production nginx configuration
+├── nginx.development.conf      # Development nginx configuration
+├── nginx.security.conf         # Security headers configuration
+├── pages/                      # HTML pages and assets
+├── public/                     # Static public assets
+└── src/                        # Source files
 
 lib/                            # BlueprintsCLI gem source code
 ├── blueprintsCLI/             # Main application modules
@@ -60,13 +72,18 @@ The new setup includes extensive Rake tasks for Docker management:
 
 ### Development Tasks
 ```bash
-rake docker:dev:up              # Start development environment
+rake docker:dev:up              # Start development environment (backend + frontend)
 rake docker:dev:down            # Stop development environment
 rake docker:dev:restart         # Restart development environment
-rake docker:dev:logs            # Show development logs
+rake docker:dev:logs            # Show development logs (all services)
 rake docker:dev:shell           # Open shell in backend container
+rake docker:dev:frontend_shell  # Open shell in frontend container
 rake docker:dev:db_shell        # Open psql shell
 rake docker:dev:redis_cli       # Open redis-cli
+
+# Individual service management
+rake docker:dev:frontend_up     # Start only frontend development service
+rake docker:dev:backend_up      # Start only backend development service
 
 # Convenience aliases
 rake dev:up                     # → docker:dev:up
@@ -108,6 +125,7 @@ rake docker:help                # Show all available tasks
 ## Enhanced Development Experience
 
 ### Hot Reloading & Debugging
+- **Frontend**: Live reload via nginx volume mounts for instant HTML/CSS/JS updates
 - **Backend**: Automatic restart on code changes via `rerun`
 - **Code Volumes**: Live volume mounts for instant updates
 - **Debug Access**: Ruby debug port exposed (9229)
@@ -125,11 +143,13 @@ Development environment supports optional profiles:
 ## Production Ready Features
 
 ### Security & Performance
-- **Security Headers**: Comprehensive security headers in Nginx
+- **Security Headers**: Comprehensive security headers in frontend nginx
 - **Rate Limiting**: API and static content rate limiting
 - **Resource Limits**: Memory and CPU limits for all services
 - **Health Checks**: All services have health monitoring
 - **SSL Ready**: SSL configuration prepared (needs certificates)
+- **API Proxy**: Frontend nginx proxies API requests to backend with CORS support
+- **Asset Optimization**: Gzip compression and caching for static assets
 
 ### Monitoring & Observability
 - **Structured Logging**: JSON logging with request tracing
@@ -145,11 +165,12 @@ Development environment supports optional profiles:
 ## Migration Benefits
 
 ### Key Improvements
+- **Complete Web Stack**: Frontend + backend + database integration
 - **Gem-based Build**: Proper bundle install using gemspec
-- **Security**: Non-root user implementation
-- **Simplicity**: Focused on essential services only
-- **Performance**: Optimized layer caching and build process
-- **Development**: Hot-reloading with volume mounts
+- **Security**: Non-root user implementation for all services
+- **Performance**: Optimized layer caching and multi-stage builds
+- **Development**: Hot-reloading with volume mounts for both frontend and backend
+- **API Integration**: Seamless frontend-backend communication via nginx proxy
 
 ### Preserved Features
 - **No Code Changes**: All existing CLI functionality preserved
@@ -159,12 +180,42 @@ Development environment supports optional profiles:
 
 ## What's New
 
-1. **Simplified Architecture**: Focus on Ruby gem with essential services
-2. **Proper Gem Build**: Uses gemspec for correct dependency management
-3. **Security First**: Non-root containers and proper user permissions
-4. **Development Optimized**: Hot-reloading and debugging support
-5. **Clean Structure**: Removed unnecessary frontend/nginx complexity
-6. **Production Ready**: Efficient multi-stage builds with health checks
+1. **Complete Web Application**: Full-stack deployment with frontend, backend, and database
+2. **Modern Frontend**: SPA with nginx serving, API proxy, and production optimizations
+3. **Security First**: Non-root containers, security headers, and rate limiting
+4. **Development Optimized**: Hot-reloading for both frontend and backend
+5. **Production Ready**: Multi-stage builds, health checks, and resource limits
+6. **API Integration**: Seamless frontend-backend communication with CORS support
+
+## Service Access
+
+After starting the services, you can access:
+
+### Production Environment
+```bash
+rake docker:prod:up
+```
+- **Frontend Web UI**: http://localhost:8080
+- **Backend API**: http://localhost:3000/api
+- **Database**: localhost:5432 (postgres/blueprints)
+- **Redis**: localhost:6379
+
+### Development Environment
+```bash
+rake docker:dev:up
+```
+- **Frontend Web UI**: http://localhost:8080 (with hot reload)
+- **Backend API**: http://localhost:3000/api (with debug support)
+- **Database**: localhost:5433 (postgres/dev_password)
+- **Redis**: localhost:6380
+- **Adminer**: http://localhost:8081 (with --profile with-adminer)
+
+### Frontend Features
+The frontend provides a modern web interface for:
+- **Blueprint Search**: Search through existing code templates
+- **Code Generation**: Generate new code using AI assistance
+- **Blueprint Submission**: Submit new blueprints to the system
+- **Blueprint Viewing**: Browse and examine blueprint details
 
 ## Next Steps
 

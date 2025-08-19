@@ -1,6 +1,4 @@
 ---
-version: "3.8"
-
 # BlueprintsCLI Development Docker Compose Configuration
 # This configuration optimizes for development workflow with:
 # - Hot reloading for backend and frontend
@@ -10,6 +8,37 @@ version: "3.8"
 # - Simplified networking for debugging
 
 services:
+
+  # Development Frontend with Hot Reloading
+  frontend-dev:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.dev
+    container_name: blueprintscli_frontend_dev
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_DEV_PORT:-8080}:8080"
+    depends_on:
+      backend-dev:
+        condition: service_started
+    volumes:
+      # Live reload of frontend assets
+      - ../frontend/pages:/usr/share/nginx/html:ro
+      - ../frontend/public:/usr/share/nginx/html:ro
+      - frontend_dev_logs:/var/log/nginx
+    networks:
+      - blueprintscli-dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging: &logging-dev
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
 
   # Development Backend API with Hot Reloading
   backend-dev:
@@ -92,11 +121,7 @@ services:
       start_period: 30s
     networks:
       - blueprintscli-dev
-    logging: &logging-dev
-      driver: "json-file"
-      options:
-        max-size: "1m"
-        max-file: "1"
+    logging: *logging-dev
 
   # Development Redis
   redis-dev:
@@ -144,6 +169,8 @@ volumes:
     driver: local
   backend_dev_logs:
     driver: local
+  frontend_dev_logs:
+    driver: local
 
 networks:
   blueprintscli-dev:
@@ -163,6 +190,7 @@ networks:
 # docker compose -f docker/docker-compose.dev.yml up postgres-dev
 #
 # Access services:
+# - Frontend: http://localhost:8080
 # - Backend API: http://localhost:3000/api
 # - Database: localhost:5433 (postgres/dev_password)
 # - Redis: localhost:6380
