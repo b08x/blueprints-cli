@@ -76,3 +76,5 @@ gem 'falcon', '~> 0.45'
 
 gem "rackup", "~> 2.2"
 gem "puma", "~> 6.6"
+
+gem "fiddle", "~> 1.1"

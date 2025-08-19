@@ -19,7 +19,9 @@ RUN bundle config set --local deployment 'true' && \
 COPY . .
 
 # Create directories for logs and tmp
-RUN mkdir -p log tmp
+RUN mkdir -p log tmp blueprintsCLI
+
+COPY ../lib /app/blueprintsCLI
 
 # Expose port 3000
 EXPOSE 3000

@@ -180,6 +180,7 @@ GEM
     fiber-local (1.1.0)
       fiber-storage
     fiber-storage (1.0.1)
+    fiddle (1.1.8)
     front_matter_parser (1.0.1)
     git (3.1.1)
       activesupport (>= 5.0)
@@ -624,6 +625,7 @@ DEPENDENCIES
   dry-container (~> 0.11.0)
   factory_bot (~> 6.5)
   falcon (~> 0.45)
+  fiddle (~> 1.1)
   front_matter_parser (~> 1.0)
   git (~> 3.1)
   git-lint (~> 8.8)

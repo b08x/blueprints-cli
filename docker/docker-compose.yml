@@ -1,5 +1,5 @@
 ---
-version: "3.8"
+
 
 # BlueprintsCLI Production Docker Compose Configuration
 # This configuration provides a complete production-ready setup with:
@@ -203,9 +203,3 @@ volumes:
 networks:
   blueprintscli:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-          gateway: 172.20.0.1
-    driver_opts:
-      com.docker.network.bridge.name: br-blueprintscli

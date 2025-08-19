@@ -16,6 +16,11 @@ COPY Gemfile Gemfile.lock ./
 RUN bundle config set --local without 'production' && \
     bundle install
 
+# Create directories for logs and tmp
+RUN mkdir -p log tmp blueprintsCLI
+
+COPY ../lib /app/blueprintsCLI/
+
 # Expose port 3000
 EXPOSE 3000
 
