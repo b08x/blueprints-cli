@@ -32,6 +32,6 @@ HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
 EXPOSE 8080
 
 # Switch to non-root user
-USER nginx-dev
+#USER nginx-dev
 
 CMD ["nginx", "-g", "daemon off;"]

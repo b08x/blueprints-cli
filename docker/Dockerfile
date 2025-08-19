@@ -1,13 +1,18 @@
 FROM ruby:3.3-alpine
 
-# Install build dependencies
+# Install build dependencies including Python and uv
 RUN apk add --no-cache \
+  bash \
   build-base \
   postgresql-dev \
   libffi-dev \
   yaml-dev \
   git \
-  curl
+  curl \
+  python3 \
+  py3-pip \
+  python3-dev \
+  uv
 
 # Create non-root user for security
 RUN addgroup -g 1000 -S app && \
@@ -17,8 +22,8 @@ RUN addgroup -g 1000 -S app && \
 WORKDIR /app
 
 # Copy Gemfile, gemspec and install gems
-COPY Gemfile Gemfile.lock blueprintsCLI.gemspec ./
-COPY lib/blueprintsCLI/version.rb ./lib/blueprintsCLI/
+COPY --chown=1000:1000 Gemfile Gemfile.lock blueprintsCLI.gemspec ./
+COPY --chown=1000:1000 lib/blueprintsCLI/version.rb ./lib/blueprintsCLI/
 
 RUN bundle config set --local without 'development test' && \ 
   bundle install --jobs 4 --retry 3
@@ -32,6 +37,15 @@ RUN mkdir -p log tmp && \
 
 # Switch to non-root user
 USER app
+
+RUN uv venv .venv && \
+  source .venv/bin/activate && \
+  uv pip install --no-cache-dir --upgrade pip setuptools && \
+  uv pip install --no-cache-dir spacy numpy
+
+# Activate virtual environment for all subsequent commands and processes
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Expose port 3000
 EXPOSE 3000
