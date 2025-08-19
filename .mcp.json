@@ -1,0 +1,85 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "category": "Development Tools",
+      "complexity": "Medium",
+      "enabled": false,
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": ""
+      }
+    },
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres"
+      ],
+      "category": "Database",
+      "complexity": "Medium",
+      "enabled": false,
+      "env": {
+        "POSTGRES_CONNECTION_STRING": ""
+      }
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "category": "Web Search",
+      "complexity": "Low",
+      "enabled": false,
+      "env": {
+        "BRAVE_API_KEY": ""
+      }
+    },
+    "ruby-docs": {
+      "command": "ruby",
+      "args": [
+        "-e",
+        "require 'json'; require 'net/http'; puts JSON.generate({tools: [{name: 'ruby_docs', description: 'Search Ruby documentation'}]})"
+      ],
+      "category": "Documentation",
+      "complexity": "Low",
+      "enabled": true
+    },
+    "rails-docs": {
+      "command": "ruby",
+      "args": [
+        "-e",
+        "require 'json'; require 'net/http'; puts JSON.generate({tools: [{name: 'rails_docs', description: 'Search Rails documentation and guides'}]})"
+      ],
+      "category": "Documentation",
+      "complexity": "Low",
+      "enabled": true
+    },
+    "rubygems": {
+      "command": "ruby",
+      "args": [
+        "-e",
+        "require 'json'; require 'net/http'; puts JSON.generate({tools: [{name: 'gem_search', description: 'Search and explore Ruby gems'}]})"
+      ],
+      "category": "Package Management",
+      "complexity": "Low",
+      "enabled": true
+    },
+    "bundler": {
+      "command": "bundle",
+      "args": [
+        "exec",
+        "ruby",
+        "-e",
+        "require 'json'; puts JSON.generate({tools: [{name: 'bundle_audit', description: 'Security audit for gems'}]})"
+      ],
+      "category": "Security",
+      "complexity": "Medium",
+      "enabled": true
+    }
+  }
+}

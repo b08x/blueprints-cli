@@ -1,0 +1,43 @@
+# Docker Compose Override File
+# This file is automatically loaded by Docker Compose to override settings
+# Use this for local customizations that shouldn't be committed to version control
+#
+# Examples:
+# - Port mappings for local development
+# - Volume mounts for specific development workflows  
+# - Environment variables for local testing
+#
+# This file is typically added to .gitignore
+
+version: "3.8"
+
+services:
+  # Example: Override backend environment for local debugging
+  # backend-api:
+  #   environment:
+  #     - DEBUG=true
+  #     - LOG_LEVEL=debug
+  #   ports:
+  #     - "9229:9229"  # Ruby debug port
+
+  # Example: Override database settings
+  # postgres:
+  #   environment:
+  #     - POSTGRES_PASSWORD=local_dev_password
+  #   ports:
+  #     - "5433:5432"  # Avoid conflicts with local PostgreSQL
+
+  # Example: Add custom volume mounts
+  # frontend:
+  #   volumes:
+  #     - ./local-assets:/usr/share/nginx/html/local:ro
+
+# Example: Add local development services
+# services:
+#   local-mailcatcher:
+#     image: dockage/mailcatcher
+#     ports:
+#       - "1080:1080"
+#       - "1025:1025"
+#     networks:
+#       - blueprintscli

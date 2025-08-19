@@ -32,9 +32,9 @@ class App
       return [
         200,
         {
-          'Access-Control-Allow-Origin' => '*',
-          'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers' => 'Content-Type, Authorization'
+          'access-control-allow-origin' => '*',
+          'access-control-allow-methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+          'access-control-allow-headers' => 'content-type, authorization'
         },
         []
       ]
@@ -64,7 +64,7 @@ class App
     when '/api/blueprints/metadata'
       handle_metadata_generation_request(req)
     else
-      [404, { 'Content-Type' => 'text/html' }, [load_html_file('404.html') || '<h1>404 - Not Found</h1>']]
+      [404, { 'content-type' => 'text/html' }, [load_html_file('404.html') || '<h1>404 - Not Found</h1>']]
     end
   end
 
@@ -73,9 +73,9 @@ class App
   def serve_html_file(filename)
     html_content = load_html_file(filename)
     if html_content
-      [200, { 'Content-Type' => 'text/html' }, [html_content]]
+      [200, { 'content-type' => 'text/html' }, [html_content]]
     else
-      [404, { 'Content-Type' => 'text/html' }, ['<h1>404 - File Not Found</h1>']]
+      [404, { 'content-type' => 'text/html' }, ['<h1>404 - File Not Found</h1>']]
     end
   end
 
@@ -88,14 +88,14 @@ class App
 
   def cors_headers
     {
-      'Access-Control-Allow-Origin' => '*',
-      'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers' => 'Content-Type, Authorization'
+      'access-control-allow-origin' => '*',
+      'access-control-allow-methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+      'access-control-allow-headers' => 'Content-Type, authorization'
     }
   end
 
   def json_headers
-    { 'Content-Type' => 'application/json' }.merge(cors_headers)
+    { 'content-type' => 'application/json' }.merge(cors_headers)
   end
 
   def handle_blueprints_request(req)

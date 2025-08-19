@@ -1,0 +1,133 @@
+/* Blueprints CLI Web UI Styles */
+
+:root {
+    --primary-background: #3d2b3d;
+    --surface-panels: rgba(255, 255, 255, 0.05);
+    --primary-accent: #b22222;
+    --secondary-accent: #d97925;
+    --text-light-gray: #c0c5ce;
+    --text-secondary: #a0a0a0;
+}
+
+body {
+    font-family: 'Space Grotesk', sans-serif;
+    background-color: var(--primary-background);
+    color: var(--text-light-gray);
+}
+
+.btn-primary {
+    background-color: var(--primary-accent);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #9b1b1b;
+}
+
+.btn-secondary {
+    background-color: var(--surface-panels);
+    color: var(--text-light-gray);
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.blueprint-card {
+    background-color: var(--surface-panels);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.blueprint-card:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.blueprint-card .blueprint-image {
+    width: 100%;
+    height: 10rem;
+    background-color: var(--surface-panels);
+    background-size: cover;
+    background-position: center;
+}
+
+.blueprint-card .blueprint-content {
+    padding: 1rem;
+}
+
+.blueprint-card .blueprint-title {
+    font-weight: bold;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.blueprint-card .blueprint-meta {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.input-field {
+    background-color: var(--surface-panels);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    color: var(--text-light-gray);
+    width: 100%;
+}
+
+.input-field::placeholder {
+    color: rgba(192, 197, 206, 0.5);
+}
+
+.input-field:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--secondary-accent);
+    border-color: var(--secondary-accent);
+}
+
+.loading {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--text-secondary);
+    border-radius: 50%;
+    border-top-color: var(--secondary-accent);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.error-message {
+    background-color: #fee;
+    border: 1px solid #fcc;
+    color: #c00;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+}
+
+.success-message {
+    background-color: #efe;
+    border: 1px solid #cfc;
+    color: #060;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+}

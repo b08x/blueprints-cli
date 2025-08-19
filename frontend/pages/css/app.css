@@ -1,0 +1,102 @@
+/* Blueprints CLI Web UI Styles */
+:root {
+    --primary-background: #3d2b3d;
+    --surface-panels: rgba(255, 255, 255, 0.05);
+    --primary-accent: #b22222;
+    --secondary-accent: #d97925;
+    --text-light-gray: #c0c5ce;
+    --text-secondary: #a0a0a0;
+}
+
+body {
+    background-color: var(--primary-background);
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--text-light-gray);
+    margin: 0;
+    padding: 0;
+}
+
+.blueprint-card {
+    background: var(--surface-panels);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.blueprint-card:hover {
+    border-color: var(--secondary-accent);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.blueprint-title {
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.blueprint-meta {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.loading {
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-top: 2px solid var(--secondary-accent);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error-message {
+    background-color: rgba(178, 34, 34, 0.2);
+    border: 1px solid var(--primary-accent);
+    border-radius: 4px;
+    padding: 1rem;
+    margin: 1rem 0;
+    color: #ff6b6b;
+}
+
+.btn-primary {
+    background-color: var(--secondary-accent);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: #e8842b;
+}
+
+.form-input {
+    background: var(--surface-panels);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    padding: 0.75rem;
+    color: white;
+    width: 100%;
+    font-family: inherit;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--secondary-accent);
+}
+
+.form-input::placeholder {
+    color: var(--text-secondary);
+}

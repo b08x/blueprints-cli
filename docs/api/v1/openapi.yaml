@@ -1,0 +1,536 @@
+openapi: 3.0.3
+info:
+  title: BlueprintsCLI API
+  description: |
+    RESTful API for the BlueprintsCLI backend service. This API provides comprehensive 
+    blueprint management capabilities including CRUD operations, AI-powered code generation, 
+    and vector similarity search functionality.
+  version: 1.0.0
+  contact:
+    name: BlueprintsCLI Development Team
+    url: https://github.com/blueprintscli/api
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:4000/api
+    description: Development server
+  - url: https://api.blueprintscli.com/api
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns the current health status of the API service
+      operationId: getHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2025-01-15T10:30:00Z"
+                  version:
+                    type: string
+                    example: "1.0.0"
+
+  /blueprints:
+    get:
+      summary: Search and list blueprints
+      description: |
+        Retrieve a list of blueprints with optional search functionality. 
+        Supports full-text search across name, description, and code content.
+      operationId: searchBlueprints
+      tags:
+        - Blueprints
+      parameters:
+        - name: query
+          in: query
+          description: Search term for filtering blueprints
+          required: false
+          schema:
+            type: string
+            example: "react component"
+        - name: language
+          in: query
+          description: Filter by programming language
+          required: false
+          schema:
+            type: string
+            example: "javascript"
+        - name: framework
+          in: query
+          description: Filter by framework
+          required: false
+          schema:
+            type: string
+            example: "react"
+        - name: limit
+          in: query
+          description: Maximum number of results to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of results to skip (for pagination)
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of blueprints matching search criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  blueprints:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Blueprint'
+                  total:
+                    type: integer
+                    description: Total number of matching blueprints
+                    example: 1
+                  query:
+                    type: string
+                    description: The search query used
+                    example: "react component"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create a new blueprint
+      description: Create a new code blueprint with metadata and categorization
+      operationId: createBlueprint
+      tags:
+        - Blueprints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - code
+              properties:
+                name:
+                  type: string
+                  description: Name of the blueprint
+                  example: "React Login Component"
+                  minLength: 1
+                  maxLength: 255
+                description:
+                  type: string
+                  description: Detailed description of the blueprint
+                  example: "A reusable React component for user authentication"
+                  minLength: 1
+                code:
+                  type: string
+                  description: The actual code content
+                  example: "import React, { useState } from 'react';\n\nconst LoginComponent = () => {\n  // Component implementation\n};\n\nexport default LoginComponent;"
+                  minLength: 1
+                language:
+                  type: string
+                  description: Programming language
+                  example: "javascript"
+                  default: "javascript"
+                framework:
+                  type: string
+                  description: Framework or library used
+                  example: "react"
+                type:
+                  type: string
+                  description: Type of blueprint (component, utility, etc.)
+                  example: "component"
+                categories:
+                  type: array
+                  description: List of category names to associate with the blueprint
+                  items:
+                    type: string
+                  example: ["component", "authentication", "react"]
+      responses:
+        '201':
+          description: Blueprint created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blueprint'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /blueprints/{id}:
+    get:
+      summary: Get a specific blueprint
+      description: Retrieve detailed information about a specific blueprint by ID
+      operationId: getBlueprintById
+      tags:
+        - Blueprints
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the blueprint
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Blueprint details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlueprintWithCategories'
+        '404':
+          description: Blueprint not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /blueprints/generate:
+    post:
+      summary: Generate code using AI
+      description: |
+        Generate code snippets using AI based on a natural language prompt. 
+        Supports multiple programming languages and frameworks.
+      operationId: generateCode
+      tags:
+        - AI Generation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - prompt
+              properties:
+                prompt:
+                  type: string
+                  description: Natural language description of the desired code
+                  example: "Create a React component for user login with email and password fields"
+                  minLength: 10
+                  maxLength: 1000
+                language:
+                  type: string
+                  description: Target programming language
+                  example: "javascript"
+                  default: "javascript"
+                  enum: ["javascript", "python", "ruby", "java", "csharp", "go", "rust"]
+                framework:
+                  type: string
+                  description: Target framework or library
+                  example: "react"
+                  default: "react"
+                  enum: ["react", "vue", "angular", "svelte", "express", "django", "rails", "spring", "none"]
+                options:
+                  type: object
+                  description: Additional generation options
+                  properties:
+                    style:
+                      type: string
+                      description: Code style preference
+                      example: "functional"
+                      enum: ["functional", "class", "mixed"]
+                    typescript:
+                      type: boolean
+                      description: Generate TypeScript code
+                      example: false
+                      default: false
+                    testing:
+                      type: boolean
+                      description: Include test cases
+                      example: false
+                      default: false
+      responses:
+        '200':
+          description: Code generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  code:
+                    type: string
+                    description: Generated code content
+                    example: "import React, { useState } from 'react';\n\nconst LoginComponent = () => {\n  const [email, setEmail] = useState('');\n  const [password, setPassword] = useState('');\n\n  return (\n    <form>\n      <input type=\"email\" value={email} onChange={(e) => setEmail(e.target.value)} />\n      <input type=\"password\" value={password} onChange={(e) => setPassword(e.target.value)} />\n      <button type=\"submit\">Login</button>\n    </form>\n  );\n};\n\nexport default LoginComponent;"
+                  language:
+                    type: string
+                    example: "javascript"
+                  framework:
+                    type: string
+                    example: "react"
+                  prompt:
+                    type: string
+                    example: "Create a React component for user login with email and password fields"
+                  generated_at:
+                    type: string
+                    format: date-time
+                    example: "2025-01-15T10:30:00Z"
+                  metadata:
+                    type: object
+                    properties:
+                      complexity:
+                        type: string
+                        enum: ["low", "medium", "high"]
+                        example: "medium"
+                      estimated_lines:
+                        type: integer
+                        example: 25
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Code generation failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "AI service unavailable"
+
+  /blueprints/metadata:
+    post:
+      summary: Generate metadata from code
+      description: |
+        Analyze provided code and generate metadata including suggested name, 
+        description, language detection, and category recommendations.
+      operationId: generateMetadata
+      tags:
+        - AI Generation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  description: Code content to analyze
+                  example: "import React from 'react';\n\nconst Button = ({ onClick, children }) => {\n  return <button onClick={onClick}>{children}</button>;\n};\n\nexport default Button;"
+                  minLength: 10
+                  maxLength: 10000
+      responses:
+        '200':
+          description: Metadata generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  metadata:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: "React Button Component"
+                      description:
+                        type: string
+                        example: "A reusable React button component with click handler and children props"
+                      language:
+                        type: string
+                        example: "javascript"
+                      framework:
+                        type: string
+                        example: "react"
+                      categories:
+                        type: array
+                        items:
+                          type: string
+                        example: ["component", "react", "ui"]
+                      complexity:
+                        type: string
+                        enum: ["low", "medium", "high"]
+                        example: "low"
+                      estimated_lines:
+                        type: integer
+                        example: 7
+                      generated_at:
+                        type: string
+                        format: date-time
+                        example: "2025-01-15T10:30:00Z"
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Metadata generation failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Failed to analyze code"
+
+components:
+  schemas:
+    Blueprint:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          example: 1
+        name:
+          type: string
+          description: Blueprint name
+          example: "React Login Component"
+        description:
+          type: string
+          description: Blueprint description
+          example: "A reusable React component for user authentication"
+        code:
+          type: string
+          description: Code content
+          example: "import React, { useState } from 'react';\n\nconst LoginComponent = () => {\n  // Component implementation\n};\n\nexport default LoginComponent;"
+        language:
+          type: string
+          description: Programming language
+          example: "javascript"
+        framework:
+          type: string
+          description: Framework or library
+          example: "react"
+        type:
+          type: string
+          description: Blueprint type
+          example: "component"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2025-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-01-15T10:30:00Z"
+
+    BlueprintWithCategories:
+      allOf:
+        - $ref: '#/components/schemas/Blueprint'
+        - type: object
+          properties:
+            categories:
+              type: array
+              description: Associated categories
+              items:
+                $ref: '#/components/schemas/Category'
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          example: 1
+        name:
+          type: string
+          description: Category name
+          example: "component"
+        description:
+          type: string
+          description: Category description
+          example: "Reusable UI components"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2025-01-15T10:30:00Z"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Blueprint not found"
+        code:
+          type: string
+          description: Error code (optional)
+          example: "BLUEPRINT_NOT_FOUND"
+        details:
+          type: object
+          description: Additional error details (optional)
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication (future enhancement)
+
+security: []
+
+tags:
+  - name: System
+    description: System health and status endpoints
+  - name: Blueprints
+    description: Blueprint management operations
+  - name: AI Generation
+    description: AI-powered code and metadata generation

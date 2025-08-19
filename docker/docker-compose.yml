@@ -1,48 +1,211 @@
 ---
+version: "3.8"
+
+# BlueprintsCLI Production Docker Compose Configuration
+# This configuration provides a complete production-ready setup with:
+# - API Gateway with SSL termination
+# - Separated frontend and backend services
+# - PostgreSQL database with pgvector extension
+# - Redis for caching and background jobs
+# - Health checks and proper service dependencies
+
 services:
-  redis:
-    image: redis/redis-stack:latest
-    container_name: blueprintscli_redis
+  # API Gateway / Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: blueprintscli_gateway
     restart: unless-stopped
-    environment:
-      PUID: 1000
-      PGID: 1000
-    volumes:
-      - redis_data:/data
     ports:
-      - "6379:6379"
-      - "8081:8081"
-      - "8001:8001"
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./configs/nginx/production.conf:/etc/nginx/nginx.conf:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - backend-api
+      - frontend
     networks:
       - blueprintscli
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: &logging-defaults
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Frontend Static File Server
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: blueprintscli_frontend
+    restart: unless-stopped
+    expose:
+      - "8080"
+    networks:
+      - blueprintscli
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging: *logging-defaults
+
+  # Backend API Service
+  backend-api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: blueprintscli_api
+    restart: unless-stopped
+    environment:
+      RACK_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-blueprints}@postgres:5432/${POSTGRES_DB:-blueprints_cli_production}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:-change-this-secret-key-in-production}
+      LOG_LEVEL: info
+
+      # AI Service Configuration
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+
+      # Application Configuration
+      APP_HOST: 0.0.0.0
+      APP_PORT: 3000
+      SESSION_SECRET: ${SESSION_SECRET:-change-this-session-secret}
+
+      # Performance Configuration
+      RUBY_GC_MALLOC_LIMIT: 16000000
+      RUBY_GC_HEAP_GROWTH_FACTOR: 1.1
+    expose:
+      - "3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ../lib:/app/lib:ro  # Mount original lib directory for access to models/services
+      - backend_logs:/app/log
+      - backend_uploads:/app/uploads
+    networks:
+      - blueprintscli
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging: *logging-defaults
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # Database Service
   postgres:
     image: pgvector/pgvector:pg16
     container_name: blueprintscli_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: blueprints
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: blueprints
+      POSTGRES_DB: ${POSTGRES_DB:-blueprints_cli_production}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-blueprints}
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+
+      # Performance tuning
+      POSTGRES_SHARED_PRELOAD_LIBRARIES: pg_stat_statements,vector
+      POSTGRES_MAX_CONNECTIONS: 100
+      POSTGRES_SHARED_BUFFERS: 256MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 1GB
+      POSTGRES_WORK_MEM: 4MB
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
+      - ./configs/postgres/init-scripts:/docker-entrypoint-initdb.d:ro
+      - ../db/schemas:/docker-entrypoint-initdb.d/schemas:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d blueprints"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-blueprints_cli_production}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     networks:
       - blueprintscli
+    shm_size: 256mb
+    logging: *logging-defaults
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # Cache Service
+  redis:
+    image: redis:7-alpine
+    container_name: blueprintscli_redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --appendonly yes --appendfsync everysec
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - blueprintscli
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging: *logging-defaults
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
 volumes:
   postgres_data:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/postgres
+
   redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/redis
+
+  backend_uploads:
+    driver: local
+
+  backend_logs:
+    driver: local
+
+  nginx_logs:
     driver: local
 
 networks:
   blueprintscli:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+    driver_opts:
+      com.docker.network.bridge.name: br-blueprintscli
