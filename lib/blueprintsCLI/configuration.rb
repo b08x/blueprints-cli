@@ -1344,28 +1344,14 @@ module BlueprintsCLI
     # @since 0.1.0
     # @api private
     def configure_providers
-      configure_rubyllm
+      # configure_rubyllm  # MOVED TO POST-INIT - was causing circular dependency
       configure_openai_gem
     end
 
-    # Configure RubyLLM with settings from unified config system
-    #
-    # Initializes the RubyLLM library with API keys, model defaults,
-    # connection settings, and logging configuration from the unified
-    # configuration system. Handles errors gracefully to avoid blocking
-    # application startup.
-    #
-    # Configuration includes:
-    # - API keys for all supported providers
-    # - Default models for text, embedding, and image generation
-    # - Connection timeouts and retry settings
-    # - Logging configuration
-    #
-    # @return [void]
-    #
-    # @since 0.1.0
-    # @api private
-    def configure_rubyllm
+    # Configure RubyLLM on-demand (lazy loading to avoid circular dependencies)
+    def configure_rubyllm!
+      return if @rubyllm_configured
+
       RubyLLM.configure do |config|
         # API Keys - use the existing ai_api_key method that checks environment variables
         config.openai_api_key = ai_api_key(:openai)
@@ -1394,6 +1380,8 @@ module BlueprintsCLI
         config.log_level = fetch(:ai, :rubyllm, :log_level)&.to_sym || :info
         
       end
+
+      @rubyllm_configured = true
     rescue StandardError => e
       # Can't use BlueprintsCLI.logger here as it may not be initialized yet
       warn "Error configuring RubyLLM: #{e.message}"

@@ -28,6 +28,7 @@ module BlueprintsCLI
       #
       # @return [String] The generated blueprint description.
       def generate
+        BlueprintsCLI.configuration.configure_rubyllm!
         response = RubyLLM.chat(model: model_name)
                           .with_schema(Schemas::DescriptionSchema)
                           .ask(prompt)

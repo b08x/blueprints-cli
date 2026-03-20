@@ -3,25 +3,20 @@
 require "ruby_llm"
 require "ruby_llm/schema"
 
-# Configure RubyLLM from the unified configuration singleton.
-# Uses BlueprintsCLI.configuration (already initialised at boot) — no second
-# Configuration.new here, which was the bug in the previous sublayer.rb initializer.
+# Configure RubyLLM using environment variables directly to avoid circular
+# dependency during configuration loading. This initializer runs in Rack context;
+# CLI context uses configuration.rb's configure_rubyllm method instead.
 RubyLLM.configure do |config|
-  config.gemini_api_key    = BlueprintsCLI.configuration.ai_api_key(:gemini)
-  config.openai_api_key    = BlueprintsCLI.configuration.ai_api_key(:openai)
-  config.anthropic_api_key = BlueprintsCLI.configuration.ai_api_key(:anthropic)
-  config.deepseek_api_key  = BlueprintsCLI.configuration.ai_api_key(:deepseek)
+  config.gemini_api_key    = ENV["GEMINI_API_KEY"] || ENV["GOOGLE_API_KEY"]
+  config.openai_api_key    = ENV["OPENROUTER_API_KEY"] || ENV["OPENAI_API_KEY"]
+  config.anthropic_api_key = ENV["ANTHROPIC_API_KEY"]
+  config.deepseek_api_key  = ENV["DEEPSEEK_API_KEY"]
 
-  openrouter_key = ENV["OPENROUTER_API_KEY"]
-  config.openrouter_api_key = openrouter_key if openrouter_key
+  config.openrouter_api_key = ENV["OPENROUTER_API_KEY"] if ENV["OPENROUTER_API_KEY"]
+  config.ollama_api_base    = ENV["OLLAMA_API_BASE"] if ENV["OLLAMA_API_BASE"]
 
-  ollama_base = ENV["OLLAMA_API_BASE"]
-  config.ollama_api_base = ollama_base if ollama_base
-
-  config.default_model           = BlueprintsCLI.configuration.fetch(:ai, :rubyllm, :default_model,
-                                                                      default: "gemini-2.0-flash")
-  config.default_embedding_model = BlueprintsCLI.configuration.fetch(:ai, :rubyllm, :default_embedding_model,
-                                                                      default: "text-embedding-004")
-  config.request_timeout         = BlueprintsCLI.configuration.fetch(:ai, :rubyllm, :request_timeout, default: 120)
-  config.max_retries             = BlueprintsCLI.configuration.fetch(:ai, :rubyllm, :max_retries, default: 3)
+  config.default_model           = ENV.fetch("RUBYLLM_DEFAULT_MODEL", "gemini-2.0-flash")
+  config.default_embedding_model = ENV.fetch("RUBYLLM_EMBEDDING_MODEL", "text-embedding-004")
+  config.request_timeout         = ENV.fetch("RUBYLLM_REQUEST_TIMEOUT", "120").to_i
+  config.max_retries             = ENV.fetch("RUBYLLM_MAX_RETRIES", "3").to_i
 end

@@ -193,6 +193,7 @@ module BlueprintsCLI
         start_time = Time.now
 
         begin
+          BlueprintsCLI.configuration.configure_rubyllm!
           chat = create_chat_instance
           response = chat.ask(build_prompt)
           end_time = Time.now

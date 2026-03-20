@@ -25,6 +25,7 @@ module BlueprintsCLI
       #
       # @return [Array<String>] 2-4 category tags for the blueprint.
       def generate
+        BlueprintsCLI.configuration.configure_rubyllm!
         response = RubyLLM.chat(model: model_name)
                           .with_schema(Schemas::CategorySchema)
                           .ask(prompt)
