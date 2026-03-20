@@ -151,8 +151,7 @@ module BlueprintsCLI
           retry_interval: 0.5,
           retry_backoff_factor: 2,
           retry_interval_randomness: 0.5,
-          log_level: 'info',
-          log_assume_model_exists: false
+          log_level: 'info'
         }
 
         # Add OpenRouter API base if using OpenRouter

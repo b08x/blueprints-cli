@@ -840,6 +840,49 @@ module BlueprintsCLI
       write(force: true)
     end
 
+    # Configure external provider libraries based on unified configuration
+    def configure_providers
+      # configure_rubyllm  # MOVED TO POST-INIT - was causing circular dependency
+      configure_openai_gem
+    end
+
+    # Configure RubyLLM on-demand (lazy loading to avoid circular dependencies)
+    def configure_rubyllm!
+      return if @rubyllm_configured
+
+      RubyLLM.configure do |config|
+        # API Keys - use the existing ai_api_key method that checks environment variables
+        config.openai_api_key = ai_api_key(:openai)
+        config.gemini_api_key = ai_api_key(:gemini)
+        config.anthropic_api_key = ai_api_key(:anthropic)
+        config.deepseek_api_key = ai_api_key(:deepseek)
+
+        # Custom endpoint
+        config.openai_api_base = fetch(:ai, :rubyllm, :openai_api_base)
+
+        # Default models
+        config.default_model = fetch(:ai, :rubyllm, :default_model)
+        config.default_embedding_model = fetch(:ai, :rubyllm, :default_embedding_model)
+        config.default_image_model = fetch(:ai, :rubyllm, :default_image_model)
+
+        # Connection settings
+        config.request_timeout = fetch(:ai, :rubyllm, :request_timeout)
+        config.max_retries = fetch(:ai, :rubyllm, :max_retries)
+        config.retry_interval = fetch(:ai, :rubyllm, :retry_interval)
+        config.retry_backoff_factor = fetch(:ai, :rubyllm, :retry_backoff_factor)
+        config.retry_interval_randomness = fetch(:ai, :rubyllm, :retry_interval_randomness)
+
+        # Logging settings
+        log_file = fetch(:ai, :rubyllm, :log_file)
+        config.log_file = log_file unless log_file.nil?
+        config.log_level = fetch(:ai, :rubyllm, :log_level)&.to_sym || :info
+      end
+
+      @rubyllm_configured = true
+    rescue StandardError => e
+      BlueprintsCLI.logger.failure("Error configuring RubyLLM: #{e.message}")
+    end
+
     private
 
     # Validate terminal command availability (placeholder)
@@ -1083,7 +1126,6 @@ module BlueprintsCLI
       @config.set_if_empty(:ai, :rubyllm, :retry_backoff_factor, value: 2)
       @config.set_if_empty(:ai, :rubyllm, :retry_interval_randomness, value: 0.5)
       @config.set_if_empty(:ai, :rubyllm, :log_level, value: 'info')
-      
 
       # OpenAI gem defaults
       @config.set_if_empty(:ai, :openai, :log_errors, value: true)
@@ -1237,9 +1279,6 @@ module BlueprintsCLI
           raise ValidationError, "#{key} must be one of: #{valid_levels.join(', ')}"
         end
       end
-
-      # RubyLLM boolean validation
-      
     end
 
     # Validate blueprints configuration section
@@ -1332,60 +1371,7 @@ module BlueprintsCLI
       File.join(state_home, 'BlueprintsCLI', 'app.log')
     end
 
-    # Configure external provider libraries based on unified configuration
-    #
-    # Configures external AI provider libraries (RubyLLM and OpenAI gem)
-    # using values from the unified configuration system. This ensures
-    # that all provider libraries are properly initialized with the
-    # correct API keys and settings.
-    #
-    # @return [void]
-    #
-    # @since 0.1.0
-    # @api private
-    def configure_providers
-      # configure_rubyllm  # MOVED TO POST-INIT - was causing circular dependency
-      configure_openai_gem
-    end
-
-    # Configure RubyLLM on-demand (lazy loading to avoid circular dependencies)
-    def configure_rubyllm!
-      return if @rubyllm_configured
-
-      RubyLLM.configure do |config|
-        # API Keys - use the existing ai_api_key method that checks environment variables
-        config.openai_api_key = ai_api_key(:openai)
-        config.gemini_api_key = ai_api_key(:gemini)
-        config.anthropic_api_key = ai_api_key(:anthropic)
-        config.deepseek_api_key = ai_api_key(:deepseek)
-
-        # Custom endpoint
-        config.openai_api_base = fetch(:ai, :rubyllm, :openai_api_base)
-
-        # Default models
-        config.default_model = fetch(:ai, :rubyllm, :default_model)
-        config.default_embedding_model = fetch(:ai, :rubyllm, :default_embedding_model)
-        config.default_image_model = fetch(:ai, :rubyllm, :default_image_model)
-
-        # Connection settings
-        config.request_timeout = fetch(:ai, :rubyllm, :request_timeout)
-        config.max_retries = fetch(:ai, :rubyllm, :max_retries)
-        config.retry_interval = fetch(:ai, :rubyllm, :retry_interval)
-        config.retry_backoff_factor = fetch(:ai, :rubyllm, :retry_backoff_factor)
-        config.retry_interval_randomness = fetch(:ai, :rubyllm, :retry_interval_randomness)
-
-        # Logging settings
-        log_file = fetch(:ai, :rubyllm, :log_file)
-        config.log_file = log_file unless log_file.nil?
-        config.log_level = fetch(:ai, :rubyllm, :log_level)&.to_sym || :info
-        
-      end
-
-      @rubyllm_configured = true
-    rescue StandardError => e
-      # Can't use BlueprintsCLI.logger here as it may not be initialized yet
-      warn "Error configuring RubyLLM: #{e.message}"
-    end
+    private
 
     # Configure legacy OpenAI gem with settings from unified config system
     #
