@@ -18,7 +18,7 @@ module BlueprintsCLI
     # @example Interactive blueprint deletion
     #   action = BlueprintsCLI::Actions::Delete.new
     #   action.call # Will prompt for interactive selection
-    class Delete < Sublayer::Actions::Base
+    class Delete
       # Initializes a new Delete
       #
       # @param id [Integer, nil] The ID of the blueprint to delete (optional)

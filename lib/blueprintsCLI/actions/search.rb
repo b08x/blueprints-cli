@@ -19,7 +19,7 @@ module BlueprintsCLI
     # @example Text search with custom limit
     #   action = Search.new(query: "database connection", semantic: false, limit: 5)
     #   action.call
-    class Search < Sublayer::Actions::Base
+    class Search
       ##
       # Initializes a new Search with search parameters.
       #

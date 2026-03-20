@@ -11,7 +11,7 @@ module BlueprintsCLI
     # Example:
     #   action = BlueprintsCLI::Actions::Export.new(id: 123, include_metadata: true)
     #   action.call
-    class Export < Sublayer::Actions::Base
+    class Export
       ##
       # Initializes a new Export.
       #

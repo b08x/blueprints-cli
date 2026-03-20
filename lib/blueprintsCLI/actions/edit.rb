@@ -16,7 +16,7 @@ module BlueprintsCLI
     # "delete-and-resubmit" operation. This ensures that the modified code
     # gets new embeddings and a fresh AI-generated description, keeping the
     # search index up-to-date.
-    class Edit < Sublayer::Actions::Base
+    class Edit
       # Initializes the action with the ID of the blueprint to be edited.
       #
       # @param id [String, Integer] The unique identifier of the blueprint to edit.

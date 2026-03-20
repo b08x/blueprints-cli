@@ -1069,8 +1069,6 @@ module BlueprintsCLI
       @config.set_if_empty(:blueprints, :ui, :pager, value: true)
 
       # AI defaults
-      @config.set_if_empty(:ai, :sublayer, :project_name, value: 'blueprintsCLI')
-      @config.set_if_empty(:ai, :sublayer, :project_template, value: 'CLI')
       @config.set_if_empty(:ai, :sublayer, :provider, value: 'Gemini')
       @config.set_if_empty(:ai, :sublayer, :model, value: 'gemini-2.0-flash')
       @config.set_if_empty(:ai, :embedding_model, value: 'text-embedding-004')

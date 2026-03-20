@@ -16,7 +16,7 @@ module BlueprintsCLI
     #     limit: 5
     #   )
     #   action.call
-    class Generate < Sublayer::Actions::Base
+    class Generate
       ##
       # Initializes a new Generate action with the provided prompt and options.
       #

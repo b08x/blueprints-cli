@@ -19,7 +19,7 @@ module BlueprintsCLI
     # - Retrieving just the code portion of a blueprint
     # - Obtaining blueprint data in JSON format
     # - Getting AI-powered suggestions for blueprint improvements
-    class View < Sublayer::Actions::Base
+    class View
       ##
       # Initializes a new View instance.
       #

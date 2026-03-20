@@ -14,7 +14,7 @@ module BlueprintsCLI
     #
     # @example Run the interactive setup
     #   BlueprintsCLI::Actions::Config.new(subcommand: 'setup').call
-    class Config < Sublayer::Actions::Base
+    class Config
       ##
       # Initializes the configuration action.
       #
@@ -82,12 +82,12 @@ module BlueprintsCLI
           puts "  URL: #{mask_password(@config.database_url || 'Not set')}"
           puts ''
 
-          # AI Configuration - Sublayer
-          puts 'AI Configuration (Sublayer):'.colorize(:cyan)
+          # AI Configuration
+          puts 'AI Configuration:'.colorize(:cyan)
           puts "  Provider: #{@config.fetch(:ai, :sublayer, :provider, default: 'Not set')}"
           puts "  Model: #{@config.fetch(:ai, :sublayer, :model, default: 'Not set')}"
-          sublayer_provider = @config.fetch(:ai, :sublayer, :provider, default: '').downcase
-          api_key_status = @config.ai_api_key(sublayer_provider) ? 'Set' : 'Not set'
+          ai_provider = @config.fetch(:ai, :sublayer, :provider, default: '').downcase
+          api_key_status = @config.ai_api_key(ai_provider) ? 'Set' : 'Not set'
           puts "  API Key: #{api_key_status}"
           puts "  Embedding Model: #{@config.fetch(:ai, :embedding_model, default: 'Not set')}"
           puts ''
@@ -431,23 +431,23 @@ module BlueprintsCLI
       ##
       # Tests the AI provider connections by checking for API keys.
       #
-      # Tests both Sublayer and Ruby LLM configurations.
+      # Tests AI provider connections by checking for configured API keys.
       #
       # @return [Boolean] `true` if at least one API key is found, `false` otherwise.
       def test_ai_connections
         success_count = 0
         total_tests = 0
 
-        # Test Sublayer configuration
-        sublayer_provider = @config.fetch(:ai, :sublayer, :provider, default: '').downcase
-        unless sublayer_provider.empty?
+        # Test configured AI provider
+        ai_provider = @config.fetch(:ai, :sublayer, :provider, default: '').downcase
+        unless ai_provider.empty?
           total_tests += 1
-          api_key = @config.ai_api_key(sublayer_provider)
+          api_key = @config.ai_api_key(ai_provider)
           if api_key
-            BlueprintsCLI.logger.success("Sublayer AI API key found for #{sublayer_provider}")
+            BlueprintsCLI.logger.success("AI API key found for #{ai_provider}")
             success_count += 1
           else
-            BlueprintsCLI.logger.failure("Sublayer AI API key not found for #{sublayer_provider}")
+            BlueprintsCLI.logger.failure("AI API key not found for #{ai_provider}")
           end
         end
 

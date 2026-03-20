@@ -20,7 +20,7 @@ module BlueprintsCLI
     #     format: :summary,
     #     interactive: true
     #   ).call
-    class List < Sublayer::Actions::Base
+    class List
       ##
       # Initializes a new List instance.
       #

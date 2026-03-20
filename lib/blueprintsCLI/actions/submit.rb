@@ -12,7 +12,7 @@ module BlueprintsCLI
     # @example Basic usage:
     #   action = Submit.new(code: "puts 'Hello, World!'")
     #   action.call
-    class Submit < Sublayer::Actions::Base
+    class Submit
       ##
       # Initializes a new Submit with the provided code and optional metadata.
       #

@@ -24,7 +24,8 @@ require 'net/http'
 require 'open3'
 require 'pg'
 require 'sequel'
-require 'sublayer'
+require 'ruby_llm'
+require 'ruby_llm/schema'
 require 'tempfile'
 require 'terrapin'
 require 'thor'
@@ -58,13 +59,9 @@ require_relative 'blueprintsCLI/enhanced_menu'
 require_relative 'blueprintsCLI/simple_enhanced_menu'
 require_relative 'blueprintsCLI/autocomplete_handler'
 
-require_relative 'blueprintsCLI/providers/sublayer/ollama'
-require_relative 'blueprintsCLI/providers/sublayer/openrouter'
-
 Dir[File.join(__dir__, 'blueprintsCLI', 'commands', '*.rb')].each { |file| require file }
 Dir[File.join(__dir__, 'blueprintsCLI', 'generators', '*.rb')].each { |file| require file }
 Dir[File.join(__dir__, 'blueprintsCLI', 'actions', '*.rb')].each { |file| require file }
-Dir[File.join(__dir__, 'blueprintsCLI', 'agents', '*.rb')].each { |file| require file }
 Dir[File.join(__dir__, 'blueprintsCLI', 'ui', '*.rb')].each { |file| require file }
 Dir[File.join(__dir__, 'blueprintsCLI', 'setup', '*.rb')].each { |file| require file }
 
