@@ -9,13 +9,13 @@ database:
 ai:
   sublayer:
     provider: OpenAI
-    model: minimax/minimax-m2.5:free
+    model: z-ai/glm-4.7
     project_name: BlueprintsCLI
     template: default
     project_template: CLI
   rubyllm:
-    default_model: minimax/minimax-m2.5:free
-    default_embedding_model: text-embedding-004
+    default_model: z-ai/glm-4.7
+    default_embedding_model: embeddinggemma:latest
     default_image_model: imagen-3.0-generate-002
     request_timeout: 120
     max_retries: 3
@@ -27,7 +27,9 @@ ai:
     openai_api_base: https://openrouter.ai/api/v1
   openai:
     log_errors: true
-  embedding_model: text-embedding-004
+  embedding_model: embeddinggemma:latest
+
+# Logging Configuration
 logger:
   level: info
   file_logging: true

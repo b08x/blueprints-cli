@@ -7,9 +7,8 @@ SimpleCov.start
 # Set the environment to "test"
 ENV['RACK_ENV'] = 'test'
 
-# Load the application
-require_relative '../lib/BlueprintsCLI'
-require_relative '../lib/blueprintsCLI/database'
+# Load the application environment
+require_relative '../lib/blueprintsCLI/config/environment'
 
 # Load RSpec and Rack::Test
 require 'rspec'

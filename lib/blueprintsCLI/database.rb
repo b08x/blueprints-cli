@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'ruby_llm'
-require 'pgvector'
+require 'json'
+require 'dry/monads'
 require_relative 'db/interface'
 # Temporarily comment out enhanced RAG for testing
 # require_relative 'nlp/enhanced_rag_service'
@@ -15,13 +15,19 @@ module BlueprintsCLI
   # standard CRUD actions, category management, and advanced vector-based
   # similarity searches. It uses the Sequel ORM to interact with a PostgreSQL
   # database (requiring the `pgvector` extension for search) and leverages the
-  # Google Gemini API to generate text embeddings for semantic search capabilities.
+  # Ollama API to generate text embeddings for semantic search capabilities.
   #
   # Configuration is loaded from the unified configuration system via
   # `BlueprintsCLI::Configuration`, environment variables, or sensible defaults.
   #
   class BlueprintDatabase
     include BlueprintsCLI::Interfaces::DatabaseInterface
+    include Dry::Monads[:result, :do]
+
+    # The Ollama embedding model used for generating text embeddings.
+    EMBEDDING_MODEL = 'embeddinggemma:latest'
+    # The number of dimensions for the text embedding vectors.
+    EMBEDDING_DIMENSIONS = 768
 
     # @!attribute [r] db
     #   @return [Sequel::Database] The active Sequel database connection instance.
@@ -49,9 +55,6 @@ module BlueprintsCLI
     def initialize(database_url: nil, rag_config: {})
       @database_url = database_url || load_database_url
       @db = connect_to_database
-      # Temporarily disable enhanced RAG for testing
-      # @cache_manager = Models::CacheManager.new
-      # @rag_service = NLP::EnhancedRagService.new(rag_config)
 
       validate_database_schema
 
@@ -72,20 +75,25 @@ module BlueprintsCLI
     # @param description [String, nil] A description of the blueprint's purpose.
     # @param categories [Array<String>] A list of category names to associate.
     #
-    # @return [Hash, nil] A hash representing the complete blueprint record
-    #   (including its new ID and categories), or `nil` if an error occurs.
+    # @return [Dry::Monads::Result] Success(blueprint_hash) or Failure(reason)
     #
-    # @example
-    #   db.create_blueprint(
-    #     code: "puts 'Hello, World!'",
-    #     name: "Hello World Snippet",
-    #     description: "A simple Ruby script to print a greeting.",
-    #     categories: ["Ruby", "Examples"]
-    #   )
-    #   # => {id: 1, code: "...", name: "...", ..., categories: [{id: 1, title: "Ruby"}, ...]}
-    #
-    def create_blueprint(code:, name: nil, description: nil, categories: [], language: 'ruby',
-                         file_type: '.rb', blueprint_type: 'code', parser_type: 'ruby')
+    def create_blueprint(code:, name: nil, description: nil, categories: [])
+      # Try to generate embedding, but allow NULL if Ollama is unavailable
+      embedding_result = generate_embedding(name: name, description: description)
+
+      embedding = case embedding_result
+      when Success then embedding_result.value!
+      when Failure
+        if embedding_result.failure == :ollama_unavailable
+          BlueprintsCLI.logger.debug("Creating blueprint with NULL embedding - will be processed later")
+          nil  # Allow NULL embedding
+        else
+          # For other embedding errors, still fail the creation
+          return embedding_result
+        end
+      end
+
+      blueprint_id = nil
       @db.transaction do
         # Prepare blueprint data for enhanced processing
         {
@@ -119,11 +127,7 @@ module BlueprintsCLI
           code: code,
           name: name,
           description: description,
-          language: language || 'ruby',
-          file_type: file_type || '.rb',
-          blueprint_type: blueprint_type || 'code',
-          parser_type: parser_type || 'ruby',
-          embedding: Pgvector.encode(embedding_vector),
+          embedding: embedding,
           created_at: Time.now,
           updated_at: Time.now
         )
@@ -133,17 +137,24 @@ module BlueprintsCLI
 
         # Handle categories if provided
         insert_blueprint_categories(blueprint_id, categories) if categories.any?
-
-        # Update search index (disabled for now)
-        # blueprint_data.merge(id: blueprint_id)
-        # @rag_service.update_search_index(blueprint_id, rag_result)
-
-        # Return the blueprint
-        get_blueprint(blueprint_id)
       end
+
+      # Return the created blueprint wrapped in Success
+      result = get_blueprint(blueprint_id)
+
+      # If embedding is missing due to Ollama unavailability, return failure to signal this
+      # but the blueprint has been successfully saved
+      if embedding.nil?
+        return Failure(:ollama_unavailable)
+      else
+        Success(result)
+      end
+    rescue Sequel::Error => e
+      BlueprintsCLI.logger.failure("Database error creating blueprint: #{e.message}")
+      Failure(e)
     rescue StandardError => e
       BlueprintsCLI.logger.failure("Error creating blueprint: #{e.message}")
-      nil
+      Failure(e)
     end
 
     #
@@ -462,6 +473,141 @@ module BlueprintsCLI
       return if @db.fetch("SELECT 1 FROM pg_extension WHERE extname = 'vector'").first
 
       BlueprintsCLI.logger.warn('pgvector extension not found. Vector search may not work.')
+    end
+
+    #
+    # Generates an embedding vector for a name and description combination.
+    #
+    # @!visibility private
+    # @param name [String] The name of the blueprint.
+    # @param description [String] The description of the blueprint.
+    # @return [String, nil] A string representation of the vector `"[d1,d2,...]"`.
+    #
+    def generate_embedding(name:, description:)
+      content = { name: name, description: description }.to_json
+      generate_embedding_for_text(content)
+    end
+
+    # Process blueprints with missing embeddings
+    #
+    # Finds all blueprints that have NULL embeddings and attempts to generate
+    # embeddings for them using the current Ollama configuration.
+    #
+    # @param batch_size [Integer] Number of blueprints to process in each batch
+    # @return [Hash] Summary of processed blueprints
+    def generate_missing_embeddings(batch_size: 10)
+      processed = 0
+      failed = 0
+      skipped = 0
+
+      # Find blueprints without embeddings
+      blueprints_without_embeddings = @db[:blueprints]
+        .where(embedding: nil)
+        .limit(batch_size)
+
+      BlueprintsCLI.logger.info("Found #{blueprints_without_embeddings.count} blueprints needing embeddings")
+
+      blueprints_without_embeddings.each do |blueprint|
+        begin
+          # Generate embedding
+          embedding_result = generate_embedding(
+            name: blueprint[:name],
+            description: blueprint[:description]
+          )
+
+          if embedding_result.success?
+            # Update the blueprint with the new embedding
+            @db[:blueprints]
+              .where(id: blueprint[:id])
+              .update(embedding: embedding_result.value!)
+
+            processed += 1
+            BlueprintsCLI.logger.debug("Generated embedding for blueprint #{blueprint[:id]}: #{blueprint[:name]}")
+          elsif embedding_result.failure == :ollama_unavailable
+            BlueprintsCLI.logger.warning("Ollama unavailable, stopping batch processing")
+            skipped += 1
+            break
+          else
+            BlueprintsCLI.logger.error("Failed to generate embedding for blueprint #{blueprint[:id]}: #{embedding_result.failure}")
+            failed += 1
+          end
+        rescue StandardError => e
+          BlueprintsCLI.logger.error("Error processing blueprint #{blueprint[:id]}: #{e.message}")
+          failed += 1
+        end
+      end
+
+      summary = {
+        processed: processed,
+        failed: failed,
+        skipped: skipped,
+        total_found: blueprints_without_embeddings.count
+      }
+
+      BlueprintsCLI.logger.info("Embedding generation complete: #{processed} processed, #{failed} failed, #{skipped} skipped")
+      summary
+    end
+
+    #
+    # Generates an embedding vector for arbitrary text using the unified RubyLLM API.
+    #
+    # @!visibility private
+    # @param text [String] The text to embed.
+    # @return [Dry::Monads::Result] Success(vector_string) or Failure(reason)
+    #
+    def generate_embedding_for_text(text)
+      # Ensure RubyLLM is configured
+      BlueprintsCLI.configuration.configure_rubyllm!
+
+      # Validate Ollama connectivity before attempting embedding generation
+      unless ollama_available?
+        BlueprintsCLI.logger.warning("Ollama service unavailable - blueprint will be queued for embedding when service returns")
+        return Failure(:ollama_unavailable)
+      end
+
+      embedding = RubyLLM.embed(text)
+      vector = embedding.vectors
+
+      if vector && !vector.empty?
+        Success("[#{vector.join(',')}]") # Format as PostgreSQL vector
+      else
+        BlueprintsCLI.logger.failure('Invalid embedding dimensions received')
+        Failure(:invalid_embedding)
+      end
+    rescue RubyLLM::Error => e
+      # Check if this is an Ollama connectivity issue
+      if e.message.match?(/connection|refused|timeout|unreachable/i)
+        BlueprintsCLI.logger.warning("Ollama connection error - blueprint will be queued for embedding: #{e.message}")
+        return Failure(:ollama_unavailable)
+      end
+      BlueprintsCLI.logger.failure("Error generating embedding: #{e.message}")
+      Failure(e)
+    rescue StandardError => e
+      BlueprintsCLI.logger.failure("Unexpected error in embedding generation: #{e.message}")
+      Failure(e)
+    end
+
+    # Check if Ollama service is available for embedding generation
+    #
+    # @return [Boolean] true if Ollama is accessible, false otherwise
+    def ollama_available?
+      ollama_base = BlueprintsCLI.configuration.fetch(:ai, :rubyllm, :ollama_api_base, default: 'http://localhost:11434')
+
+      # Quick health check by attempting to reach Ollama's tags endpoint
+      require 'net/http'
+      require 'timeout'
+
+      uri = URI.join(ollama_base, '/api/tags')
+
+      Timeout.timeout(5) do
+        response = Net::HTTP.get_response(uri)
+        response.code == '200'
+      end
+
+      true
+    rescue StandardError => e
+      BlueprintsCLI.logger.debug("Ollama health check failed: #{e.message}")
+      false
     end
 
     #

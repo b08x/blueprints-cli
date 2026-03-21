@@ -16,7 +16,7 @@ RubyLLM.configure do |config|
   config.ollama_api_base    = ENV["OLLAMA_API_BASE"] if ENV["OLLAMA_API_BASE"]
 
   config.default_model           = ENV.fetch("RUBYLLM_DEFAULT_MODEL", "gemini-2.0-flash")
-  config.default_embedding_model = ENV.fetch("RUBYLLM_EMBEDDING_MODEL", "text-embedding-004")
+  config.default_embedding_model = ENV.fetch("RUBYLLM_EMBEDDING_MODEL", "embeddinggemma:latest")
   config.request_timeout         = ENV.fetch("RUBYLLM_REQUEST_TIMEOUT", "120").to_i
   config.max_retries             = ENV.fetch("RUBYLLM_MAX_RETRIES", "3").to_i
 end

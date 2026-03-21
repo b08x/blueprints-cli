@@ -5,9 +5,11 @@
 require 'bundler/setup'
 Bundler.require
 
-# Set up database connection using environment variables with fallback
+# Load main module first
+require_relative '../../BlueprintsCLI'
+
+# Set up database connection using unified configuration
 ENV['RACK_ENV'] ||= 'development'
-require_relative '../configuration'
 DB = Sequel.connect(BlueprintsCLI.configuration.database_url)
 
 # Load initializers

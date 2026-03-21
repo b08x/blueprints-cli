@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'dry/monads'
+
 module BlueprintsCLI
   module Actions
     ##
@@ -13,6 +15,8 @@ module BlueprintsCLI
     #   action = Submit.new(code: "puts 'Hello, World!'")
     #   action.call
     class Submit
+      include Dry::Monads[:result, :do]
+
       ##
       # Initializes a new Submit with the provided code and optional metadata.
       #
@@ -23,9 +27,10 @@ module BlueprintsCLI
       # @param filename [String, nil] The original filename for type detection.
       # @param auto_describe [Boolean] Whether to auto-generate the description if not provided. Defaults to true.
       # @param auto_categorize [Boolean] Whether to auto-generate the categories if not provided. Defaults to true.
+      # @param db [BlueprintDatabase] The database dependency. Defaults to a new instance.
       # @return [Submit] A new instance of Submit.
-      def initialize(code:, name: nil, description: nil, categories: nil, filename: nil,
-                     auto_describe: true, auto_categorize: true)
+      def initialize(code:, name: nil, description: nil, categories: nil, auto_describe: true,
+                     auto_categorize: true, db: BlueprintsCLI::BlueprintDatabase.new)
         @code = code
         @name = name
         @description = description
@@ -33,46 +38,34 @@ module BlueprintsCLI
         @filename = filename
         @auto_describe = auto_describe
         @auto_categorize = auto_categorize
-        @db = BlueprintsCLI::BlueprintDatabase.new
-
-        # Detect types based on filename using Blueprint model method
-        @types = ::Blueprint.detect_types(@filename)
+        @db = db
       end
 
       ##
-      # Executes the blueprint submission process. This includes generating missing metadata,
-      # validating the blueprint data, and creating the blueprint in the database.
+      # Executes the blueprint submission process.
       #
       # @return [Boolean] true if the blueprint was successfully created, false otherwise.
-      # @raise [StandardError] If an error occurs during the submission process.
       def call
         BlueprintsCLI.logger.step('Processing blueprint submission...')
 
-        # Generate missing metadata using AI
-        generate_missing_metadata
+        result = execute_pipeline
 
-        # Validate required fields
-        return false unless validate_blueprint_data
-
-        # Create the blueprint in database
-        blueprint = @db.create_blueprint(
-          code: @code,
-          name: @name,
-          description: @description,
-          categories: @categories,
-          language: @types[:language],
-          file_type: @types[:file_type],
-          blueprint_type: @types[:blueprint_type],
-          parser_type: @types[:parser_type]
-        )
-
-        if blueprint
+        if result.success?
           BlueprintsCLI.logger.success('Blueprint created successfully!')
-          display_blueprint_summary(blueprint)
+          display_blueprint_summary(result.value!)
           true
         else
-          BlueprintsCLI.logger.failure('Failed to create blueprint')
-          false
+          # Handle specific failure types
+          case result.failure
+          when :ollama_unavailable
+            BlueprintsCLI.logger.warning("Blueprint saved successfully, but embedding generation was queued.")
+            BlueprintsCLI.logger.info("Embedding will be generated automatically when Ollama service becomes available.")
+            BlueprintsCLI.logger.info("You can also manually process embeddings later with: bin/blueprintsCLI embedding process")
+            true # Still consider this a success since the blueprint was saved
+          else
+            BlueprintsCLI.logger.failure("Failed to create blueprint: #{result.failure}")
+            false
+          end
         end
       rescue StandardError => e
         BlueprintsCLI.logger.failure("Error submitting blueprint: #{e.message}")
@@ -82,15 +75,27 @@ module BlueprintsCLI
 
       private
 
+      def execute_pipeline
+        yield generate_missing_metadata
+        yield validate_blueprint_data
+
+        @db.create_blueprint(
+          code: @code,
+          name: @name,
+          description: @description,
+          categories: @categories
+        )
+      end
+
       ##
       # Generates missing metadata for the blueprint, including name, description, and categories.
       #
-      # @return [void]
+      # @return [Dry::Monads::Result] Success(true) or Failure(reason)
       def generate_missing_metadata
         # Generate name if not provided
         if @name.nil? || @name.strip.empty?
           BlueprintsCLI.logger.info('Generating blueprint name...')
-          @name = BlueprintsCLI::Generators::Name.new(
+          @name = yield BlueprintsCLI::Generators::Name.new(
             code: @code,
             description: @description
           ).generate
@@ -100,32 +105,33 @@ module BlueprintsCLI
         # Generate description if not provided and auto_describe is enabled
         if (@description.nil? || @description.strip.empty?) && @auto_describe
           puts '📖 Generating blueprint description...'.colorize(:yellow)
-          @description = BlueprintsCLI::Generators::Description.new(
+          @description = yield BlueprintsCLI::Generators::Description.new(
             code: @code
           ).generate
           puts "   Generated description: #{truncate_text(@description, 80)}".colorize(:cyan)
         end
 
         # Generate categories if not provided and auto_categorize is enabled
-        return unless @categories.empty? && @auto_categorize
+        if @categories.empty? && @auto_categorize
+          puts '🏷️  Generating blueprint categories...'.colorize(:yellow)
+          @categories = yield BlueprintsCLI::Generators::Category.new(
+            code: @code,
+            description: @description
+          ).generate
+          puts "   Generated categories: #{@categories.join(', ')}".colorize(:cyan)
+        end
 
-        puts '🏷️  Generating blueprint categories...'.colorize(:yellow)
-        @categories = BlueprintsCLI::Generators::Category.new(
-          code: @code,
-          description: @description
-        ).generate
-        puts "   Generated categories: #{@categories.join(', ')}".colorize(:cyan)
+        Success(true)
       end
 
       ##
       # Validates the blueprint data to ensure all required fields are present and valid.
       #
-      # @return [Boolean] true if the blueprint data is valid, false otherwise.
+      # @return [Dry::Monads::Result] Success(true) or Failure(errors)
       def validate_blueprint_data
         errors = []
 
         errors << 'Code cannot be empty' if @code.nil? || @code.strip.empty?
-
         errors << 'Name is required (auto-generation failed)' if @name.nil? || @name.strip.empty?
 
         if @description.nil? || @description.strip.empty?
@@ -139,10 +145,10 @@ module BlueprintsCLI
         if errors.any?
           BlueprintsCLI.logger.failure('Validation errors:')
           errors.each { |error| BlueprintsCLI.logger.error("   - #{error}") }
-          return false
+          Failure(errors)
+        else
+          Success(true)
         end
-
-        true
       end
 
       ##

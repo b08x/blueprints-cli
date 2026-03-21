@@ -10,37 +10,24 @@ module BlueprintsCLI
   # @example Interactive menu mode (no arguments)
   #   BlueprintsCLI::CLI.start
   class CLI < Thor
-    # Dynamically registers all available commands from BlueprintsCLI::Commands
-    # as Thor commands, excluding the base and menu commands.
-    #
-    # This is automatically executed when the class is loaded and sets up
-    # the command descriptions and method definitions for each available command.
-    excluded_commands = %i[BaseCommand MenuCommand]
-    valid_commands = BlueprintsCLI::Commands.constants.reject do |command_class|
-      excluded_commands.include?(command_class)
+    desc "blueprint", "Manage code blueprints"
+    def blueprint(*args)
+      BlueprintsCLI::Commands::BlueprintCommand.new(options).execute(*args)
     end
 
-    valid_commands.each do |command_class|
-      command = BlueprintsCLI::Commands.const_get(command_class)
-      desc command.command_name, command.description
+    desc "config", "Manage application configuration"
+    def config(*args)
+      BlueprintsCLI::Commands::ConfigCommand.new(options).execute(*args)
+    end
 
-      # Add specific options for blueprint command
-      if command.command_name == 'blueprint'
-        option :interactive, type: :boolean, aliases: '-i',
-                             desc: 'Enable interactive multiline input for submit command'
-        option :auto_describe, type: :boolean, default: true,
-                               desc: 'Auto-generate description using AI'
-        option :auto_categorize, type: :boolean, default: true, desc: 'Auto-categorize using AI'
-        option :format, type: :string, desc: 'Output format (table, summary, json, etc.)'
-        option :analyze, type: :boolean, desc: 'Include AI analysis in view output'
-        option :limit, type: :numeric, desc: 'Limit number of results'
-        option :output, type: :string, desc: 'Output file path'
-        option :force, type: :boolean, desc: 'Force overwrite existing files'
-      end
+    desc "docs", "Generate and view project documentation"
+    def docs(*args)
+      BlueprintsCLI::Commands::DocsCommand.new(options).execute(*args)
+    end
 
-      define_method(command.command_name) do |*args|
-        command.new(options).execute(*args)
-      end
+    desc "setup", "Initial environment setup"
+    def setup(*args)
+      BlueprintsCLI::Commands::SetupCommand.new(options).execute(*args)
     end
 
     # Starts the CLI application with the given arguments.

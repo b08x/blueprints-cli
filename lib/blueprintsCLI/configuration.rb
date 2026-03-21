@@ -572,8 +572,9 @@ module BlueprintsCLI
       when 'gemini', 'google'
         ENV['GEMINI_API_KEY'] || ENV['GOOGLE_API_KEY']
       when 'openai'
-        # Support both OpenRouter and direct OpenAI
-        ENV['OPENROUTER_API_KEY'] || ENV['OPENAI_API_KEY']
+        ENV['OPENAI_API_KEY']
+      when 'openrouter'
+        ENV['OPENROUTER_API_KEY']
       when 'anthropic'
         ENV['ANTHROPIC_API_KEY']
       when 'deepseek'
@@ -853,12 +854,14 @@ module BlueprintsCLI
       RubyLLM.configure do |config|
         # API Keys - use the existing ai_api_key method that checks environment variables
         config.openai_api_key = ai_api_key(:openai)
+        config.openrouter_api_key = ai_api_key(:openrouter)
         config.gemini_api_key = ai_api_key(:gemini)
         config.anthropic_api_key = ai_api_key(:anthropic)
         config.deepseek_api_key = ai_api_key(:deepseek)
 
-        # Custom endpoint
+        # Custom endpoints
         config.openai_api_base = fetch(:ai, :rubyllm, :openai_api_base)
+        config.ollama_api_base = fetch(:ai, :rubyllm, :ollama_api_base)
 
         # Default models
         config.default_model = fetch(:ai, :rubyllm, :default_model)
@@ -1114,11 +1117,11 @@ module BlueprintsCLI
       # AI defaults
       @config.set_if_empty(:ai, :sublayer, :provider, value: 'Gemini')
       @config.set_if_empty(:ai, :sublayer, :model, value: 'gemini-2.0-flash')
-      @config.set_if_empty(:ai, :embedding_model, value: 'text-embedding-004')
+      @config.set_if_empty(:ai, :embedding_model, value: 'embeddinggemma:latest')
 
       # RubyLLM defaults
       @config.set_if_empty(:ai, :rubyllm, :default_model, value: 'gemini-2.0-flash')
-      @config.set_if_empty(:ai, :rubyllm, :default_embedding_model, value: 'text-embedding-004')
+      @config.set_if_empty(:ai, :rubyllm, :default_embedding_model, value: 'embeddinggemma:latest')
       @config.set_if_empty(:ai, :rubyllm, :default_image_model, value: 'imagen-3.0-generate-002')
       @config.set_if_empty(:ai, :rubyllm, :request_timeout, value: 120)
       @config.set_if_empty(:ai, :rubyllm, :max_retries, value: 3)
@@ -1168,6 +1171,7 @@ module BlueprintsCLI
 
       # AI Provider API keys
       @config.set_from_env(:ai, :provider_keys, :openai) { 'OPENAI_API_KEY' }
+      @config.set_from_env(:ai, :provider_keys, :openrouter) { 'OPENROUTER_API_KEY' }
       @config.set_from_env(:ai, :provider_keys, :gemini) { 'GEMINI_API_KEY' }
       @config.set_from_env(:ai, :provider_keys, :gemini) { 'GOOGLE_API_KEY' }
       @config.set_from_env(:ai, :provider_keys, :anthropic) { 'ANTHROPIC_API_KEY' }
@@ -1175,7 +1179,9 @@ module BlueprintsCLI
       @config.set_from_env(:ai, :provider_keys, :openai_access_token) { 'OPENAI_ACCESS_TOKEN' }
       @config.set_from_env(:ai, :provider_keys, :openai_base_uri) { 'OPENAI_BASE_URI' }
       @config.set_from_env(:ai, :rubyllm, :openai_api_key) { 'OPENAI_API_KEY' }
+      @config.set_from_env(:ai, :rubyllm, :openrouter_api_key) { 'OPENROUTER_API_KEY' }
       @config.set_from_env(:ai, :rubyllm, :openai_api_base) { 'OPENAI_API_BASE' }
+      @config.set_from_env(:ai, :rubyllm, :ollama_api_base) { 'OLLAMA_API_BASE' }
     end
 
     # Setup validation rules
@@ -1324,10 +1330,27 @@ module BlueprintsCLI
 
       # Check if API key is available for the provider
       api_key = ai_api_key(provider)
-      return unless api_key.nil? || api_key.empty?
+      if api_key.nil? || api_key.empty?
+        BlueprintsCLI.logger.warn("No API key found for AI provider '#{provider}'. Set the appropriate environment variable.")
+      end
 
-      # Can't use BlueprintsCLI.logger here as it may not be initialized yet
-      warn "No API key found for AI provider '#{provider}'. Set the appropriate environment variable."
+      # Validate Ollama-specific configuration
+      validate_ollama_config!
+    end
+
+    # Validate Ollama-specific configuration
+    def validate_ollama_config!
+      embedding_model = fetch(:ai, :rubyllm, :default_embedding_model)
+
+      # Check if we're using an Ollama embedding model
+      if embedding_model&.match?(/^(embeddinggemma|nomic-embed|mxbai-embed)/i)
+        ollama_base = fetch(:ai, :rubyllm, :ollama_api_base)
+
+        if ollama_base.nil? || ollama_base.empty?
+          BlueprintsCLI.logger.warn("Using Ollama embedding model '#{embedding_model}' but OLLAMA_API_BASE is not configured.")
+          BlueprintsCLI.logger.warn("Set OLLAMA_API_BASE environment variable (e.g., http://localhost:11434) or ensure Ollama is running on the default port.")
+        end
+      end
     end
 
     # Validate logger configuration section
