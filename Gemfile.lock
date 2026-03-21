@@ -25,37 +25,6 @@ GEM
     addressable (2.8.9)
       public_suffix (>= 2.0.2, < 8.0)
     ast (2.4.3)
-    async (2.27.3)
-      console (~> 1.29)
-      fiber-annotation
-      io-event (~> 1.11)
-      metrics (~> 0.12)
-      traces (~> 0.15)
-    async-container (0.25.0)
-      async (~> 2.22)
-    async-container-supervisor (0.5.2)
-      async-container (~> 0.22)
-      async-service
-      io-endpoint
-      io-stream
-      memory-leak (~> 0.5)
-    async-http (0.91.0)
-      async (>= 2.10.2)
-      async-pool (~> 0.11)
-      io-endpoint (~> 0.14)
-      io-stream (~> 0.6)
-      metrics (~> 0.12)
-      protocol-http (~> 0.49)
-      protocol-http1 (~> 0.30)
-      protocol-http2 (~> 0.22)
-      traces (~> 0.10)
-    async-http-cache (0.4.5)
-      async-http (~> 0.56)
-    async-pool (0.11.0)
-      async (>= 2.0)
-    async-service (0.14.1)
-      async
-      async-container (~> 0.16)
     backport (1.2.0)
     base64 (0.3.0)
     benchmark (0.5.0)
@@ -63,34 +32,12 @@ GEM
     climate_control (1.2.0)
     clipboard (2.0.0)
     coderay (1.1.3)
-    cogger (0.31.0)
-      core (~> 1.10)
-      logger (~> 1.6)
-      refinements (~> 12.10)
-      tone (~> 1.10)
-      zeitwerk (~> 2.7)
     colorize (1.1.0)
-<<<<<<< HEAD
-    concurrent-ruby (1.3.5)
-    connection_pool (2.5.3)
-    console (1.33.0)
-      fiber-annotation
-      fiber-local (~> 1.1)
-      json
-    containable (0.6.0)
-      concurrent-ruby (~> 1.2)
-    core (1.10.0)
-=======
     concurrent-ruby (1.3.6)
     connection_pool (3.0.2)
     date (3.5.1)
     diff-lcs (1.6.2)
-<<<<<<< HEAD
-    docile (1.4.1)
-    dotenv (3.1.8)
-=======
     dotenv (3.2.0)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
     drb (2.2.3)
     dry-configurable (1.3.0)
       dry-core (~> 1.1)
@@ -110,7 +57,6 @@ GEM
     factory_bot (6.5.6)
       activesupport (>= 6.1.0)
     faraday (2.14.1)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
       faraday-net_http (>= 2.0, < 3.5)
       json
       logger
@@ -136,51 +82,19 @@ GEM
       bigdecimal (>= 3.1, < 5)
     kramdown (2.5.2)
       rexml (>= 3.4.4)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
     language_server-protocol (3.17.0.5)
-    linguistics (2.1.0)
-      loggability (~> 0.11)
     lint_roller (1.1.0)
     logger (1.7.0)
-<<<<<<< HEAD
-    mapping (1.1.3)
-    marameters (3.12.0)
-      refinements (~> 12.10)
-      zeitwerk (~> 2.7)
-    marcel (1.0.4)
-    memory-leak (0.5.2)
-=======
     marcel (1.1.0)
     mcp (0.9.0)
       json-schema (>= 4.1)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
     method_source (1.1.0)
     minitest (6.0.2)
       drb (~> 2.0)
       prism (~> 1.5)
     multipart-post (2.4.1)
-<<<<<<< HEAD
-    mustermann (3.0.4)
-      ruby2_keywords (~> 0.0.1)
-    nest (3.2.0)
-      redic
-    net-http (0.6.0)
-      uri
-    nio4r (2.7.4)
-    nokogiri (1.18.9-aarch64-linux-gnu)
-      racc (~> 1.4)
-    nokogiri (1.18.9-aarch64-linux-musl)
-      racc (~> 1.4)
-    nokogiri (1.18.9-arm64-darwin)
-      racc (~> 1.4)
-    nokogiri (1.18.9-x86_64-darwin)
-      racc (~> 1.4)
-    nokogiri (1.18.9-x86_64-linux-gnu)
-      racc (~> 1.4)
-    nokogiri (1.18.9-x86_64-linux-musl)
-=======
     net-http (0.9.1)
       uri (>= 0.11.1)
     nokogiri (1.19.2-aarch64-linux-gnu)
@@ -198,49 +112,16 @@ GEM
     nokogiri (1.19.2-x86_64-linux-gnu)
       racc (~> 1.4)
     nokogiri (1.19.2-x86_64-linux-musl)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
       racc (~> 1.4)
-    numpy (0.4.0)
-      pycall (>= 1.2.0.beta1)
     observer (0.1.2)
-<<<<<<< HEAD
-    ohm (3.1.1)
-      nest (~> 3)
-      redic (~> 1.5.0)
-      stal
-    onnxruntime (0.10.0-aarch64-linux)
-      ffi
-    onnxruntime (0.10.0-arm64-darwin)
-      ffi
-    onnxruntime (0.10.0-x86_64-darwin)
-      ffi
-    onnxruntime (0.10.0-x86_64-linux)
-      ffi
-    openssl (3.3.0)
-    optparse (0.6.0)
-    ostruct (0.6.3)
-    parallel (1.27.0)
-    parser (3.3.9.0)
-=======
     open3 (0.2.1)
     ostruct (0.6.3)
     parallel (1.27.0)
     parser (3.3.10.2)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
       ast (~> 2.4.1)
       racc
     pastel (0.8.0)
       tty-color (~> 0.5)
-<<<<<<< HEAD
-    pg (1.6.1-aarch64-linux)
-    pg (1.6.1-aarch64-linux-musl)
-    pg (1.6.1-arm64-darwin)
-    pg (1.6.1-x86_64-darwin)
-    pg (1.6.1-x86_64-linux)
-    pg (1.6.1-x86_64-linux-musl)
-    pgvector (0.3.2)
-    prism (1.4.0)
-=======
     pg (1.6.3)
     pg (1.6.3-aarch64-linux)
     pg (1.6.3-aarch64-linux-musl)
@@ -261,49 +142,19 @@ GEM
     psych (5.3.1)
       date
       stringio
-<<<<<<< HEAD
-    public_suffix (6.0.2)
-    puma (6.6.1)
-      nio4r (~> 2.0)
-    pycall (1.5.2)
-    racc (1.8.1)
-    rack (3.2.0)
-    rack-protection (4.1.1)
-      base64 (>= 0.1.0)
-      logger (>= 1.6.0)
-      rack (>= 3.0.0, < 4)
-    rack-session (2.1.1)
-      base64 (>= 0.1.0)
-      rack (>= 3.0.0)
-=======
     public_suffix (7.0.5)
     racc (1.8.1)
     rack (3.2.5)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
     rack-test (2.2.0)
       rack (>= 1.3)
-    rackup (2.2.1)
-      rack (>= 3)
     rainbow (3.1.1)
     rbs (3.10.3)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
       logger
       tsort
     rchardet (1.10.0)
     rdoc (7.2.0)
       erb
       psych (>= 4.0.0)
-<<<<<<< HEAD
-    redic (1.5.3)
-      hiredis
-    refinements (12.11.0)
-    regexp_parser (2.11.2)
-    reverse_markdown (3.0.0)
-      nokogiri
-    rexml (3.4.1)
-    rouge (4.6.0)
-    rspec (3.13.1)
-=======
       tsort
     regexp_parser (2.11.3)
     reline (0.6.3)
@@ -313,7 +164,6 @@ GEM
     rexml (3.4.4)
     rouge (4.7.0)
     rspec (3.13.2)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
       rspec-core (~> 3.13.0)
       rspec-expectations (~> 3.13.0)
       rspec-mocks (~> 3.13.0)
@@ -325,13 +175,8 @@ GEM
     rspec-mocks (3.13.8)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
-<<<<<<< HEAD
-    rspec-support (3.13.5)
-    rubocop (1.79.2)
-=======
     rspec-support (3.13.7)
     rubocop (1.85.1)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.1.0)
@@ -340,21 +185,6 @@ GEM
       parser (>= 3.3.0.2)
       rainbow (>= 2.2.2, < 4.0)
       regexp_parser (>= 2.9.3, < 3.0)
-<<<<<<< HEAD
-      rubocop-ast (>= 1.46.0, < 2.0)
-      ruby-progressbar (~> 1.7)
-      unicode-display_width (>= 2.4.0, < 4.0)
-    rubocop-ast (1.46.0)
-      parser (>= 3.3.7.2)
-      prism (~> 1.4)
-    rubocop-capybara (2.22.1)
-      lint_roller (~> 1.1)
-      rubocop (~> 1.72, >= 1.72.1)
-    rubocop-disable_syntax (0.2.0)
-      lint_roller
-      rubocop (>= 1.72.0)
-    rubocop-factory_bot (2.27.1)
-=======
       rubocop-ast (>= 1.49.0, < 2.0)
       ruby-progressbar (~> 1.7)
       unicode-display_width (>= 2.4.0, < 4.0)
@@ -362,7 +192,6 @@ GEM
       parser (>= 3.3.7.2)
       prism (~> 1.7)
     rubocop-factory_bot (2.28.0)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
       lint_roller (~> 1.1)
       rubocop (~> 1.72, >= 1.72.1)
     rubocop-minitest (0.39.1)
@@ -391,29 +220,12 @@ GEM
       lint_roller (~> 1.1)
       rubocop (~> 1.72, >= 1.72.1)
       rubocop-ast (>= 1.44.0, < 2.0)
-<<<<<<< HEAD
-    ruby-lsp (0.26.1)
-      language_server-protocol (~> 3.17.0)
-      prism (>= 1.2, < 2.0)
-      rbs (>= 3, < 5)
-    ruby-openai (8.2.0)
-=======
     ruby-lsp (0.26.8)
       language_server-protocol (~> 3.17.0)
       prism (>= 1.2, < 2.0)
       rbs (>= 3, < 5)
     ruby-progressbar (1.13.0)
-<<<<<<< HEAD
-    ruby-spacy (0.2.3)
-      numpy (~> 0.4.0)
-      pycall (~> 1.5.1)
-      ruby-openai
-      terminal-table (~> 3.0.1)
-    ruby2_keywords (0.0.5)
-    ruby_llm (1.6.3)
-=======
     ruby_llm (1.14.0)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
       base64
       event_stream_parser (~> 1)
       faraday (>= 1.10.0)
@@ -423,52 +235,12 @@ GEM
       marcel (~> 1)
       ruby_llm-schema (~> 0)
       zeitwerk (~> 2)
-<<<<<<< HEAD
-    rubyzip (0.9.9)
-    runcom (11.10.0)
-      refinements (~> 12.10)
-      xdg (~> 8.10)
-      zeitwerk (~> 2.7)
-    rwordnet (0.1.3)
-    samovar (2.3.0)
-      console (~> 1.0)
-      mapping (~> 1.0)
-    schiphol (1.0.2)
-      progressbar (>= 0.10.0)
-      rubyzip (~> 0.9.9)
-    securerandom (0.4.1)
-    sequel (5.95.1)
-      bigdecimal
-    simplecov (0.22.0)
-      docile (~> 1.1)
-      simplecov-html (~> 0.11)
-      simplecov_json_formatter (~> 0.1)
-    simplecov-html (0.13.2)
-    simplecov_json_formatter (0.1.4)
-    sinatra (4.1.1)
-      logger (>= 1.6.0)
-      mustermann (~> 3.0)
-      rack (>= 3.0.0, < 4)
-      rack-protection (= 4.1.1)
-      rack-session (>= 2.0.0, < 3)
-      tilt (~> 2.0)
-    sod (0.20.0)
-      cogger (~> 0.31)
-      containable (~> 0.2)
-      infusible (~> 3.12)
-      optparse (~> 0.6)
-      refinements (~> 12.10)
-      tone (~> 1.10)
-      zeitwerk (~> 2.7)
-    solargraph (0.56.2)
-=======
     ruby_llm-schema (0.3.0)
     securerandom (0.4.1)
     sequel (5.102.0)
       bigdecimal
     solargraph (0.58.3)
       ast (~> 2.4.3)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
       backport (~> 1.2)
       benchmark (~> 0.4)
       bundler (>= 2.0)
@@ -482,11 +254,7 @@ GEM
       ostruct (~> 0.6)
       parser (~> 3.0)
       prism (~> 1.4)
-<<<<<<< HEAD
-      rbs (~> 3.6.1)
-=======
       rbs (>= 3.6.1, <= 4.0.0.dev.4)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
       reverse_markdown (~> 3.0)
       rubocop (~> 1.76)
       thor (~> 1.0)
@@ -494,18 +262,7 @@ GEM
       yard (~> 0.9, >= 0.9.24)
       yard-activesupport-concern (~> 0.0)
       yard-solargraph (~> 0.1)
-<<<<<<< HEAD
-    spek (3.10.0)
-      dry-monads (~> 1.6)
-      refinements (~> 12.10)
-      versionaire (~> 13.10)
-      zeitwerk (~> 2.7)
-    stal (0.3.0)
-      redic (~> 1.5)
-    stringio (3.1.7)
-=======
     stringio (3.2.0)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
     strings (0.2.1)
       strings-ansi (~> 0.2)
       unicode-display_width (>= 1.5, < 3.0)
@@ -513,29 +270,10 @@ GEM
     strings-ansi (0.2.0)
     terrapin (1.1.1)
       climate_control
-<<<<<<< HEAD
-    thor (1.4.0)
-    tilt (2.6.1)
-    tokenizers (0.5.5-aarch64-linux)
-    tokenizers (0.5.5-aarch64-linux-musl)
-    tokenizers (0.5.5-arm64-darwin)
-    tokenizers (0.5.5-x86_64-darwin)
-    tokenizers (0.5.5-x86_64-linux)
-    tokenizers (0.5.5-x86_64-linux-musl)
-    tone (1.10.0)
-      refinements (~> 12.10)
-      zeitwerk (~> 2.7)
-    traces (0.17.0)
-    treat (2.1.0)
-      birch
-      schiphol
-      yomu
-=======
     thor (1.5.0)
     tilt (2.7.0)
     track_open_instances (0.1.15)
     tsort (0.2.0)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
     tty-box (0.7.0)
       pastel (~> 0.8)
       strings (~> 0.2.0)
@@ -589,19 +327,6 @@ GEM
       concurrent-ruby (~> 1.0)
     unicode-display_width (2.6.0)
     unicode_utils (1.4.0)
-<<<<<<< HEAD
-    uri (1.0.3)
-    versionaire (13.10.0)
-      refinements (~> 12.10)
-    wisper (2.0.1)
-    xdg (8.10.0)
-    yard (0.9.37)
-    yard-solargraph (0.1.0)
-      yard (~> 0.9)
-    yomu (0.1.10)
-      mime-types (~> 1.23)
-    zeitwerk (2.7.3)
-=======
     uri (1.1.1)
     wisper (2.0.1)
     yard (0.9.38)
@@ -610,20 +335,19 @@ GEM
     yard-solargraph (0.1.0)
       yard (~> 0.9)
     zeitwerk (2.7.5)
->>>>>>> 777ea55 (♻️ refactor: replace Sublayer with RubyLLM for AI interactions)
 
 PLATFORMS
   aarch64-linux
-  aarch64-linux
   aarch64-linux-gnu
   aarch64-linux-musl
+  arm-linux-gnu
+  arm-linux-musl
   arm64-darwin
   x86_64-darwin
   x86_64-linux-gnu
   x86_64-linux-musl
 
 DEPENDENCIES
-  algorithms (~> 1.0)
   blueprintsCLI!
   clipboard
   colorize
@@ -637,12 +361,9 @@ DEPENDENCIES
   pg
   pry
   pry-doc (~> 1.6)
-  puma (~> 6.6)
   rack (~> 3.1)
   rack-test (~> 2.2)
-  rackup (~> 2.2)
-  rake (~> 13.3)
-  rbs
+  rbs (~> 3.9)
   rdoc
   rspec (~> 3.10)
   rubocop
@@ -682,4 +403,4 @@ DEPENDENCIES
   yard
 
 BUNDLED WITH
-   2.5.22
+   2.6.9
