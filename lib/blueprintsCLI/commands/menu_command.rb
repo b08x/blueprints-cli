@@ -315,7 +315,7 @@ module BlueprintsCLI
       end
 
       # Handles the blueprint submission process.
-      # Prompts the user for input method and options, then executes the submit command.
+      # Prompts the user for input and options, then executes the submit command.
       #
       # @return [void]
       private def handle_blueprint_submit
@@ -616,7 +616,6 @@ module BlueprintsCLI
           unit_index += 1
         end
 
-        if unit_index.zero?
         if unit_index.zero?
           "#{size_float.to_i} #{units[unit_index]}"
         else

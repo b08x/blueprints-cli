@@ -137,7 +137,7 @@ module BlueprintsCLI
       # Launches the configured system editor to open the temporary file.
       #
       # @param temp_file [String] The path to the file to be opened.
-      # @return [Boolean] The success status of the editor operation.
+      # @return [Boolean] The success status of the system call.
       # @private
       private def launch_editor(temp_file)
         # Get editor preference from config or environment
@@ -146,8 +146,8 @@ module BlueprintsCLI
         puts "🔧 Opening #{editor} with blueprint code...".colorize(:cyan)
         puts "💡 Save and exit when done editing".colorize(:cyan)
 
-        # Launch editor safely using TTY::Editor
-        TTY::Editor.open(temp_file, command: editor)
+        # Launch editor and wait for it to complete
+        system("#{editor} #{temp_file}")
       end
 
       # Determines the user's preferred editor using the unified configuration system.

@@ -24,7 +24,6 @@ module BlueprintsCLI
       # @param name [String, nil] The name of the blueprint. If not provided, it will be auto-generated.
       # @param description [String, nil] The description of the blueprint. If not provided and auto_describe is true, it will be auto-generated.
       # @param categories [Array, nil] The categories of the blueprint. If not provided and auto_categorize is true, they will be auto-generated.
-      # @param filename [String, nil] The original filename for type detection.
       # @param auto_describe [Boolean] Whether to auto-generate the description if not provided. Defaults to true.
       # @param auto_categorize [Boolean] Whether to auto-generate the categories if not provided. Defaults to true.
       # @param db [BlueprintDatabase] The database dependency. Defaults to a new instance.
@@ -36,7 +35,6 @@ module BlueprintsCLI
         @name = name
         @description = description
         @categories = categories || []
-        @filename = filename
         @auto_describe = auto_describe
         @auto_categorize = auto_categorize
         @db = db
@@ -162,10 +160,6 @@ module BlueprintsCLI
         puts "ID: #{blueprint[:id]}"
         puts "Name: #{blueprint[:name]}"
         puts "Description: #{blueprint[:description]}"
-        puts "Language: #{@types[:language]}"
-        puts "File Type: #{@types[:file_type]}"
-        puts "Blueprint Type: #{@types[:blueprint_type]}"
-        puts "Parser Type: #{@types[:parser_type]}"
 
         if blueprint[:categories]&.any?
           category_names = blueprint[:categories].map { |cat| cat[:title] }

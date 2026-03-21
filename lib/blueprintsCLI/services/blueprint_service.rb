@@ -38,15 +38,8 @@ class BlueprintService
 
       # Generate a vector embedding from the name and description for semantic search.
       embedding_text = "#{params['name']} #{params['description']}"
-      begin
-        embedding_result = RubyLLM.embed(embedding_text)
-        embedding_vector = embedding_result.vectors
-        blueprint.embedding = Pgvector.encode(embedding_vector)
-      rescue RubyLLM::Error => e
-        # Log the error but continue with nil embedding
-        puts "Warning: Embedding generation failed: #{e.message}"
-        blueprint.embedding = nil
-      end
+      embedding = RubyLLM.embed(text: embedding_text)
+      blueprint.embedding = Pgvector.encode(embedding)
 
       # Save the blueprint to the database.
       blueprint.save

@@ -200,15 +200,8 @@ module BlueprintsCLI
           puts "Found #{blueprints.length} blueprints"
           puts "=" * 80
 
-      ##
-      # Builds the choices array for the blueprint browser prompt.
-      #
-      # Combines blueprint choices with action options.
-      #
-      # @param blueprints [Array<Hash>] The collection of blueprints to browse
-      # @return [Array<Hash>] Complete choices array for the prompt
-      def build_browser_choices(blueprints)
-        choices = prepare_blueprint_choices(blueprints)
+          # Prepare choices for the prompt
+          choices = prepare_blueprint_choices(blueprints)
 
           # Add action options
           choices << { name: "🔍 Search blueprints".colorize(:blue), value: :search }
@@ -239,14 +232,6 @@ module BlueprintsCLI
       end
 
       ##
-      # Refreshes the blueprint list from the database.
-      #
-      # @return [Array<Hash>] Updated collection of blueprints
-      def refresh_blueprint_list
-        @db.list_blueprints(limit: @limit)
-      end
-
-      ##
       # Prepares blueprint choices for the interactive prompt.
       #
       # Formats blueprint information for display in the selection menu.
@@ -271,8 +256,7 @@ module BlueprintsCLI
       ##
       # Handles actions for a selected blueprint in interactive mode.
       #
-      # Provides options to view (with AI analysis), edit, export, or copy the blueprint ID.
-      # The view action launches the enhanced interactive two-column viewer with AI suggestions.
+      # Provides options to view, edit, export, analyze, or copy the blueprint ID.
       #
       # @param blueprint [Hash] The selected blueprint
       # @param prompt [TTY::Prompt] The prompt instance for user interaction
@@ -293,8 +277,7 @@ module BlueprintsCLI
         when :view
           BlueprintsCLI::Actions::View.new(
             id: blueprint[:id],
-            format: :interactive,
-            with_suggestions: true
+            format: :detailed
           ).call
           prompt.keypress("Press any key to continue...")
         when :edit

@@ -1,8 +1,18 @@
-# Changelog
+## [unreleased]
 
-All notable changes to this project will be documented in this file.
+### 🚀 Features
 
-## [0.5.0] - 2025-08-02
+- *(docker)* Integrate frontend service with comprehensive Docker architecture
+- *(docker)* Add Python virtual environment support and resolve PyCall dependencies
+
+### 🐛 Bug Fixes
+
+- *(config)* Make configure_rubyllm! public and remove unsupported log_assume_model_exists
+
+### 🚜 Refactor
+
+- Reorganize Docker configuration and update Gemfile dependencies
+## [0.5.0] - 2025-08-03
 
 ### 🚀 Features
 
@@ -54,7 +64,6 @@ All notable changes to this project will be documented in this file.
 ### 🛡️ Security
 
 - Add CLI-UI framework and related dependencies
-
 ## [0.1.0] - 2025-07-12
 
 ### 🚀 Features

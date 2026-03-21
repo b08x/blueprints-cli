@@ -66,14 +66,5 @@ module BlueprintsCLI
         super
       end
     end
-
-    def self.fallback_to_traditional_menu
-      require 'tty-prompt'
-      debug_mode = ENV['BlueprintsCLI_DEBUG'] == 'true'
-      BlueprintsCLI::Commands::MenuCommand.new(debug: debug_mode).start
-    rescue LoadError => e
-      BlueprintsCLI.logger.failure("TTY::Prompt not available. Please run: bundle install. #{e.message}")
-      super
-    end
   end
 end

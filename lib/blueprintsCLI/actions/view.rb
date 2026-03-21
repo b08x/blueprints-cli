@@ -71,8 +71,6 @@ module BlueprintsCLI
         case @format
         when :detailed
           display_detailed(blueprint)
-        when :interactive
-          display_interactive(blueprint)
         when :json
           puts JSON.pretty_generate(blueprint)
         when :code_only
@@ -96,25 +94,6 @@ module BlueprintsCLI
         else
           puts content
         end
-      end
-
-      ##
-      # Displays an interactive view of the blueprint using CLI::UI.
-      #
-      # Shows metadata and details in organized sections with scrollable code,
-      # and a slash menu for actions like edit, preview improvements, generate docs.
-      #
-      # @param blueprint [Hash] The blueprint data to display
-      # @return [void]
-      #
-      # @example Internal usage
-      #   display_interactive(blueprint_data)
-      def display_interactive(blueprint)
-        viewer = BlueprintsCLI::UI::CLIUIViewer.new(
-          blueprint,
-          with_suggestions: @with_suggestions
-        )
-        viewer.display
       end
 
       ##
@@ -214,7 +193,6 @@ module BlueprintsCLI
             # Indent continuation lines
             wrapped_lines = wrapped_improvement.split("\n")
             content_lines << "  • #{wrapped_lines.first}"
-            wrapped_lines[1..].each { |line| content_lines << "    #{line}" }
             wrapped_lines[1..].each { |line| content_lines << "    #{line}" }
           end
           content_lines << ""

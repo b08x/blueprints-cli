@@ -27,11 +27,7 @@ module BlueprintsCLI
 
     # @!attribute [r] db
     #   @return [Sequel::Database] The active Sequel database connection instance.
-    # @!attribute [r] rag_service
-    #   @return [BlueprintsCLI::NLP::EnhancedRagService] The enhanced RAG service for NLP processing.
-    # @!attribute [r] cache_manager
-    #   @return [BlueprintsCLI::Models::CacheManager] The cache manager for intelligent caching.
-    attr_reader :db, :rag_service, :cache_manager
+    attr_reader :db
 
     #
     # Initializes the database connection and validates the schema.
@@ -48,14 +44,11 @@ module BlueprintsCLI
     # @raise [StandardError] If the database connection fails or a required
     #   table is missing from the schema.
     #
-    def initialize(database_url: nil, rag_config: {})
+    def initialize(database_url: nil)
       @database_url = database_url || load_database_url
       @db = connect_to_database
 
       validate_database_schema
-
-      # Temporarily disable search index rebuilding
-      # rebuild_search_index
     end
 
     #
@@ -101,9 +94,6 @@ module BlueprintsCLI
           updated_at: Time.now
         )
 
-        # Store in cache for future access (disabled for now)
-        # @cache_manager.store(:pipeline, blueprint_data.to_json, @rag_service.config, rag_result)
-
         # Handle categories if provided
         insert_blueprint_categories(blueprint_id, categories) if categories.any?
       end
@@ -142,9 +132,6 @@ module BlueprintsCLI
 
       # Add categories
       blueprint[:categories] = get_blueprint_categories(id)
-
-      # Enhanced NLP metadata is disabled - skip parsing
-
       blueprint
     end
 
@@ -200,13 +187,26 @@ module BlueprintsCLI
     #   results = db.search_blueprints(query: "http server in ruby", limit: 5)
     #   # => [{id: 12, ..., distance: 0.18}, {id: 34, ..., distance: 0.21}]
     #
-    def search_blueprints(query:, limit: 10, enhanced: false)
-      # Enhanced RAG search is temporarily disabled, use traditional vector search
-      traditional_vector_search(query, limit)
-    rescue StandardError => e
-      BlueprintsCLI.logger.failure("Error in search: #{e.message}")
-      # Return empty array if search fails completely
-      []
+    def search_blueprints(query:, limit: 10)
+      # Generate embedding for the search query
+      query_embedding = generate_embedding_for_text(query)
+      return [] unless query_embedding
+
+      # Perform vector similarity search using pgvector
+      results = @db.fetch(
+        "SELECT *, embedding <-> ? AS distance
+           FROM blueprints
+           ORDER BY embedding <-> ?
+           LIMIT ?",
+        query_embedding, query_embedding, limit
+      ).all
+
+      # Add categories for each result
+      results.each do |blueprint|
+        blueprint[:categories] = get_blueprint_categories(blueprint[:id])
+      end
+
+      results
     end
 
     #
@@ -263,18 +263,7 @@ module BlueprintsCLI
         current = get_blueprint(id)
         new_name = name || current[:name]
         new_description = description || current[:description]
-        content_to_embed = { name: new_name, description: new_description }.to_json
-        begin
-          embedding_result = RubyLLM.embed(content_to_embed)
-          embedding_vector = embedding_result.vectors
-          updates[:embedding] = Pgvector.encode(embedding_vector)
-        rescue RubyLLM::Error => e
-          BlueprintsCLI.logger.warn("Update embedding failed: #{e.message}")
-          # Skip embedding update on failure
-        rescue StandardError => e
-          BlueprintsCLI.logger.warn("Update embedding generation failed: #{e.message}")
-          # Skip embedding update on failure
-        end
+        updates[:embedding] = generate_embedding(name: new_name, description: new_description)
       end
 
       @db.transaction do
@@ -572,60 +561,6 @@ module BlueprintsCLI
           category_id:
         )
       end
-    end
-
-    # Traditional vector search fallback
-    def traditional_vector_search(query, limit)
-      # Generate embedding for the search query
-      begin
-        query_embedding_result = RubyLLM.embed(query)
-        query_embedding_vector = query_embedding_result.vectors
-      rescue RubyLLM::Error => e
-        BlueprintsCLI.logger.warn("Search embedding failed: #{e.message}")
-        return []
-      rescue StandardError => e
-        BlueprintsCLI.logger.warn("Search embedding generation failed: #{e.message}")
-        return []
-      end
-
-      return [] unless query_embedding_vector&.any?
-
-      query_embedding = Pgvector.encode(query_embedding_vector)
-
-      # Perform vector similarity search using pgvector
-      results = @db.fetch(
-        "SELECT *, embedding <-> ? AS distance
-           FROM blueprints
-           ORDER BY embedding <-> ?
-           LIMIT ?",
-        query_embedding, query_embedding, limit
-      ).all
-
-      # Add categories for each result
-      results.each do |blueprint|
-        blueprint[:categories] = get_blueprint_categories(blueprint[:id])
-      end
-
-      results
-    end
-
-    # Generate fallback embedding using RubyLLM
-    def generate_fallback_embedding(blueprint_data)
-      content_to_embed = {
-        name: blueprint_data[:name],
-        description: blueprint_data[:description]
-      }.to_json
-
-      embedding_result = RubyLLM.embed(content_to_embed)
-      embedding_result.vectors
-    rescue RubyLLM::Error => e
-      BlueprintsCLI.logger.warn("RubyLLM fallback embedding failed: #{e.message}")
-      # Return zero vector as last resort
-      Array.new(768, 0.0)
-    rescue StandardError => e
-      BlueprintsCLI.logger.warn("Error generating fallback embedding: #{e.message}")
-      # Return zero vector as last resort
-      Array.new(768, 0.0)
     end
   end
 end

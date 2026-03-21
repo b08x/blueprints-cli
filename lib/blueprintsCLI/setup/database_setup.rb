@@ -62,13 +62,13 @@ module BlueprintsCLI
       def get_template_url(template_type)
         case template_type
         when :local_default
-          'postgresql://postgres:password@localhost:5432/blueprints'
+          "postgresql://postgres:password@localhost:5432/blueprints"
         when :docker_default
           BlueprintsCLI.configuration.build_database_url
         when :remote_example
-          'postgresql://username:password@hostname:5432/database_name'
+          "postgresql://username:password@hostname:5432/database_name"
         else
-          ''
+          ""
         end
       end
 

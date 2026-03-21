@@ -60,7 +60,7 @@ module BlueprintsCLI
       #
       # @return [Boolean] True if provider setup completed successfully
       def setup_providers
-        @logger.step('Setting up AI providers...')
+        @logger.step("Setting up AI providers...")
         provider_detector = ProviderDetector.new(@prompt, @setup_data)
         provider_detector.detect_and_configure
       end
@@ -69,7 +69,7 @@ module BlueprintsCLI
       #
       # @return [Boolean] True if database setup completed successfully
       def setup_database
-        @logger.step('Setting up database...')
+        @logger.step("Setting up database...")
         database_setup = DatabaseSetup.new(@prompt, @setup_data)
         database_setup.configure_and_test
       end
@@ -78,7 +78,7 @@ module BlueprintsCLI
       #
       # @return [Boolean] True if model configuration completed successfully
       def setup_models
-        @logger.step('Configuring AI models...')
+        @logger.step("Configuring AI models...")
         model_configurator = ModelConfigurator.new(@prompt, @setup_data)
         model_configurator.discover_and_configure
       end
@@ -87,7 +87,7 @@ module BlueprintsCLI
       #
       # @return [Boolean] True if configuration was saved successfully
       def generate_config
-        @logger.step('Generating configuration...')
+        @logger.step("Generating configuration...")
         config_generator = ConfigGenerator.new(@config, @setup_data)
         config_generator.generate_and_save
       end
@@ -103,7 +103,7 @@ module BlueprintsCLI
       #
       # @return [Boolean] True if setup should be run
       def setup_required?
-        first_time_setup? || @prompt.yes?('Configuration exists. Run setup anyway?')
+        first_time_setup? || @prompt.yes?("Configuration exists. Run setup anyway?")
       end
 
       private def display_welcome
@@ -124,9 +124,9 @@ module BlueprintsCLI
       # @return [Boolean] True if user confirms
       private def confirm_continue
         if first_time_setup?
-          @prompt.yes?('Ready to begin setup?', default: true)
+          @prompt.yes?("Ready to begin setup?", default: true)
         else
-          @prompt.yes?('Existing configuration found. Overwrite?', default: false)
+          @prompt.yes?("Existing configuration found. Overwrite?", default: false)
         end
       end
 
@@ -145,9 +145,7 @@ module BlueprintsCLI
         phases.each_with_index do |phase, index|
           @logger.step("Phase #{index + 1}/#{phases.length}: #{phase[:name]}")
 
-
           success = send(phase[:method])
-          raise SetupValidationError, "Setup failed at phase: #{phase[:name]}" unless success
           raise SetupValidationError, "Setup failed at phase: #{phase[:name]}" unless success
 
           display_phase_completion(phase[:name])
@@ -162,9 +160,8 @@ module BlueprintsCLI
         ruby_version = RUBY_VERSION
         @logger.success("Ruby #{ruby_version} detected")
 
-        @logger.info('Checking required gems...')
+        @logger.info("Checking required gems...")
         required_gems = %w[tty-prompt tty-config ruby_llm sequel pg]
-
 
         required_gems.each do |gem_name|
           require gem_name.gsub("-", "/")
@@ -220,20 +217,15 @@ module BlueprintsCLI
 
         # Test database connection
         if @setup_data[:database]
-          @logger.info('Testing database connection...')
+          @logger.info("Testing database connection...")
           # Database verification logic here
-          @logger.success('Database connection verified')
+          @logger.success("Database connection verified")
         end
 
         # Test AI provider connections
         if @setup_data[:providers]
-          @logger.info('Testing AI provider connections...')
+          @logger.info("Testing AI provider connections...")
           @setup_data[:providers].each do |provider, config|
-            next unless config[:api_key]
-
-            @logger.info("Testing #{provider} connection...")
-            # Provider verification logic here
-            @logger.success("#{provider} connection verified")
             next unless config[:api_key]
 
             @logger.info("Testing #{provider} connection...")
@@ -242,7 +234,7 @@ module BlueprintsCLI
           end
         end
 
-        @logger.success('Setup verification completed!')
+        @logger.success("Setup verification completed!")
         true
       end
 
@@ -285,8 +277,8 @@ module BlueprintsCLI
         @logger.debug(error.backtrace.join("\n")) if ENV["DEBUG"]
 
         puts "\nSetup encountered an error. Please check the logs and try again."
-        puts 'If the problem persists, please create an issue at:'
-        puts 'https://github.com/your-org/blueprintsCLI/issues'
+        puts "If the problem persists, please create an issue at:"
+        puts "https://github.com/your-org/blueprintsCLI/issues"
       end
 
       # Check if critical configuration is missing
@@ -308,4 +300,3 @@ module BlueprintsCLI
     end
   end
 end
-

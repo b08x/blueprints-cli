@@ -70,17 +70,14 @@ module BlueprintsCLI
           puts "❌ Please provide a file path or code string".colorize(:red)
           puts "Usage: blueprint submit <file_path_or_code>"
           return false
-
         end
 
         if File.exist?(input)
           puts "📁 Submitting blueprint from file: #{input}".colorize(:blue)
           code = File.read(input)
-          filename = File.basename(input)
         else
           puts "📝 Submitting blueprint from code string".colorize(:blue)
           code = input
-          filename = nil
         end
 
         BlueprintsCLI::Actions::Submit.new(
@@ -293,7 +290,7 @@ module BlueprintsCLI
 
           📋 Browsing & Search:
             blueprint list                      List all blueprints
-            blueprint browse                    Interactive browser with enhanced AI-powered viewing
+            blueprint browse                    Interactive blueprint browser
             blueprint view <id>                 View specific blueprint
             blueprint search <query>            Search blueprints by content
 
@@ -304,7 +301,7 @@ module BlueprintsCLI
             blueprint config [show|setup]      Manage configuration
 
           Options:
-            --format FORMAT                     Output format (table, json, summary, detailed, interactive)
+            --format FORMAT                     Output format (table, json, summary, detailed)
             --interactive                       Interactive mode with prompts
             --output FILE                       Output file path
             --output_dir DIR                    Output directory for generated files
@@ -319,9 +316,7 @@ module BlueprintsCLI
             blueprint submit 'puts "hello world"'
             blueprint list --format summary
             blueprint browse
-            blueprint view 123                         # Interactive two-column view (default)
-            blueprint view 123 --format detailed       # Traditional detailed view
-            blueprint view 123 --analyze               # Interactive view with AI suggestions
+            blueprint view 123 --analyze
             blueprint edit 123
             blueprint delete 123
             blueprint delete --force 123

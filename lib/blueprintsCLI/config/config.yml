@@ -4,8 +4,10 @@
 
 # Database Configuration
 database:
-  url: postgresql://postgres:blueprints@postgres:5432/blueprints_development
+  url: postgresql://postgres:blueprints@localhost:5432/blueprints
   pool_size: 5
+
+# AI Provider Configuration
 ai:
   sublayer:
     provider: OpenAI
@@ -33,56 +35,38 @@ ai:
 logger:
   level: info
   file_logging: true
-  file_level: info
-  file_path: "/home/b08x/.local/state/BlueprintsCLI/app.log"
+  file_level: debug
+  file_path: /home/b08x/.local/state/BlueprintsCLI/app.log
   context_enabled: true
   context_detail_level: full
   context_cache_size: 1000
+
 editor:
   default: micro
   auto_save: true
-  temp_dir: "/tmp"
+  temp_dir: /tmp
+
 ui:
   colors: true
   interactive: true
   pager: most
   auto_pager: true
-  enhanced_menu: true
-  slash_commands: true
+
 features:
   auto_description: true
   auto_categorize: true
   improvement_analysis: true
   vector_search: true
+
 search:
   default_limit: 10
   semantic_search: true
   text_search_fallback: true
+
 export:
   include_metadata: false
   auto_detect_extension: true
+
 performance:
   batch_size: 100
   connection_pool_size: 5
-blueprints:
-  database:
-    url: postgresql://postgres:blueprints@postgres:5432/blueprints_development
-  features:
-    auto_description: true
-    auto_categorize: true
-    improvement_analysis: true
-  editor: micro
-  auto_save_edits: false
-  search:
-    default_limit: 10
-    semantic_search: true
-  export:
-    include_metadata: false
-    auto_detect_extension: true
-  performance:
-    batch_size: 100
-    connection_pool_size: 5
-  ui:
-    colors: true
-    interactive: true
-    pager: true
