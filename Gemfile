@@ -1,84 +1,63 @@
 # frozen_string_literal: true
 
+source "https://rubygems.org"
+
 gemspec
 
 source 'https://rubygems.org'
 
 group :development, :test do
-  gem 'rdoc'
-  gem 'rspec', '~> 3.10'
-  gem 'rubocop', require: false
-  gem 'rubocop-factory_bot'
-  gem 'rubocop-minitest'
-  gem 'rubocop-packaging'
-  gem 'rubocop-performance'
-  gem 'rubocop-rake'
-  gem 'rubocop-rspec'
-  gem 'rubocop-sequel'
-  gem 'rubocop-shopify'
-  gem 'rubocop-thread_safety'
-  gem 'ruby-lsp'
-  gem 'simplecov', require: false
-  gem 'yard'
+  gem "rdoc"
+  gem "rspec", "~> 3.10"
+  gem "rubocop", require: false
+  gem "rubocop-factory_bot"
+  gem "rubocop-minitest"
+  gem "rubocop-packaging"
+  gem "rubocop-performance"
+  gem "rubocop-rake"
+  gem "rubocop-rspec"
+  gem "rubocop-sequel"
+  gem "rubocop-shopify"
+  gem "rubocop-thread_safety"
+  gem "ruby-lsp"
+  gem "solargraph"
+  gem "yard"
 end
 
-gem 'algorithms', '~> 1.0'
-gem 'bm25f', '~> 0.1.0'
-gem 'caliber', '~> 0.67.0'
-gem 'circuit_breaker', '~> 1.1'
-gem 'clipboard', '~> 2.0'
-gem 'colorize', '~> 1.1'
-gem 'dotenv', '~> 3.1'
-gem 'dry-configurable', '~> 1.0'
-gem 'dry-container', '~> 0.11.0'
-gem 'factory_bot', '~> 6.5'
-gem 'falcon', '~> 0.45'
-gem 'ffi', '~> 1.17', force_ruby_platform: true
-gem 'fiddle', '~> 1.1'
-gem 'front_matter_parser', '~> 1.0'
-gem 'git', '~> 3.1'
-gem 'git-lint', '~> 8.8'
-gem 'informers', '~> 1.2'
-gem 'json'
-gem 'linguistics', '~> 2.1'
-gem 'numpy', '~> 0.4.0'
-gem 'ohm', '~> 3.1'
-gem 'pg', '~> 1.5'
-gem 'pgvector', '~> 0.2'
-gem 'pry', '~> 0.14.2'
-gem 'pry-doc', '~> 1.6'
-gem 'puma', '~> 6.6'
-gem 'rack', '~> 3.1'
-gem 'rack-test', '~> 2.2'
-gem 'rackup', '~> 2.2'
-gem 'rake', '~> 13.3'
-gem 'rbs'
-gem 'ruby_llm'
-gem 'ruby-spacy', '~> 0.2.0'
-gem 'rwordnet', '~> 0.1.0'
-gem 'sequel', '~> 5.94'
-gem 'sinatra', '~> 4.1'
-gem 'solargraph', '~> 0.56.1'
-gem 'sublayer', '~> 0.2.9'
-gem 'terrapin', '~> 1.1'
-gem 'thor', '~> 1.4'
-gem 'tty-box', '~> 0.7'
-gem 'tty-command', '~> 0.10.1'
-gem 'tty-config', '~> 0.5'
-gem 'tty-cursor', '~> 0.7.1'
-gem 'tty-editor', '~> 0.7'
-gem 'tty-file', '~> 0.10.0'
-gem 'tty-link', '~> 0.2.0'
-gem 'tty-logger', '~> 0.6.0'
-gem 'tty-markdown', '~> 0.7'
-gem 'tty-pager', '~> 0.14.0'
-gem 'tty-progressbar', '~> 0.18.3'
-gem 'tty-prompt', '~> 0.23'
-gem 'tty-reader', '~> 0.9.0'
-gem 'tty-screen', '~> 0.8.2'
-gem 'tty-spinner', '~> 0.9.3'
-gem 'tty-table', '~> 0.12'
-gem 'tty-tree', '~> 0.4.0'
-gem 'tty-which', '~> 0.5.0'
-
+gem "clipboard"
+gem "colorize"
+gem "dotenv"
+gem "dry-configurable"
+gem "dry-container"
 gem "dry-monads", "~> 1.9"
+gem "factory_bot"
+gem "front_matter_parser"
+gem "git"
+gem "pg"
+gem "pry"
+gem "pry-doc", "~> 1.6"
+gem "rack", "~> 3.1"
+gem "rack-test", "~> 2.2"
+gem "rbs", "~> 3.9"
+gem "ruby_llm"
+gem "ruby_llm-schema"
+gem "sequel"
+gem "terrapin"
+gem "tty-box", "~> 0.7"
+gem "tty-command", "~> 0.10.1"
+gem "tty-config", "~> 0.5"
+gem "tty-cursor", "~> 0.7.1"
+gem "tty-editor", "~> 0.7"
+gem "tty-file", "~> 0.10.0"
+gem "tty-link", "~> 0.2.0"
+gem "tty-logger", "~> 0.6.0"
+gem "tty-markdown", "~> 0.7"
+gem "tty-pager", "~> 0.14.0"
+gem "tty-progressbar", "~> 0.18.3"
+gem "tty-prompt", "~> 0.23"
+gem "tty-reader", "~> 0.9.0"
+gem "tty-screen", "~> 0.8.2"
+gem "tty-spinner", "~> 0.9.3"
+gem "tty-table", "~> 0.12"
+gem "tty-tree", "~> 0.4.0"
+gem "tty-which", "~> 0.5.0"

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'ruby_llm'
-require 'json'
-require_relative '../configuration'
-require_relative '../logger'
+require "ruby_llm"
+require "json"
+require_relative "../configuration"
+require_relative "../logger"
 
 module BlueprintsCLI
   module Generators
@@ -47,8 +47,8 @@ module BlueprintsCLI
       end
 
       # Array-like interface for backward compatibility
-      def each(&block)
-        @improvements.each(&block)
+      def each(&)
+        @improvements.each(&)
       end
 
       def [](index)
@@ -90,7 +90,7 @@ module BlueprintsCLI
         {
           input_tokens: @metadata[:input_tokens] || 0,
           output_tokens: @metadata[:output_tokens] || 0,
-          total_tokens: (@metadata[:input_tokens] || 0) + (@metadata[:output_tokens] || 0)
+          total_tokens: (@metadata[:input_tokens] || 0) + (@metadata[:output_tokens] || 0),
         }
       end
 
@@ -102,7 +102,7 @@ module BlueprintsCLI
       def model_info
         {
           model_id: @metadata[:model_id],
-          provider: @metadata[:provider]
+          provider: @metadata[:provider],
         }
       end
 
@@ -123,12 +123,12 @@ module BlueprintsCLI
       # JSON serialization including both improvements and metadata.
       #
       # @return [String] JSON representation
-      def to_json(*args)
+      def to_json(*)
         {
           improvements: @improvements,
           metadata: @metadata,
-          success: success?
-        }.to_json(*args)
+          success: success?,
+        }.to_json(*)
       end
 
       def inspect
@@ -166,10 +166,12 @@ module BlueprintsCLI
     #   puts "Model: #{result.model_info[:model_id]}"
     class Improvement
       # Error raised when LLM response cannot be parsed
-      ParseError = Class.new(StandardError)
+      class ParseError < StandardError
+      end
 
       # Error raised when LLM communication fails
-      CommunicationError = Class.new(StandardError)
+      class CommunicationError < StandardError
+      end
 
       # Initializes a new Improvement instance.
       #
@@ -202,29 +204,24 @@ module BlueprintsCLI
           metadata = build_metadata(response, response_time)
 
           ImprovementResponse.new(
-            improvements: improvements,
-            metadata: metadata,
+            improvements:,
+            metadata:,
             raw_response: response
           )
         rescue ParseError, RubyLLM::Error => e
           handle_error(e, start_time)
-        rescue StandardError => e
+        rescue => e
           BlueprintsCLI.logger.failure("An unexpected error occurred during improvement generation: #{e.message}")
           handle_error(e, start_time)
         end
       end
 
-      private
-
-      # Creates a RubyLLM chat instance with appropriate configuration
-      #
-      # @return [RubyLLM::Chat] Configured chat instance
-      def create_chat_instance
+      private def create_chat_instance
         # Get model from configuration, fallback to default
-        model = @config.fetch(:ai, :rubyllm, :default_model) || 'gemini-2.0-flash'
+        model = @config.fetch(:ai, :rubyllm, :default_model) || "gemini-2.0-flash"
 
         # Create chat with system instructions for structured output
-        chat = RubyLLM.chat(model: model)
+        chat = RubyLLM.chat(model:)
         chat.with_instructions(system_instructions)
 
         chat
@@ -233,7 +230,7 @@ module BlueprintsCLI
       # System instructions for the LLM to ensure structured output
       #
       # @return [String] System instructions
-      def system_instructions
+      private def system_instructions
         <<~INSTRUCTIONS
           You are a senior software engineer and code reviewer. Your task is to analyze code and provide specific, actionable improvement suggestions.
 
@@ -250,11 +247,11 @@ module BlueprintsCLI
       # Builds the analysis prompt for the LLM
       #
       # @return [String] The complete prompt to be sent for analysis
-      def build_prompt
+      private def build_prompt
         <<~PROMPT
           Analyze this code blueprint and suggest specific, actionable improvements.
 
-          #{@description ? "Description: #{@description}" : ''}
+          #{"Description: #{@description}" if @description}
 
           Code:
           ```
@@ -316,18 +313,18 @@ module BlueprintsCLI
       # @param content [String] The raw response content from the LLM
       # @return [Array<String>] Array of improvement suggestions
       # @raise [ParseError] If the response cannot be parsed
-      def parse_improvements(content)
+      private def parse_improvements(content)
         # Try to extract JSON from the response
         json_match = content.match(/\{.*\}/m)
-        raise ParseError, 'No JSON found in response' unless json_match
+        raise ParseError, "No JSON found in response" unless json_match
 
         json_content = json_match[0]
         parsed = JSON.parse(json_content)
 
-        improvements = parsed['improvements']
+        improvements = parsed["improvements"]
         raise ParseError, "No 'improvements' key found in response" unless improvements
-        raise ParseError, 'Improvements is not an array' unless improvements.is_a?(Array)
-        raise ParseError, 'No improvements found' if improvements.empty?
+        raise ParseError, "Improvements is not an array" unless improvements.is_a?(Array)
+        raise ParseError, "No improvements found" if improvements.empty?
 
         # Clean up and validate improvements
         improvements.map(&:strip).reject(&:empty?)
@@ -340,15 +337,15 @@ module BlueprintsCLI
       # @param response [RubyLLM::Message] The LLM response object
       # @param response_time [Float] Time taken for the request
       # @return [Hash] Metadata hash
-      def build_metadata(response, response_time)
+      private def build_metadata(response, response_time)
         {
           model_id: response.model_id,
           provider: extract_provider_from_model(response.model_id),
           input_tokens: response.input_tokens,
           output_tokens: response.output_tokens,
           total_tokens: (response.input_tokens || 0) + (response.output_tokens || 0),
-          response_time: response_time,
-          timestamp: Time.now.iso8601
+          response_time:,
+          timestamp: Time.now.iso8601,
         }
       end
 
@@ -356,18 +353,18 @@ module BlueprintsCLI
       #
       # @param model_id [String] The model identifier
       # @return [String] Provider name
-      def extract_provider_from_model(model_id)
+      private def extract_provider_from_model(model_id)
         case model_id
         when /gemini/i
-          'Google'
+          "Google"
         when /gpt|openai/i
-          'OpenAI'
+          "OpenAI"
         when /claude/i
-          'Anthropic'
+          "Anthropic"
         when /deepseek/i
-          'DeepSeek'
+          "DeepSeek"
         else
-          'Unknown'
+          "Unknown"
         end
       end
 
@@ -376,7 +373,7 @@ module BlueprintsCLI
       # @param error [StandardError] The error that occurred
       # @param start_time [Time] When the generation started
       # @return [ImprovementResponse] Error response object
-      def handle_error(error, start_time)
+      private def handle_error(error, start_time)
         end_time = Time.now
         response_time = end_time - start_time
 
@@ -386,7 +383,7 @@ module BlueprintsCLI
         else
           BlueprintsCLI.logger.warn("Improvement generation failed: #{error.message}")
         end
-        BlueprintsCLI.logger.debug(error.backtrace.join("\n")) if ENV['DEBUG']
+        BlueprintsCLI.logger.debug(error.backtrace.join("\n")) if ENV["DEBUG"]
 
         # Return empty response with error metadata
         ImprovementResponse.new(
@@ -394,8 +391,8 @@ module BlueprintsCLI
           metadata: {
             error: error.message,
             error_type: error.class.name,
-            response_time: response_time,
-            timestamp: Time.now.iso8601
+            response_time:,
+            timestamp: Time.now.iso8601,
           },
           raw_response: nil
         )

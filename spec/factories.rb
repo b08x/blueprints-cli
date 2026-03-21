@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'factory_bot'
-require 'pgvector'
+require "factory_bot"
+require "pgvector"
 
 FactoryBot.define do
   # Factory for the Category model

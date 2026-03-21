@@ -11,23 +11,28 @@ module BlueprintsCLI
   #   BlueprintsCLI::CLI.start
   class CLI < Thor
     desc "blueprint", "Manage code blueprints"
-    def blueprint(*args)
-      BlueprintsCLI::Commands::BlueprintCommand.new(options).execute(*args)
+    def blueprint(*)
+      BlueprintsCLI::Commands::BlueprintCommand.new(options).execute(*)
     end
 
     desc "config", "Manage application configuration"
-    def config(*args)
-      BlueprintsCLI::Commands::ConfigCommand.new(options).execute(*args)
+    def config(*)
+      BlueprintsCLI::Commands::ConfigCommand.new(options).execute(*)
     end
 
     desc "docs", "Generate and view project documentation"
-    def docs(*args)
-      BlueprintsCLI::Commands::DocsCommand.new(options).execute(*args)
+    def docs(*)
+      BlueprintsCLI::Commands::DocsCommand.new(options).execute(*)
+    end
+
+    desc "embedding", "Manage blueprint embeddings and Ollama connectivity"
+    def embedding(*)
+      BlueprintsCLI::Commands::EmbeddingCommand.new(options).execute(*)
     end
 
     desc "setup", "Initial environment setup"
-    def setup(*args)
-      BlueprintsCLI::Commands::SetupCommand.new(options).execute(*args)
+    def setup(*)
+      BlueprintsCLI::Commands::SetupCommand.new(options).execute(*)
     end
 
     # Starts the CLI application with the given arguments.
@@ -49,23 +54,13 @@ module BlueprintsCLI
     def self.start(given_args = ARGV)
       # If no arguments provided, launch interactive menu
       if given_args.empty?
-        # Check for enhanced menu option
-        config = BlueprintsCLI.configuration
-        enhanced_enabled = config.fetch(:ui, :enhanced_menu, default: true) ||
-                           config.fetch(:ui, :slash_commands, default: true) ||
-                           ENV['BLUEPRINTS_ENHANCED_MENU'] == 'true' ||
-                           ENV['BLUEPRINTS_SLASH_COMMANDS'] == 'true'
-
-        if enhanced_enabled
-          begin
-            BlueprintsCLI::SimpleEnhancedMenu.new.start
-          rescue StandardError => e
-            BlueprintsCLI.logger.failure("Enhanced menu failed: #{e.message}")
-            # Fallback to traditional menu
-            fallback_to_traditional_menu
-          end
-        else
-          fallback_to_traditional_menu
+        begin
+          require "tty-prompt"
+          debug_mode = ENV["BlueprintsCLI_DEBUG"] == "true"
+          BlueprintsCLI::Commands::MenuCommand.new(debug: debug_mode).start
+        rescue LoadError
+          BlueprintsCLI.logger.failure("TTY::Prompt not available. Please run: bundle install. #{e.message}")
+          super
         end
       else
         super

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'ruby_llm'
-require 'forwardable'
+require "ruby_llm"
+require_relative "enhanced_logger"
 
 module BlueprintsCLI
   # Centralized logger module for the BlueprintsCLI application.
@@ -280,41 +280,41 @@ module BlueprintsCLI
       # Add custom log types after initialization with styling
       # Use try-catch to handle any conflicts with built-in types
       begin
-        base_logger.add_type(:success, { level: :info, symbol: '✅', color: :green })
+        base_logger.add_type(:success, { level: :info, symbol: "✅", color: :green })
       rescue TTY::Logger::Error
         # Type already exists, skip
       end
 
       begin
-        base_logger.add_type(:failure, { level: :error, symbol: '❌', color: :red })
+        base_logger.add_type(:failure, { level: :error, symbol: "❌", color: :red })
       rescue TTY::Logger::Error
         # Type already exists, skip
       end
 
       begin
-        base_logger.add_type(:tip, { level: :info, symbol: '💡', color: :cyan })
+        base_logger.add_type(:tip, { level: :info, symbol: "💡", color: :cyan })
       rescue TTY::Logger::Error
         # Type already exists, skip
       end
 
       begin
-        base_logger.add_type(:step, { level: :info, symbol: '🚀', color: :blue })
+        base_logger.add_type(:step, { level: :info, symbol: "🚀", color: :blue })
       rescue TTY::Logger::Error
         # Type already exists, skip
       end
 
       # Check context logging configuration options
       context_enabled = app_config.fetch(:logger, :context_enabled, default: true)
-      context_detail_level = app_config.fetch(:logger, :context_detail_level,
-                                              default: 'full')&.to_sym || :full
+      context_detail_level = app_config.fetch(:logger, :context_detail_level, default: "full")&.to_sym || :full
       context_cache_size = app_config.fetch(:logger, :context_cache_size, default: 1000) || 1000
 
+
       # Wrap the base logger with enhanced context-aware functionality
-      @@instance = Enhanced.new(
+      @@instance = EnhancedLogger.new(
         base_logger,
-        context_enabled: context_enabled,
-        context_detail_level: context_detail_level,
-        context_cache_size: context_cache_size
+        context_enabled:,
+        context_detail_level:,
+        context_cache_size:
       )
 
       @@instance
@@ -336,10 +336,10 @@ module BlueprintsCLI
         instance.tip("Could not connect to the AI provider. Check your network connection.")
       when RubyLLM::InvalidRequestError
         instance.warn("The request to the AI provider was invalid. This may be a bug.")
-        instance.debug(error.backtrace.join("\n")) if ENV['DEBUG']
+        instance.debug(error.backtrace.join("\n")) if ENV["DEBUG"]
       else
         instance.warn("An unexpected error occurred while communicating with the AI provider.")
-        instance.debug(error.backtrace.join("\n")) if ENV['DEBUG']
+        instance.debug(error.backtrace.join("\n")) if ENV["DEBUG"]
       end
     end
 
@@ -347,8 +347,6 @@ module BlueprintsCLI
     def self.reset!
       @@instance = nil
     end
-
-    private
 
     # Configures the console handler with custom styles.
     #
@@ -358,16 +356,16 @@ module BlueprintsCLI
       [
         :console,
         {
-          level: level,
+          level:,
           output: $stderr, # Log to stderr to separate from program output
           styles: {
-            info: { symbol: 'ℹ️', color: :blue },
-            debug: { symbol: '🐞', color: :magenta },
-            error: { symbol: '❌', color: :red },
-            warn: { symbol: '⚠️', color: :yellow },
-            fatal: { symbol: '💀', color: :red, bold: true }
-          }
-        }
+            info: { symbol: "ℹ️", color: :blue },
+            debug: { symbol: "🐞", color: :magenta },
+            error: { symbol: "❌", color: :red },
+            warn: { symbol: "⚠️", color: :yellow },
+            fatal: { symbol: "💀", color: :red, bold: true },
+          },
+        },
       ]
     end
 
@@ -383,10 +381,10 @@ module BlueprintsCLI
       [
         :stream,
         {
-          level: level,
-          output: File.open(path, 'a'),
-          formatter: :json # Use JSON format for structured logging
-        }
+          level:,
+          output: File.open(path, "a"),
+          formatter: :json, # Use JSON format for structured logging
+        },
       ]
     end
 
@@ -395,8 +393,8 @@ module BlueprintsCLI
     # @return [String] The absolute path for the log file.
     def self.default_log_path
       # Use XDG Base Directory Specification if available, otherwise fallback
-      state_home = ENV['XDG_STATE_HOME'] || File.expand_path('~/.local/state')
-      File.join(state_home, 'BlueprintsCLI', 'app.log')
+      state_home = ENV["XDG_STATE_HOME"] || File.expand_path("~/.local/state")
+      File.join(state_home, "BlueprintsCLI", "app.log")
     end
   end
 end

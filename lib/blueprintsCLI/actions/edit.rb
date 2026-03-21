@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-require 'tty-box'
-require 'tty-editor'
-require_relative '../ui/preview_boxes'
+require "tty-box"
+require_relative "../ui/preview_boxes"
 
 module BlueprintsCLI
   module Actions
@@ -61,7 +60,7 @@ module BlueprintsCLI
           # Step 3: Launch editor
           editor_success = launch_editor(temp_file)
           unless editor_success
-            BlueprintsCLI.logger.failure('Editor failed or was cancelled')
+            BlueprintsCLI.logger.failure("Editor failed or was cancelled")
             return false
           end
 
@@ -70,15 +69,15 @@ module BlueprintsCLI
 
           # Step 5: Check if content actually changed
           if modified_code.strip == blueprint[:code].strip
-            puts 'ℹ️  No changes detected'.colorize(:blue)
+            puts "ℹ️  No changes detected".colorize(:blue)
             return true
           end
 
-          puts '✅ Changes detected'.colorize(:green)
+          puts "✅ Changes detected".colorize(:green)
 
           # Step 6: Confirm the edit operation
           unless confirm_edit_operation(blueprint, modified_code)
-            puts '❌ Edit operation cancelled'.colorize(:yellow)
+            puts "❌ Edit operation cancelled".colorize(:yellow)
             return false
           end
 
@@ -86,30 +85,20 @@ module BlueprintsCLI
           perform_delete_and_resubmit(blueprint, modified_code)
         ensure
           # Clean up temporary file
-          File.delete(temp_file) if File.exist?(temp_file)
+          FileUtils.rm_f(temp_file)
         end
-      rescue StandardError => e
+      rescue => e
         BlueprintsCLI.logger.failure("Error during edit operation: #{e.message}")
-        BlueprintsCLI.logger.debug(e) if ENV['DEBUG']
+        BlueprintsCLI.logger.debug(e) if ENV["DEBUG"]
         false
       end
 
-      private
-
-      # Creates a temporary file containing the blueprint's code.
-      #
-      # It uses `detect_file_extension` to give the file the appropriate
-      # extension, which helps editors with syntax highlighting.
-      #
-      # @param blueprint [Hash] The blueprint data hash.
-      # @return [String] The path to the created temporary file.
-      # @private
-      def create_temp_file(blueprint)
+      private def create_temp_file(blueprint)
         # Detect file extension based on code content
         extension = detect_file_extension(blueprint[:code])
 
         # Create safe filename
-        safe_name = blueprint[:name].gsub(/[^a-zA-Z0-9_-]/, '_').downcase
+        safe_name = blueprint[:name].gsub(/[^a-zA-Z0-9_-]/, "_").downcase
         temp_file = Tempfile.new(["blueprint_#{@id}_#{safe_name}", extension])
         temp_file.write(blueprint[:code])
         temp_file.flush
@@ -124,24 +113,24 @@ module BlueprintsCLI
       # @param code [String] The source code of the blueprint.
       # @return [String] The inferred file extension (e.g., '.rb', '.js').
       # @private
-      def detect_file_extension(code)
+      private def detect_file_extension(code)
         case code
         when /class\s+\w+.*<.*ApplicationRecord/m, /def\s+\w+.*end/m, /require ['"].*['"]/m
-          '.rb'
+          ".rb"
         when /function\s+\w+\s*\(/m, /const\s+\w+\s*=/m, /import\s+.*from/m
-          '.js'
+          ".js"
         when /def\s+\w+\s*\(/m, /import\s+\w+/m, /from\s+\w+\s+import/m
-          '.py'
+          ".py"
         when /#include\s*<.*>/m, /int\s+main\s*\(/m
-          '.c'
+          ".c"
         when /public\s+class\s+\w+/m, /import\s+java\./m
-          '.java'
+          ".java"
         when /fn\s+\w+\s*\(/m, /use\s+std::/m
-          '.rs'
+          ".rs"
         when /func\s+\w+\s*\(/m, /package\s+main/m
-          '.go'
+          ".go"
         else
-          '.txt'
+          ".txt"
         end
       end
 
@@ -150,12 +139,12 @@ module BlueprintsCLI
       # @param temp_file [String] The path to the file to be opened.
       # @return [Boolean] The success status of the editor operation.
       # @private
-      def launch_editor(temp_file)
+      private def launch_editor(temp_file)
         # Get editor preference from config or environment
         editor = get_editor_preference
 
         puts "🔧 Opening #{editor} with blueprint code...".colorize(:cyan)
-        puts '💡 Save and exit when done editing'.colorize(:cyan)
+        puts "💡 Save and exit when done editing".colorize(:cyan)
 
         # Launch editor safely using TTY::Editor
         TTY::Editor.open(temp_file, command: editor)
@@ -165,7 +154,7 @@ module BlueprintsCLI
       #
       # @return [String] The name of the editor command.
       # @private
-      def get_editor_preference
+      private def get_editor_preference
         BlueprintsCLI.configuration.fetch(:blueprints, :editor)
       end
 
@@ -178,7 +167,7 @@ module BlueprintsCLI
       # @param modified_code [String] The code after being edited by the user.
       # @return [Boolean] `true` if the user confirms, `false` otherwise.
       # @private
-      def confirm_edit_operation(original_blueprint, modified_code)
+      private def confirm_edit_operation(original_blueprint, modified_code)
         # Create content for the confirmation box
         content = <<~CONTENT
           Original blueprint: #{original_blueprint[:name]} (ID: #{@id})
@@ -194,7 +183,7 @@ module BlueprintsCLI
         # Display the confirmation box with yellow border
         confirmation_box = TTY::Box.frame(
           content,
-          title: { top_left: '🔄 Edit Confirmation' },
+          title: { top_left: "🔄 Edit Confirmation" },
           style: { border: { fg: :yellow } },
           padding: 1
         )
@@ -203,7 +192,7 @@ module BlueprintsCLI
         # Show a preview of changes
         show_change_preview(original_blueprint[:code], modified_code)
 
-        print 'Continue with edit operation? (y/N): '
+        print "Continue with edit operation? (y/N): "
         response = $stdin.gets.chomp.downcase
         %w[y yes].include?(response)
       end
@@ -217,7 +206,7 @@ module BlueprintsCLI
       # @param modified_code [String] The new, modified code.
       # @return [void]
       # @private
-      def show_change_preview(original_code, modified_code)
+      private def show_change_preview(original_code, modified_code)
         # Show first few lines to give context
         original_lines = original_code.lines
         modified_lines = modified_code.lines
@@ -237,12 +226,12 @@ module BlueprintsCLI
         # Create side-by-side preview boxes with plain text (syntax highlighting removed)
         original_box = UI::PreviewBoxes.code_box(
           original_preview,
-          title: '📜 Original Code'
+          title: "📜 Original Code"
         )
 
         modified_box = UI::PreviewBoxes.code_box(
           modified_preview,
-          title: '✏️ Modified Code'
+          title: "✏️ Modified Code"
         )
 
         # Display boxes side by side (simplified version)
@@ -253,7 +242,7 @@ module BlueprintsCLI
         if original_lines.length != modified_lines.length
           change_info = TTY::Box.frame(
             "Line count changed: #{original_lines.length} → #{modified_lines.length}",
-            title: { top_left: '📊 Changes Summary' },
+            title: { top_left: "📊 Changes Summary" },
             style: { border: { fg: :yellow } },
             padding: 1,
             align: :center
@@ -261,7 +250,7 @@ module BlueprintsCLI
           puts change_info
         end
 
-        puts ''
+        puts ""
       end
 
       # Executes the core update logic by deleting the old blueprint and
@@ -276,29 +265,29 @@ module BlueprintsCLI
       # @param modified_code [String] The new, modified code.
       # @return [Boolean] `true` on success, `false` on failure.
       # @private
-      def perform_delete_and_resubmit(original_blueprint, modified_code)
-        puts '🔄 Starting delete-and-resubmit workflow...'.colorize(:blue)
+      private def perform_delete_and_resubmit(original_blueprint, modified_code)
+        puts "🔄 Starting delete-and-resubmit workflow...".colorize(:blue)
 
         # Store original metadata for rollback
         original_data = {
           name: original_blueprint[:name],
           description: original_blueprint[:description],
-          categories: original_blueprint[:categories].map { |c| c[:title] }
+          categories: original_blueprint[:categories].map { |c| c[:title] },
         }
 
         # Step 1: Delete the existing blueprint
-        puts '🗑️  Deleting original blueprint...'.colorize(:yellow)
+        puts "🗑️  Deleting original blueprint...".colorize(:yellow)
         delete_success = @db.delete_blueprint(@id)
 
         unless delete_success
-          puts '❌ Failed to delete original blueprint. Aborting edit.'.colorize(:red)
+          puts "❌ Failed to delete original blueprint. Aborting edit.".colorize(:red)
           return false
         end
 
-        puts '✅ Original blueprint deleted'.colorize(:green)
+        puts "✅ Original blueprint deleted".colorize(:green)
 
         # Step 2: Submit the modified code as a new blueprint
-        puts '📝 Creating new blueprint with modified code...'.colorize(:yellow)
+        puts "📝 Creating new blueprint with modified code...".colorize(:yellow)
 
         submit_action = BlueprintsCLI::Actions::Submit.new(
           code: modified_code,
@@ -312,13 +301,13 @@ module BlueprintsCLI
         new_blueprint_success = submit_action.call
 
         if new_blueprint_success
-          puts '✅ Edit operation completed successfully!'.colorize(:green)
-          puts '💡 The blueprint now has fresh embeddings for improved search'.colorize(:cyan)
+          puts "✅ Edit operation completed successfully!".colorize(:green)
+          puts "💡 The blueprint now has fresh embeddings for improved search".colorize(:cyan)
           true
         else
-          puts '❌ Failed to create new blueprint'.colorize(:red)
-          puts '⚠️  Original blueprint has been deleted and cannot be restored'.colorize(:red)
-          puts '💡 You may need to manually recreate the blueprint'.colorize(:yellow)
+          puts "❌ Failed to create new blueprint".colorize(:red)
+          puts "⚠️  Original blueprint has been deleted and cannot be restored".colorize(:red)
+          puts "💡 You may need to manually recreate the blueprint".colorize(:yellow)
           false
         end
       end

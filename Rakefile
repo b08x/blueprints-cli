@@ -12,66 +12,32 @@ require 'fileutils'
 require 'pathname'
 require 'yard'
 
-require 'sequel'
-require_relative 'lib/blueprintsCLI/configuration'
+require "sequel"
+require "yaml"
 
-# Use BlueprintsCLI configuration system
-CONFIG = BlueprintsCLI::Configuration.new
+DB_CONFIG = YAML.load_file("config/database.yml")
 
 namespace :db do
-  desc 'Create the database'
+  desc "Create the database"
   task :create do
-    require 'pg'
-    require 'uri'
-    uri = URI.parse(CONFIG.database_url)
-    db_name = uri.path[1..]
-    begin
-      PG.connect(dbname: 'postgres', user: uri.user, password: uri.password, host: uri.host,
-                 port: uri.port) do |conn|
-        conn.exec("CREATE DATABASE #{db_name}")
-      end
-      puts "Database '#{db_name}' created."
-    rescue PG::DuplicateDatabase
-      puts "Database '#{db_name}' already exists."
-    end
+    `createdb #{DB_CONFIG["development"]["database"]}`
   end
 
-  desc 'Drop the database'
+  desc "Drop the database"
   task :drop do
-    require 'pg'
-    require 'uri'
-    uri = URI.parse(CONFIG.database_url)
-    db_name = uri.path[1..]
-    begin
-      PG.connect(dbname: 'postgres', user: uri.user, password: uri.password, host: uri.host,
-                 port: uri.port) do |conn|
-        conn.exec("DROP DATABASE IF EXISTS #{db_name}")
-      end
-      puts "Database '#{db_name}' dropped."
-    rescue PG::InvalidCatalogName
-      puts "Database '#{db_name}' does not exist."
-    end
+    `dropdb #{DB_CONFIG["development"]["database"]}`
   end
 
-  desc 'Migrate the database'
+  desc "Migrate the database"
   task :migrate do
     Sequel.extension :migration
-    db = Sequel.connect(CONFIG.database_url)
-    Sequel::Migrator.run(db, 'lib/blueprintsCLI/db/migrate')
+    db = Sequel.connect(DB_CONFIG["development"])
+    Sequel::Migrator.run(db, "db/migrate")
   end
 
-  desc 'Seed the database'
+  desc "Seed the database"
   task :seed do
-    require 'blueprintsCLI/db/seeds' if File.exist?('lib/blueprintsCLI/db/seeds.rb')
-  end
-
-  desc 'Rebuild the database'
-  task rebuild: %i[drop create migrate]
-
-  desc 'Reset the test database'
-  task :reset_test do
-    ENV['RACK_ENV'] = 'test'
-    Rake::Task['db:rebuild'].invoke
+    require_relative "db/seeds"
   end
 end
 

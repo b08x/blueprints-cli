@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "../schemas/generator_schemas"
-require 'dry/monads'
-require 'json'
+require "dry/monads"
+require "json"
 
 module BlueprintsCLI
   module Generators
@@ -31,8 +31,8 @@ module BlueprintsCLI
       def generate
         BlueprintsCLI.configuration.configure_rubyllm!
         response = RubyLLM.chat(model: model_name)
-                          .with_schema(Schemas::CategorySchema)
-                          .ask(prompt)
+          .with_schema(Schemas::CategorySchema)
+          .ask(prompt)
 
         # Handle different response formats from various models
         categories = extract_categories_from_response(response)
@@ -40,19 +40,14 @@ module BlueprintsCLI
       rescue RubyLLM::Error => e
         BlueprintsCLI.logger.failure("Category generation failed: #{e.message}")
         Failure(e)
-      rescue StandardError => e
+      rescue => e
         BlueprintsCLI.logger.failure("Unexpected error in category generation: #{e.message}")
         Failure(e)
       end
 
-      private
-
-      # Extract categories from response, handling different model response formats
-      def extract_categories_from_response(response)
+      private def extract_categories_from_response(response)
         # First try standard content format
-        if response.content && response.content.is_a?(Hash) && response.content["categories"]
-          return response.content["categories"]
-        end
+        return response.content["categories"] if response.content.is_a?(Hash) && response.content["categories"]
 
         # Try reasoning format (GLM models)
         if response.respond_to?(:thinking) && response.thinking&.text
@@ -79,19 +74,19 @@ module BlueprintsCLI
         end
 
         # Ultimate fallback
-        ["ruby", "code-blueprint"]
+        %w[ruby code-blueprint]
       end
 
-      def model_name
+      private def model_name
         BlueprintsCLI.configuration.fetch(:ai, :rubyllm, :default_model,
-                                          default: "gemini-2.0-flash")
+          default: "gemini-2.0-flash")
       end
 
-      def prompt
+      private def prompt
         <<~PROMPT
           Analyze this code and generate relevant categories/tags for organization and discovery.
 
-          #{@description ? "Description: #{@description}" : ""}
+          #{"Description: #{@description}" if @description}
 
           Code:
           ```

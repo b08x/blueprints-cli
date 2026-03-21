@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'dry/monads'
+require "dry/monads"
 
 module BlueprintsCLI
   module Actions
@@ -30,7 +30,8 @@ module BlueprintsCLI
       # @param db [BlueprintDatabase] The database dependency. Defaults to a new instance.
       # @return [Submit] A new instance of Submit.
       def initialize(code:, name: nil, description: nil, categories: nil, auto_describe: true,
-                     auto_categorize: true, db: BlueprintsCLI::BlueprintDatabase.new)
+        auto_categorize: true, db: BlueprintsCLI::BlueprintDatabase.new
+      )
         @code = code
         @name = name
         @description = description
@@ -46,12 +47,12 @@ module BlueprintsCLI
       #
       # @return [Boolean] true if the blueprint was successfully created, false otherwise.
       def call
-        BlueprintsCLI.logger.step('Processing blueprint submission...')
+        BlueprintsCLI.logger.step("Processing blueprint submission...")
 
         result = execute_pipeline
 
         if result.success?
-          BlueprintsCLI.logger.success('Blueprint created successfully!')
+          BlueprintsCLI.logger.success("Blueprint created successfully!")
           display_blueprint_summary(result.value!)
           true
         else
@@ -67,15 +68,13 @@ module BlueprintsCLI
             false
           end
         end
-      rescue StandardError => e
+      rescue => e
         BlueprintsCLI.logger.failure("Error submitting blueprint: #{e.message}")
-        BlueprintsCLI.logger.debug(e) if ENV['DEBUG']
+        BlueprintsCLI.logger.debug(e) if ENV["DEBUG"]
         false
       end
 
-      private
-
-      def execute_pipeline
+      private def execute_pipeline
         yield generate_missing_metadata
         yield validate_blueprint_data
 
@@ -91,10 +90,10 @@ module BlueprintsCLI
       # Generates missing metadata for the blueprint, including name, description, and categories.
       #
       # @return [Dry::Monads::Result] Success(true) or Failure(reason)
-      def generate_missing_metadata
+      private def generate_missing_metadata
         # Generate name if not provided
         if @name.nil? || @name.strip.empty?
-          BlueprintsCLI.logger.info('Generating blueprint name...')
+          BlueprintsCLI.logger.info("Generating blueprint name...")
           @name = yield BlueprintsCLI::Generators::Name.new(
             code: @code,
             description: @description
@@ -104,7 +103,7 @@ module BlueprintsCLI
 
         # Generate description if not provided and auto_describe is enabled
         if (@description.nil? || @description.strip.empty?) && @auto_describe
-          puts '📖 Generating blueprint description...'.colorize(:yellow)
+          puts "📖 Generating blueprint description...".colorize(:yellow)
           @description = yield BlueprintsCLI::Generators::Description.new(
             code: @code
           ).generate
@@ -113,7 +112,7 @@ module BlueprintsCLI
 
         # Generate categories if not provided and auto_categorize is enabled
         if @categories.empty? && @auto_categorize
-          puts '🏷️  Generating blueprint categories...'.colorize(:yellow)
+          puts "🏷️  Generating blueprint categories...".colorize(:yellow)
           @categories = yield BlueprintsCLI::Generators::Category.new(
             code: @code,
             description: @description
@@ -128,22 +127,22 @@ module BlueprintsCLI
       # Validates the blueprint data to ensure all required fields are present and valid.
       #
       # @return [Dry::Monads::Result] Success(true) or Failure(errors)
-      def validate_blueprint_data
+      private def validate_blueprint_data
         errors = []
 
-        errors << 'Code cannot be empty' if @code.nil? || @code.strip.empty?
-        errors << 'Name is required (auto-generation failed)' if @name.nil? || @name.strip.empty?
+        errors << "Code cannot be empty" if @code.nil? || @code.strip.empty?
+        errors << "Name is required (auto-generation failed)" if @name.nil? || @name.strip.empty?
 
         if @description.nil? || @description.strip.empty?
           if @auto_describe
-            errors << 'Description generation failed'
+            errors << "Description generation failed"
           else
-            puts '⚠️  Warning: No description provided'.colorize(:yellow)
+            puts "⚠️  Warning: No description provided".colorize(:yellow)
           end
         end
 
         if errors.any?
-          BlueprintsCLI.logger.failure('Validation errors:')
+          BlueprintsCLI.logger.failure("Validation errors:")
           errors.each { |error| BlueprintsCLI.logger.error("   - #{error}") }
           Failure(errors)
         else
@@ -156,10 +155,10 @@ module BlueprintsCLI
       #
       # @param blueprint [Hash] The blueprint data to display.
       # @return [void]
-      def display_blueprint_summary(blueprint)
-        puts "\n" + '=' * 60
-        puts '📋 Blueprint Summary'.colorize(:blue)
-        puts '=' * 60
+      private def display_blueprint_summary(blueprint)
+        puts "\n#{'=' * 60}"
+        puts "📋 Blueprint Summary".colorize(:blue)
+        puts "=" * 60
         puts "ID: #{blueprint[:id]}"
         puts "Name: #{blueprint[:name]}"
         puts "Description: #{blueprint[:description]}"
@@ -168,15 +167,15 @@ module BlueprintsCLI
         puts "Blueprint Type: #{@types[:blueprint_type]}"
         puts "Parser Type: #{@types[:parser_type]}"
 
-        if blueprint[:categories] && blueprint[:categories].any?
+        if blueprint[:categories]&.any?
           category_names = blueprint[:categories].map { |cat| cat[:title] }
           puts "Categories: #{category_names.join(', ')}"
         end
 
         puts "Code length: #{@code.length} characters"
         puts "Created: #{blueprint[:created_at]}"
-        puts '=' * 60
-        puts ''
+        puts "=" * 60
+        puts ""
       end
 
       ##
@@ -185,10 +184,10 @@ module BlueprintsCLI
       # @param text [String] The text to truncate.
       # @param length [Integer] The maximum length of the text.
       # @return [String] The truncated text.
-      def truncate_text(text, length)
+      private def truncate_text(text, length)
         return text if text.length <= length
 
-        text[0..length - 4] + '...'
+        "#{text[0..(length - 4)]}..."
       end
     end
   end

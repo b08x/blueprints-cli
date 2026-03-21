@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'tty-file'
+require "tty-file"
 
 module BlueprintsCLI
   module Actions
@@ -25,7 +25,7 @@ module BlueprintsCLI
       # @param limit [Integer] The number of similar blueprints to use as context (default: 5)
       # @param force [Boolean] Whether to overwrite existing files (default: false)
       # @return [Generate] A new instance of Generate.
-      def initialize(prompt:, output_dir: './generated', limit: 5, force: false)
+      def initialize(prompt:, output_dir: "./generated", limit: 5, force: false)
         @prompt = prompt
         @output_dir = File.expand_path(output_dir)
         @limit = limit
@@ -39,14 +39,14 @@ module BlueprintsCLI
       #
       # @return [Hash] Results including success status, generated files, and metadata
       def call
-        BlueprintsCLI.logger.step('Starting code generation process...')
+        BlueprintsCLI.logger.step("Starting code generation process...")
 
         # Search for relevant blueprints using vector similarity
         relevant_blueprints = search_relevant_blueprints
 
         if relevant_blueprints.empty?
-          BlueprintsCLI.logger.warn('No relevant blueprints found for context')
-          return { success: false, error: 'No relevant blueprints found' }
+          BlueprintsCLI.logger.warn("No relevant blueprints found for context")
+          return { success: false, error: "No relevant blueprints found" }
         end
 
         BlueprintsCLI.logger.info("Found #{relevant_blueprints.length} relevant blueprints for context")
@@ -65,21 +65,15 @@ module BlueprintsCLI
           output_dir: @output_dir,
           relevant_blueprints: relevant_blueprints.map { |bp| bp[:id] },
           generated_files: file_results,
-          metadata: generation_result[:metadata]
+          metadata: generation_result[:metadata],
         }
-      rescue StandardError => e
+      rescue => e
         BlueprintsCLI.logger.failure("Error during code generation: #{e.message}")
         { success: false, error: e.message }
       end
 
-      private
-
-      ##
-      # Searches for blueprints relevant to the generation prompt using vector similarity
-      #
-      # @return [Array<Hash>] Array of relevant blueprint records
-      def search_relevant_blueprints
-        BlueprintsCLI.logger.info('Searching for relevant blueprints...')
+      private def search_relevant_blueprints
+        BlueprintsCLI.logger.info("Searching for relevant blueprints...")
 
         results = @db.search_blueprints(query: @prompt, limit: @limit)
 
@@ -94,8 +88,8 @@ module BlueprintsCLI
       #
       # @param relevant_blueprints [Array<Hash>] The blueprints to use as context
       # @return [Hash] Generation result with files and metadata
-      def generate_code_with_context(relevant_blueprints)
-        BlueprintsCLI.logger.info('Generating code with AI...')
+      private def generate_code_with_context(relevant_blueprints)
+        BlueprintsCLI.logger.info("Generating code with AI...")
 
         context = build_blueprint_context(relevant_blueprints)
         generation_prompt = build_generation_prompt(context)
@@ -106,17 +100,17 @@ module BlueprintsCLI
 
           {
             success: true,
-            files: files,
+            files:,
             metadata: {
-              generation_prompt: generation_prompt,
+              generation_prompt:,
               context_blueprints: relevant_blueprints.length,
-              timestamp: Time.now
-            }
+              timestamp: Time.now,
+            },
           }
         rescue RubyLLM::Error => e
           BlueprintsCLI::Logger.ai_error(e)
           { success: false, error: "AI Generation Failed: #{e.message}" }
-        rescue StandardError => e
+        rescue => e
           BlueprintsCLI.logger.failure("An unexpected error occurred during AI generation: #{e.message}")
           { success: false, error: e.message }
         end
@@ -127,7 +121,7 @@ module BlueprintsCLI
       #
       # @param blueprints [Array<Hash>] The relevant blueprints
       # @return [String] Formatted context for AI
-      def build_blueprint_context(blueprints)
+      private def build_blueprint_context(blueprints)
         context_parts = []
 
         blueprints.each_with_index do |blueprint, index|
@@ -152,7 +146,7 @@ module BlueprintsCLI
       #
       # @param context [String] The blueprint context
       # @return [String] Complete prompt for AI generation
-      def build_generation_prompt(context)
+      private def build_generation_prompt(context)
         <<~PROMPT
           You are a code generation assistant. Based on the user's request and the provided blueprint examples, generate appropriate code files.
 
@@ -192,7 +186,7 @@ module BlueprintsCLI
       #
       # @param content [String] The AI-generated content
       # @return [Array<Hash>] Array of file specifications
-      def parse_generated_content(content)
+      private def parse_generated_content(content)
         files = []
         current_file = nil
         current_content = []
@@ -201,21 +195,21 @@ module BlueprintsCLI
         content.lines.each do |line|
           line = line.chomp
 
-          if line.start_with?('FILE: ')
+          if line.start_with?("FILE: ")
             # Save previous file if exists
             if current_file
               files << {
                 name: current_file,
                 content: current_content.join("\n"),
-                language: detect_language(current_file)
+                language: detect_language(current_file),
               }
             end
 
             # Start new file
-            current_file = line.sub('FILE: ', '').strip
+            current_file = line.sub("FILE: ", "").strip
             current_content = []
             in_code_block = false
-          elsif line.start_with?('```')
+          elsif line.start_with?("```")
             in_code_block = !in_code_block
           elsif in_code_block && current_file
             current_content << line
@@ -227,7 +221,7 @@ module BlueprintsCLI
           files << {
             name: current_file,
             content: current_content.join("\n"),
-            language: detect_language(current_file)
+            language: detect_language(current_file),
           }
         end
 
@@ -235,8 +229,8 @@ module BlueprintsCLI
         if files.empty?
           files << {
             name: guess_filename_from_prompt,
-            content: content,
-            language: 'text'
+            content:,
+            language: "text",
           }
         end
 
@@ -248,29 +242,29 @@ module BlueprintsCLI
       #
       # @param filename [String] The filename
       # @return [String] The detected language
-      def detect_language(filename)
+      private def detect_language(filename)
         ext = File.extname(filename).downcase
 
         case ext
-        when '.rb' then 'ruby'
-        when '.py' then 'python'
-        when '.js' then 'javascript'
-        when '.ts' then 'typescript'
-        when '.java' then 'java'
-        when '.cpp', '.cc', '.cxx' then 'cpp'
-        when '.c' then 'c'
-        when '.go' then 'go'
-        when '.rs' then 'rust'
-        when '.php' then 'php'
-        when '.sh' then 'bash'
-        when '.sql' then 'sql'
-        when '.html' then 'html'
-        when '.css' then 'css'
-        when '.json' then 'json'
-        when '.yaml', '.yml' then 'yaml'
-        when '.xml' then 'xml'
-        when '.md' then 'markdown'
-        else 'text'
+        when ".rb" then "ruby"
+        when ".py" then "python"
+        when ".js" then "javascript"
+        when ".ts" then "typescript"
+        when ".java" then "java"
+        when ".cpp", ".cc", ".cxx" then "cpp"
+        when ".c" then "c"
+        when ".go" then "go"
+        when ".rs" then "rust"
+        when ".php" then "php"
+        when ".sh" then "bash"
+        when ".sql" then "sql"
+        when ".html" then "html"
+        when ".css" then "css"
+        when ".json" then "json"
+        when ".yaml", ".yml" then "yaml"
+        when ".xml" then "xml"
+        when ".md" then "markdown"
+        else "text"
         end
       end
 
@@ -278,26 +272,26 @@ module BlueprintsCLI
       # Guesses a filename from the prompt when no files are parsed
       #
       # @return [String] A default filename
-      def guess_filename_from_prompt
+      private def guess_filename_from_prompt
         # Simple heuristic to guess file extension from prompt
         prompt_lower = @prompt.downcase
 
-        if prompt_lower.include?('ruby') || prompt_lower.include?('.rb')
-          'generated_code.rb'
-        elsif prompt_lower.include?('python') || prompt_lower.include?('.py')
-          'generated_code.py'
-        elsif prompt_lower.include?('javascript') || prompt_lower.include?('.js')
-          'generated_code.js'
-        elsif prompt_lower.include?('typescript') || prompt_lower.include?('.ts')
-          'generated_code.ts'
-        elsif prompt_lower.include?('java')
-          'GeneratedCode.java'
-        elsif prompt_lower.include?('html')
-          'generated.html'
-        elsif prompt_lower.include?('css')
-          'generated.css'
+        if prompt_lower.include?("ruby") || prompt_lower.include?(".rb")
+          "generated_code.rb"
+        elsif prompt_lower.include?("python") || prompt_lower.include?(".py")
+          "generated_code.py"
+        elsif prompt_lower.include?("javascript") || prompt_lower.include?(".js")
+          "generated_code.js"
+        elsif prompt_lower.include?("typescript") || prompt_lower.include?(".ts")
+          "generated_code.ts"
+        elsif prompt_lower.include?("java")
+          "GeneratedCode.java"
+        elsif prompt_lower.include?("html")
+          "generated.html"
+        elsif prompt_lower.include?("css")
+          "generated.css"
         else
-          'generated_code.txt'
+          "generated_code.txt"
         end
       end
 
@@ -306,56 +300,58 @@ module BlueprintsCLI
       #
       # @param prompt [String] The generation prompt
       # @return [String] The generated content
-      def generate_with_ai(prompt)
-        require 'ruby_llm'
+      private def generate_with_ai(prompt)
+        require "ruby_llm"
 
         BlueprintsCLI.logger.debug("Starting AI generation with prompt length: #{prompt.length}")
 
-        BlueprintsCLI.logger.debug('Creating configuration...')
+        BlueprintsCLI.logger.debug("Creating configuration...")
         config = BlueprintsCLI::Configuration.new
-        BlueprintsCLI.logger.debug('Configuration created successfully')
+        BlueprintsCLI.logger.debug("Configuration created successfully")
 
         # Get AI configuration
-        BlueprintsCLI.logger.debug('Fetching AI provider...')
-        provider = config.fetch(:ai, :provider) || 'gemini'
+        BlueprintsCLI.logger.debug("Fetching AI provider...")
+        provider = config.fetch(:ai, :provider) || "gemini"
         BlueprintsCLI.logger.debug("Provider: #{provider}")
 
-        BlueprintsCLI.logger.debug('Fetching AI model...')
-        model = config.fetch(:ai, :model) || 'gemini-2.0-flash'
+        BlueprintsCLI.logger.debug("Fetching AI model...")
+        model = config.fetch(:ai, :model) || "gemini-2.0-flash"
         BlueprintsCLI.logger.debug("Model: #{model}")
 
-        BlueprintsCLI.logger.debug('Fetching API key...')
+        BlueprintsCLI.logger.debug("Fetching API key...")
         api_key = config.ai_api_key(provider)
         BlueprintsCLI.logger.debug("API key present: #{!api_key.nil? && !api_key.empty?}")
 
         unless api_key
           raise RubyLLM::ConfigurationError,
-                "No API key found for #{provider}. Please configure your AI settings."
+            "No API key found for #{provider}. Please configure your AI settings."
         end
 
         # Create RubyLLM client
         llm_config = {
           provider: provider.to_sym,
-          model: model,
-          api_key: api_key
+          model:,
+          api_key:,
         }
         BlueprintsCLI.logger.debug("LLM config prepared: #{llm_config.keys}")
 
-        BlueprintsCLI.logger.debug('Creating RubyLLM chat client...')
+        BlueprintsCLI.logger.debug("Creating RubyLLM chat client...")
         chat = RubyLLM::Chat.new(model: llm_config[:model])
-        BlueprintsCLI.logger.debug('RubyLLM chat client created successfully')
+        BlueprintsCLI.logger.debug("RubyLLM chat client created successfully")
 
         # Generate content
-        BlueprintsCLI.logger.debug('Calling completion method...')
+        BlueprintsCLI.logger.debug("Calling completion method...")
         response = chat.with_temperature(0.3).ask(prompt)
 
         chat.on_end_message do |message|
-          BlueprintsCLI.logger.debug('Completion method returned successfully')
+          BlueprintsCLI.logger.debug("Completion method returned successfully")
           # NOTE: message might be nil if an error occurred during the request
-          BlueprintsCLI.logger.debug("Used #{message.input_tokens + message.output_tokens} tokens") if message&.output_tokens
+          if message&.output_tokens
+            BlueprintsCLI.logger.debug("Used #{message.input_tokens + message.output_tokens} tokens")
+          end
         end
 
-        BlueprintsCLI.logger.debug('Extracting content from response...')
+        BlueprintsCLI.logger.debug("Extracting content from response...")
         content = response.content
         BlueprintsCLI.logger.debug("Content extracted successfully, length: #{content.length}")
 
@@ -367,7 +363,7 @@ module BlueprintsCLI
       #
       # @param files [Array<Hash>] The files to create
       # @return [Array<Hash>] Results of file creation
-      def create_output_files(files)
+      private def create_output_files(files)
         BlueprintsCLI.logger.info("Creating #{files.length} output files in #{@output_dir}")
 
         file_results = []
@@ -388,16 +384,16 @@ module BlueprintsCLI
               name: file_spec[:name],
               path: file_path,
               success: true,
-              language: file_spec[:language]
+              language: file_spec[:language],
             }
 
             BlueprintsCLI.logger.success("Created file: #{file_path}")
-          rescue StandardError => e
+          rescue => e
             file_results << {
               name: file_spec[:name],
               path: file_path,
               success: false,
-              error: e.message
+              error: e.message,
             }
 
             BlueprintsCLI.logger.failure("Failed to create file #{file_path}: #{e.message}")

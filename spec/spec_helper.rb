@@ -5,15 +5,15 @@ require 'simplecov'
 SimpleCov.start
 
 # Set the environment to "test"
-ENV['RACK_ENV'] = 'test'
+ENV["RACK_ENV"] = "test"
 
 # Load the application environment
-require_relative '../lib/blueprintsCLI/config/environment'
+require_relative "../lib/blueprintsCLI/config/environment"
 
 # Load RSpec and Rack::Test
-require 'rspec'
-require 'rack/test'
-require 'factory_bot'
+require "rspec"
+require "rack/test"
+require "factory_bot"
 
 # Configure RSpec
 RSpec.configure do |config|
@@ -33,8 +33,7 @@ RSpec.configure do |config|
     # Run migrations before the test suite starts
     db_instance = BlueprintsCLI::BlueprintDatabase.new
     Sequel.extension :migration
-    db_path = File.expand_path('../lib/blueprintsCLI/db/migrate', __dir__)
-    Sequel::Migrator.run(db_instance.db, db_path)
+    Sequel::Migrator.run(DB, "db/migrate")
   end
 
   config.around(:each) do |example|

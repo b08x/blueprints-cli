@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
-require 'tty-box'
-require_relative '../ui/preview_boxes'
-require_relative '../ui/two_column_viewer'
-require_relative '../ui/cli_ui_viewer'
+require "tty-box"
+require_relative "../ui/preview_boxes"
 
 module BlueprintsCLI
   module Actions
@@ -66,14 +64,8 @@ module BlueprintsCLI
 
         # Generate AI suggestions if requested
         if @with_suggestions
-          puts '🤖 Generating AI analysis...'.colorize(:yellow)
-          begin
-            blueprint[:ai_suggestions] = generate_suggestions(blueprint)
-          rescue StandardError => e
-            BlueprintsCLI.logger.warn("AI suggestions failed: #{e.message}")
-            puts "⚠️  AI analysis unavailable: #{e.message}".colorize(:yellow)
-            blueprint[:ai_suggestions] = nil
-          end
+          puts "🤖 Generating AI analysis...".colorize(:yellow)
+          blueprint[:ai_suggestions] = generate_suggestions(blueprint)
         end
 
         case @format
@@ -90,25 +82,13 @@ module BlueprintsCLI
         end
 
         true
-      rescue StandardError => e
+      rescue => e
         BlueprintsCLI.logger.failure("Error viewing blueprint: #{e.message}")
-        BlueprintsCLI.logger.error("Stack trace: #{e.backtrace.join("\n")}")
+        BlueprintsCLI.logger.debug(e) if ENV["DEBUG"]
         false
       end
 
-      private
-
-      ##
-      # Displays a detailed view of the blueprint.
-      #
-      # Uses a pager if available for better readability of long content.
-      #
-      # @param blueprint [Hash] The blueprint data to display
-      # @return [void]
-      #
-      # @example Internal usage
-      #   display_detailed(blueprint_data)
-      def display_detailed(blueprint)
+      private def display_detailed(blueprint)
         content = build_detailed_content(blueprint)
 
         if tty_pager_available?
@@ -148,24 +128,24 @@ module BlueprintsCLI
       #
       # @example Internal usage
       #   content = build_detailed_content(blueprint_data)
-      def build_detailed_content(blueprint)
+      private def build_detailed_content(blueprint)
         content_parts = []
 
         # Metadata Box
         metadata_content = build_metadata_content(blueprint)
         metadata_box = TTY::Box.frame(
           metadata_content,
-          title: { top_left: '📋 Blueprint Details' },
+          title: { top_left: "📋 Blueprint Details" },
           style: { border: { fg: :blue } },
           padding: 1
         )
         content_parts << metadata_box
 
         # Description Box
-        description_content = blueprint[:description] || 'No description available'
+        description_content = blueprint[:description] || "No description available"
         description_box = TTY::Box.frame(
           description_content,
-          title: { top_left: '📝 Description' },
+          title: { top_left: "📝 Description" },
           style: { border: { fg: :cyan } },
           width: 120,
           padding: 1
@@ -177,7 +157,7 @@ module BlueprintsCLI
           suggestions_content = build_suggestions_content(blueprint[:ai_suggestions])
           suggestions_box = TTY::Box.frame(
             suggestions_content,
-            title: { top_left: '🤖 AI Analysis & Suggestions' },
+            title: { top_left: "🤖 AI Analysis & Suggestions" },
             style: { border: { fg: :magenta } },
             width: 140,
             padding: 1
@@ -188,7 +168,7 @@ module BlueprintsCLI
         # Code Box with plain text (syntax highlighting removed due to readability issues)
         code_box = UI::PreviewBoxes.code_box(
           blueprint[:code],
-          title: '💻 Blueprint Code'
+          title: "💻 Blueprint Code"
         )
         content_parts << code_box
 
@@ -200,7 +180,7 @@ module BlueprintsCLI
       #
       # @param blueprint [Hash] The blueprint data
       # @return [String] Formatted metadata content
-      def build_metadata_content(blueprint)
+      private def build_metadata_content(blueprint)
         metadata_lines = []
         metadata_lines << "ID: #{blueprint[:id]}"
         metadata_lines << "Name: #{blueprint[:name]}"
@@ -208,11 +188,11 @@ module BlueprintsCLI
         metadata_lines << "Updated: #{blueprint[:updated_at]}"
 
         # Categories
-        if blueprint[:categories] && blueprint[:categories].any?
+        if blueprint[:categories]&.any?
           category_names = blueprint[:categories].map { |cat| cat[:title] }
           metadata_lines << "Categories: #{category_names.join(', ')}"
         else
-          metadata_lines << 'Categories: None'
+          metadata_lines << "Categories: None"
         end
 
         metadata_lines.join("\n")
@@ -223,11 +203,11 @@ module BlueprintsCLI
       #
       # @param suggestions [Hash] The AI suggestions data
       # @return [String] Formatted suggestions content
-      def build_suggestions_content(suggestions)
+      private def build_suggestions_content(suggestions)
         content_lines = []
 
         if suggestions[:improvements]
-          content_lines << '💡 Improvements:'
+          content_lines << "💡 Improvements:"
           suggestions[:improvements].each do |improvement|
             # Wrap long improvement text to fit in box (130 chars for width 140 box)
             wrapped_improvement = wrap_text(improvement, 130)
@@ -235,12 +215,13 @@ module BlueprintsCLI
             wrapped_lines = wrapped_improvement.split("\n")
             content_lines << "  • #{wrapped_lines.first}"
             wrapped_lines[1..].each { |line| content_lines << "    #{line}" }
+            wrapped_lines[1..].each { |line| content_lines << "    #{line}" }
           end
-          content_lines << ''
+          content_lines << ""
         end
 
         if suggestions[:quality_assessment]
-          content_lines << '📊 Quality Assessment:'
+          content_lines << "📊 Quality Assessment:"
           wrapped_assessment = wrap_text(suggestions[:quality_assessment], 130)
           content_lines << wrapped_assessment
         end
@@ -258,22 +239,22 @@ module BlueprintsCLI
       #
       # @example Internal usage
       #   display_summary(blueprint_data)
-      def display_summary(blueprint)
+      private def display_summary(blueprint)
         puts "\n📋 Blueprint Summary".colorize(:blue)
-        puts '=' * 50
+        puts "=" * 50
         puts "ID: #{blueprint[:id]}"
         puts "Name: #{blueprint[:name]}"
         puts "Description: #{truncate_text(blueprint[:description] || 'No description', 60)}"
 
-        if blueprint[:categories] && blueprint[:categories].any?
+        if blueprint[:categories]&.any?
           category_names = blueprint[:categories].map { |cat| cat[:title] }
           puts "Categories: #{category_names.join(', ')}"
         end
 
         puts "Code length: #{blueprint[:code].length} characters"
         puts "Created: #{blueprint[:created_at]}"
-        puts '=' * 50
-        puts ''
+        puts "=" * 50
+        puts ""
       end
 
       ##
@@ -288,7 +269,7 @@ module BlueprintsCLI
       # @example Internal usage
       #   suggestions = generate_suggestions(blueprint_data)
       #   # => { improvements: [...], quality_assessment: "..." }
-      def generate_suggestions(blueprint)
+      private def generate_suggestions(blueprint)
         suggestions = {}
 
         begin
@@ -299,7 +280,7 @@ module BlueprintsCLI
           ).generate
 
           suggestions[:improvements] = improvements if improvements
-        rescue StandardError => e
+        rescue => e
           BlueprintsCLI.logger.warn("Could not generate AI suggestions: #{e.message}")
         end
 
@@ -318,10 +299,10 @@ module BlueprintsCLI
       # @example Basic usage
       #   truncate_text("This is a long text that needs truncation", 20)
       #   # => "This is a long text..."
-      def truncate_text(text, length)
+      private def truncate_text(text, length)
         return text if text.length <= length
 
-        text[0..length - 4] + '...'
+        "#{text[0..(length - 4)]}..."
       end
 
       ##
@@ -334,7 +315,7 @@ module BlueprintsCLI
       # @param text [String] Text to wrap
       # @param width [Integer] Maximum line width
       # @return [String] Wrapped text
-      def wrap_text(text, width = 80)
+      private def wrap_text(text, width = 80)
         text.gsub(/(.{1,#{width}})(\s+|$)/, "\\1\n").strip
       end
 
@@ -344,7 +325,7 @@ module BlueprintsCLI
       #   else
       #     puts content
       #   end
-      def tty_pager_available?
+      private def tty_pager_available?
         defined?(TTY::Pager)
       end
     end

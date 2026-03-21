@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-require 'ruby_llm'
-require 'tty-box'
-require 'tty-prompt'
-require 'tty-spinner'
+require "ruby_llm"
+require "tty-box"
+require "tty-prompt"
+require "tty-spinner"
 
 module BlueprintsCLI
   module Services
     # Service to generate YARD documentation for a Ruby file using an LLM.
     class YardocService
       # The prompt template for generating YARD documentation.
-      PROMPT_TEMPLATE = <<~'PROMPT'
+      PROMPT_TEMPLATE = <<~PROMPT
         # SFL-Framework YARD Documentation Generation System Prompt
 
         ## Context
@@ -177,10 +177,10 @@ module BlueprintsCLI
         @file_path = file_path
         @preview = preview
         @prompt = TTY::Prompt.new if preview
-        
+
         # Configure RubyLLM with available API keys
         configure_rubyllm
-        
+
         # Initialize chat with appropriate model and provider
         @chat = create_chat_instance
       end
@@ -189,86 +189,79 @@ module BlueprintsCLI
       # @return [Boolean] true if successful, false otherwise.
       def call
         puts "Generating YARD documentation for #{@file_path}..."
-        
+
         unless File.exist?(@file_path)
           puts "Error: File not found at #{@file_path}"
           return false
         end
 
         file_content = File.read(@file_path)
-        
-        # Show before preview if enabled
-        if @preview
-          show_before_preview(file_content)
-        end
 
-        llm_prompt = PROMPT_TEMPLATE.gsub('{{RUBY_CODE}}', file_content)
+        # Show before preview if enabled
+        show_before_preview(file_content) if @preview
+
+        llm_prompt = PROMPT_TEMPLATE.gsub("{{RUBY_CODE}}", file_content)
 
         begin
           # Set up spinner for AI generation feedback
-          spinner = TTY::Spinner.new("[:spinner] Generating YARD documentation with AI...", 
-                                     format: :dots)
-          
+          spinner = TTY::Spinner.new("[:spinner] Generating YARD documentation with AI...",
+            format: :dots)
+
           # Set up callback for streaming response feedback
           @chat.on_new_message do
             spinner.spin
           end
-          
+
           spinner.auto_spin
           response_message = @chat.ask(llm_prompt)
-          spinner.success('Documentation generated!')
-          
-          if response_message && response_message.content && !response_message.content.strip.empty?
+          spinner.success("Documentation generated!")
+
+          if response_message&.content && !response_message.content.strip.empty?
             documented_content = response_message.content
-            
+
             # Show after preview and confirm if preview enabled
-            if @preview
-              return false unless show_after_preview_and_confirm(file_content, documented_content)
-            end
-            
+            return false if @preview && !show_after_preview_and_confirm(file_content, documented_content)
+
             File.write(@file_path, documented_content)
             show_success_message
             true
           else
-            spinner.error('Empty response from AI') if defined?(spinner)
+            spinner.error("Empty response from AI") if defined?(spinner)
             puts "Error: Received empty response from LLM."
             false
           end
         rescue => e
-          spinner.error('Generation failed') if defined?(spinner)
+          spinner.error("Generation failed") if defined?(spinner)
           puts "Error generating documentation: #{e.message}"
           false
         end
       end
 
-      private
-
-      # Shows a preview of the original code before documentation generation
-      def show_before_preview(file_content)
+      private def show_before_preview(file_content)
         preview_content = file_content.lines.first(15).join
         preview_content += "\n..." if file_content.lines.length > 15
 
         before_box = TTY::Box.frame(
           preview_content,
-          title: { top_left: '📜 Original Code' },
+          title: { top_left: "📜 Original Code" },
           style: { border: { fg: :blue } },
           padding: 1
         )
-        
+
         puts before_box
-        @prompt.keypress('Press any key to start YARD generation...')
+        @prompt.keypress("Press any key to start YARD generation...")
         print TTY::Cursor.clear_screen_down if defined?(TTY::Cursor)
       end
 
       # Shows before/after preview and asks for confirmation
-      def show_after_preview_and_confirm(original_content, documented_content)
+      private def show_after_preview_and_confirm(original_content, documented_content)
         # Show original preview
         original_preview = original_content.lines.first(10).join
         original_preview += "\n..." if original_content.lines.length > 10
 
         original_box = TTY::Box.frame(
           original_preview,
-          title: { top_left: '📜 Before (Original)' },
+          title: { top_left: "📜 Before (Original)" },
           style: { border: { fg: :blue } },
           width: 80,
           padding: 1
@@ -280,7 +273,7 @@ module BlueprintsCLI
 
         documented_box = TTY::Box.frame(
           documented_preview,
-          title: { top_left: '📚 After (With YARD Documentation)' },
+          title: { top_left: "📚 After (With YARD Documentation)" },
           style: { border: { fg: :green } },
           width: 80,
           padding: 1
@@ -291,44 +284,44 @@ module BlueprintsCLI
         puts documented_box
 
         # Ask for confirmation
-        @prompt.yes?('Apply YARD documentation to file?')
+        @prompt.yes?("Apply YARD documentation to file?")
       end
 
       # Configure RubyLLM with available API keys
-      def configure_rubyllm
+      private def configure_rubyllm
         RubyLLM.configure do |config|
           # Use Gemini if available
-          if ENV['GEMINI_API_KEY']
-            config.gemini_api_key = ENV['GEMINI_API_KEY']
+          if ENV["GEMINI_API_KEY"]
+            config.gemini_api_key = ENV["GEMINI_API_KEY"]
           # Use OpenRouter if available
-          elsif ENV['OPENROUTER_API_KEY']
-            config.openai_api_key = ENV['OPENROUTER_API_KEY']
-            config.openai_api_base = 'https://openrouter.ai/api/v1'
+          elsif ENV["OPENROUTER_API_KEY"]
+            config.openai_api_key = ENV["OPENROUTER_API_KEY"]
+            config.openai_api_base = "https://openrouter.ai/api/v1"
           # Use OpenAI if available
-          elsif ENV['OPENAI_API_KEY']
-            config.openai_api_key = ENV['OPENAI_API_KEY']
+          elsif ENV["OPENAI_API_KEY"]
+            config.openai_api_key = ENV["OPENAI_API_KEY"]
           end
         end
       end
 
       # Create chat instance with appropriate model and provider
-      def create_chat_instance
-        if ENV['GEMINI_API_KEY']
-          RubyLLM.chat(model: 'gemini-2.0-flash', provider: :gemini)
-        elsif ENV['OPENROUTER_API_KEY']
-          RubyLLM.chat(model: 'gemini-2.0-flash', provider: :openai)
-        elsif ENV['OPENAI_API_KEY']
-          RubyLLM.chat(model: 'gpt-4o-mini', provider: :openai)
+      private def create_chat_instance
+        if ENV["GEMINI_API_KEY"]
+          RubyLLM.chat(model: "gemini-2.0-flash", provider: :gemini)
+        elsif ENV["OPENROUTER_API_KEY"]
+          RubyLLM.chat(model: "gemini-2.0-flash", provider: :openai)
+        elsif ENV["OPENAI_API_KEY"]
+          RubyLLM.chat(model: "gpt-4o-mini", provider: :openai)
         else
-          raise 'No AI provider configured. Please set GEMINI_API_KEY, OPENROUTER_API_KEY, or OPENAI_API_KEY environment variable.'
+          raise "No AI provider configured. Please set GEMINI_API_KEY, OPENROUTER_API_KEY, or OPENAI_API_KEY environment variable."
         end
       end
 
       # Shows success message with styled box
-      def show_success_message
+      private def show_success_message
         success_box = TTY::Box.frame(
           "Successfully generated YARD documentation for:\n#{@file_path}",
-          title: { top_left: '✅ Documentation Generated' },
+          title: { top_left: "✅ Documentation Generated" },
           style: { border: { fg: :green } },
           padding: 1,
           align: :center

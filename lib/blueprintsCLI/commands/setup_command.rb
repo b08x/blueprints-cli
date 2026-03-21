@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'base_command'
+require_relative "base_command"
 
 module BlueprintsCLI
   module Commands
@@ -11,7 +11,7 @@ module BlueprintsCLI
       # Provides a description of what this command does.
       # @return [String] A description of the command's purpose.
       def self.description
-        'Run first-time setup wizard for BlueprintsCLI configuration'
+        "Run first-time setup wizard for BlueprintsCLI configuration"
       end
 
       # Initializes a new SetupCommand instance.
@@ -26,17 +26,17 @@ module BlueprintsCLI
       def execute(*args)
         subcommand = args.shift
         case subcommand
-        when 'wizard', 'run', nil
+        when "wizard", "run", nil
           run_setup_wizard
-        when 'providers'
+        when "providers"
           setup_providers_only
-        when 'database'
+        when "database"
           setup_database_only
-        when 'models'
+        when "models"
           setup_models_only
-        when 'verify'
+        when "verify"
           verify_setup
-        when 'help'
+        when "help"
           show_help
         else
           log_failure("Unknown subcommand: #{subcommand}")
@@ -45,16 +45,12 @@ module BlueprintsCLI
         end
       end
 
-      private
-
-      # Run the complete setup wizard
-      #
-      # @return [Boolean] True if setup completed successfully
-      def run_setup_wizard
-        log_step('Starting BlueprintsCLI setup wizard...')
+      private def run_setup_wizard
+        log_step("Starting BlueprintsCLI setup wizard...")
 
         begin
           setup_manager = BlueprintsCLI::Setup::SetupManager.new
+
 
           # Check if setup is needed
           unless setup_manager.setup_required?
@@ -64,6 +60,7 @@ module BlueprintsCLI
 
           # Run complete setup
           success = setup_manager.run
+
 
           if success
             log_success('Setup completed successfully!')
@@ -76,7 +73,7 @@ module BlueprintsCLI
         rescue BlueprintsCLI::Setup::SetupManager::SetupCancelledError
           log_info('Setup cancelled by user')
           true
-        rescue StandardError => e
+        rescue => e
           log_failure("Setup failed: #{e.message}")
           log_debug(e.backtrace.join("\n"))
           false
@@ -86,12 +83,13 @@ module BlueprintsCLI
       # Setup only AI providers
       #
       # @return [Boolean] True if provider setup completed
-      def setup_providers_only
-        log_step('Setting up AI providers...')
+      private def setup_providers_only
+        log_step("Setting up AI providers...")
 
         begin
           setup_manager = BlueprintsCLI::Setup::SetupManager.new
           success = setup_manager.setup_providers
+
 
           if success
             log_success('Provider setup completed!')
@@ -100,7 +98,7 @@ module BlueprintsCLI
           end
 
           success
-        rescue StandardError => e
+        rescue => e
           log_failure("Provider setup failed: #{e.message}")
           log_debug(e.backtrace.join("\n"))
           false
@@ -110,12 +108,13 @@ module BlueprintsCLI
       # Setup only database
       #
       # @return [Boolean] True if database setup completed
-      def setup_database_only
-        log_step('Setting up database...')
+      private def setup_database_only
+        log_step("Setting up database...")
 
         begin
           setup_manager = BlueprintsCLI::Setup::SetupManager.new
           success = setup_manager.setup_database
+
 
           if success
             log_success('Database setup completed!')
@@ -124,7 +123,7 @@ module BlueprintsCLI
           end
 
           success
-        rescue StandardError => e
+        rescue => e
           log_failure("Database setup failed: #{e.message}")
           log_debug(e.backtrace.join("\n"))
           false
@@ -134,12 +133,13 @@ module BlueprintsCLI
       # Setup only AI models
       #
       # @return [Boolean] True if model setup completed
-      def setup_models_only
-        log_step('Setting up AI models...')
+      private def setup_models_only
+        log_step("Setting up AI models...")
 
         begin
           setup_manager = BlueprintsCLI::Setup::SetupManager.new
           success = setup_manager.setup_models
+
 
           if success
             log_success('Model setup completed!')
@@ -148,7 +148,7 @@ module BlueprintsCLI
           end
 
           success
-        rescue StandardError => e
+        rescue => e
           log_failure("Model setup failed: #{e.message}")
           log_debug(e.backtrace.join("\n"))
           false
@@ -158,11 +158,12 @@ module BlueprintsCLI
       # Verify current setup
       #
       # @return [Boolean] True if verification passed
-      def verify_setup
-        log_step('Verifying BlueprintsCLI setup...')
+      private def verify_setup
+        log_step("Verifying BlueprintsCLI setup...")
 
         begin
           config = BlueprintsCLI::Configuration.new
+
 
           # Check configuration file exists
           if config.exist?
@@ -190,7 +191,7 @@ module BlueprintsCLI
 
           log_success('Setup verification completed!')
           true
-        rescue StandardError => e
+        rescue => e
           log_failure("Setup verification failed: #{e.message}")
           log_debug(e.backtrace.join("\n"))
           false
@@ -200,20 +201,20 @@ module BlueprintsCLI
       # Verify database connection
       #
       # @param database_url [String] Database URL to test
-      def verify_database_connection(database_url)
-        require 'sequel'
+      private def verify_database_connection(database_url)
+        require "sequel"
         db = Sequel.connect(database_url)
         db.test_connection
-        log_success('✓ Database connection successful')
+        log_success("✓ Database connection successful")
         db.disconnect
-      rescue StandardError => e
+      rescue => e
         log_failure("✗ Database connection failed: #{e.message}")
       end
 
       # Verify AI provider configuration
       #
       # @param config [BlueprintsCLI::Configuration] Configuration instance
-      def verify_ai_providers(config)
+      private def verify_ai_providers(config)
         providers = %w[openai anthropic gemini deepseek]
         found_providers = []
 
@@ -234,9 +235,8 @@ module BlueprintsCLI
       end
 
       # Verify required directories exist
-      def verify_directories
-        log_file_dir = File.dirname(BlueprintsCLI.configuration.fetch(:logger, :file_path,
-                                                                      default: '/tmp/app.log'))
+      private def verify_directories
+        log_file_dir = File.dirname(BlueprintsCLI.configuration.fetch(:logger, :file_path, default: "/tmp/app.log"))
 
         if Dir.exist?(log_file_dir)
           log_success('✓ Log directory exists')
@@ -247,7 +247,7 @@ module BlueprintsCLI
       end
 
       # Display next steps after successful setup
-      def display_next_steps
+      private def display_next_steps
         puts "\n🎉 Welcome to BlueprintsCLI!"
         puts "\nNext steps:"
         puts "• Run 'bin/blueprintsCLI' to access the interactive menu"
@@ -258,7 +258,7 @@ module BlueprintsCLI
       end
 
       # Show help information
-      def show_help
+      private def show_help
         puts <<~HELP
           Usage: blueprintsCLI setup <subcommand> [options]
 
@@ -288,3 +288,4 @@ module BlueprintsCLI
     end
   end
 end
+

@@ -23,7 +23,7 @@ module BlueprintsCLI
       #
       # @return [String] A description of the command's purpose
       def self.description
-        'Manage BlueprintsCLI configuration settings'
+        "Manage BlueprintsCLI configuration settings"
       end
 
       ##
@@ -51,17 +51,17 @@ module BlueprintsCLI
         subcommand = args.shift
 
         case subcommand
-        when 'setup', nil
+        when "setup", nil
           handle_setup
-        when 'show'
+        when "show"
           handle_show
-        when 'edit'
+        when "edit"
           handle_edit
-        when 'reset'
+        when "reset"
           handle_reset
-        when 'validate'
+        when "validate"
           handle_validate
-        when 'help'
+        when "help"
           show_help
         else
           puts "❌ Unknown subcommand: #{subcommand}".colorize(:red)
@@ -70,39 +70,25 @@ module BlueprintsCLI
         end
       end
 
-      private
-
-      ##
-      # Handles the configuration setup process
-      #
-      # This method guides the user through an interactive setup process to configure
-      # BlueprintsCLI for their environment. It loads the configuration module and
-      # initiates the interactive setup procedure.
-      #
-      # @return [Boolean] true if setup was successful, false otherwise
-      #
-      # @example Run the setup handler
-      #   command = ConfigCommand.new({})
-      #   command.send(:handle_setup)
-      def handle_setup
-        puts '🔧 BlueprintsCLI Configuration Setup'.colorize(:blue)
-        puts '=' * 40
+      private def handle_setup
+        puts "🔧 BlueprintsCLI Configuration Setup".colorize(:blue)
+        puts "=" * 40
 
         begin
-          require_relative '../configuration'
+          require_relative "../configuration"
           config = BlueprintsCLI::Configuration.new
           success = config.interactive_setup
 
           if success
-            puts '✅ Configuration setup completed successfully!'.colorize(:green)
+            puts "✅ Configuration setup completed successfully!".colorize(:green)
             true
           else
-            puts '⚠️  Configuration setup completed with warnings.'.colorize(:yellow)
+            puts "⚠️  Configuration setup completed with warnings.".colorize(:yellow)
             false
           end
-        rescue StandardError => e
+        rescue => e
           BlueprintsCLI.logger.failure("Error during configuration setup: #{e.message}")
-          BlueprintsCLI.logger.debug(e) if ENV['DEBUG']
+          BlueprintsCLI.logger.debug(e) if ENV["DEBUG"]
           false
         end
       end
@@ -119,12 +105,12 @@ module BlueprintsCLI
       # @example Show current configuration
       #   command = ConfigCommand.new({})
       #   command.send(:handle_show)
-      def handle_show
-        puts '📋 Current Configuration'.colorize(:blue)
-        puts '=' * 25
+      private def handle_show
+        puts "📋 Current Configuration".colorize(:blue)
+        puts "=" * 25
 
         begin
-          require_relative '../configuration'
+          require_relative "../configuration"
           config = BlueprintsCLI::Configuration.new
           config_hash = config.config.to_hash
 
@@ -133,14 +119,14 @@ module BlueprintsCLI
             return false
           end
 
-          display_config_section('Paths', config_hash['paths']) if config_hash['paths']
-          display_config_section('Display', config_hash['display']) if config_hash['display']
-          display_config_section('Restic', config_hash['restic']) if config_hash['restic']
-          display_config_section('Terminal', config_hash['terminal']) if config_hash['terminal']
-          display_config_section('Logger', config_hash['logger']) if config_hash['logger']
+          display_config_section("Paths", config_hash["paths"]) if config_hash["paths"]
+          display_config_section("Display", config_hash["display"]) if config_hash["display"]
+          display_config_section("Restic", config_hash["restic"]) if config_hash["restic"]
+          display_config_section("Terminal", config_hash["terminal"]) if config_hash["terminal"]
+          display_config_section("Logger", config_hash["logger"]) if config_hash["logger"]
 
           true
-        rescue StandardError => e
+        rescue => e
           BlueprintsCLI.logger.failure("Error reading configuration: #{e.message}")
           false
         end
@@ -158,22 +144,22 @@ module BlueprintsCLI
       # @example Edit configuration
       #   command = ConfigCommand.new({})
       #   command.send(:handle_edit)
-      def handle_edit
-        puts '✏️  Interactive Configuration Editor'.colorize(:blue)
-        puts '=' * 35
+      private def handle_edit
+        puts "✏️  Interactive Configuration Editor".colorize(:blue)
+        puts "=" * 35
 
         begin
-          require_relative '../configuration'
+          require_relative "../configuration"
           config = BlueprintsCLI::Configuration.new
 
-          section = @prompt.select('Which section would you like to edit?') do |menu|
-            menu.choice '📁 Paths (directories and repositories)', :paths
-            menu.choice '🎨 Display settings', :display
-            menu.choice '📦 Restic backup settings', :restic
-            menu.choice '💻 Terminal settings', :terminal
-            menu.choice '📝 Logger settings', :logger
-            menu.choice '🔄 Full setup (all sections)', :all
-            menu.choice '❌ Cancel', :cancel
+          section = @prompt.select("Which section would you like to edit?") do |menu|
+            menu.choice "📁 Paths (directories and repositories)", :paths
+            menu.choice "🎨 Display settings", :display
+            menu.choice "📦 Restic backup settings", :restic
+            menu.choice "💻 Terminal settings", :terminal
+            menu.choice "📝 Logger settings", :logger
+            menu.choice "🔄 Full setup (all sections)", :all
+            menu.choice "❌ Cancel", :cancel
           end
 
           return true if section == :cancel
@@ -194,9 +180,9 @@ module BlueprintsCLI
           end
 
           config.send(:save_config)
-          puts '✅ Configuration updated successfully!'.colorize(:green)
+          puts "✅ Configuration updated successfully!".colorize(:green)
           true
-        rescue StandardError => e
+        rescue => e
           BlueprintsCLI.logger.failure("Error editing configuration: #{e.message}")
           false
         end
@@ -213,22 +199,22 @@ module BlueprintsCLI
       # @example Reset configuration
       #   command = ConfigCommand.new({})
       #   command.send(:handle_reset)
-      def handle_reset
-        puts '🔄 Reset Configuration'.colorize(:blue)
-        puts '=' * 22
+      private def handle_reset
+        puts "🔄 Reset Configuration".colorize(:blue)
+        puts "=" * 22
 
-        config_file = File.expand_path('~/.config/BlueprintsCLI/config.yml')
+        config_file = File.expand_path("~/.config/BlueprintsCLI/config.yml")
 
         if File.exist?(config_file)
-          confirmed = @prompt.yes?('⚠️  This will delete your current configuration. Are you sure?')
+          confirmed = @prompt.yes?("⚠️  This will delete your current configuration. Are you sure?")
           return false unless confirmed
 
           begin
             File.delete(config_file)
-            puts '✅ Configuration file deleted successfully.'.colorize(:green)
+            puts "✅ Configuration file deleted successfully.".colorize(:green)
             puts "💡 Run 'config setup' to create a new configuration.".colorize(:cyan)
             true
-          rescue StandardError => e
+          rescue => e
             BlueprintsCLI.logger.failure("Error deleting configuration file: #{e.message}")
             false
           end
@@ -249,29 +235,29 @@ module BlueprintsCLI
       # @example Validate configuration
       #   command = ConfigCommand.new({})
       #   command.send(:handle_validate)
-      def handle_validate
-        puts '🔍 Validating Configuration'.colorize(:blue)
-        puts '=' * 26
+      private def handle_validate
+        puts "🔍 Validating Configuration".colorize(:blue)
+        puts "=" * 26
 
         begin
-          require_relative '../configuration'
+          require_relative "../configuration"
           config = BlueprintsCLI::Configuration.new
 
           # Test terminal command
-          puts '📡 Checking terminal availability...'.colorize(:cyan)
+          puts "📡 Checking terminal availability...".colorize(:cyan)
           terminals_valid = config.send(:validate_terminal_command)
 
           if terminals_valid
-            puts '✅ Configuration validation passed!'.colorize(:green)
+            puts "✅ Configuration validation passed!".colorize(:green)
           else
-            puts '⚠️  Configuration validation completed with warnings.'.colorize(:yellow)
+            puts "⚠️  Configuration validation completed with warnings.".colorize(:yellow)
           end
 
           true
         rescue TTY::Config::ValidationError => e
           puts "❌ Configuration validation failed: #{e.message}".colorize(:red)
           false
-        rescue StandardError => e
+        rescue => e
           BlueprintsCLI.logger.failure("Error during validation: #{e.message}")
           false
         end
@@ -289,7 +275,7 @@ module BlueprintsCLI
       # @example Display a configuration section
       #   command = ConfigCommand.new({})
       #   command.send(:display_config_section, "Paths", { home: "/home/user" })
-      def display_config_section(title, data)
+      private def display_config_section(title, data)
         puts "\n#{title}:".colorize(:cyan)
         case data
         when Hash
@@ -321,10 +307,10 @@ module BlueprintsCLI
       # @example Format a command hash
       #   command = ConfigCommand.new({})
       #   command.send(:format_value, { command: "ls", args: "-la" })
-      def format_value(value)
+      private def format_value(value)
         case value
         when Hash
-          if value.key?('command') && value.key?('args')
+          if value.key?("command") && value.key?("args")
             "#{value['command']} #{value['args']}".colorize(:yellow)
           else
             value.inspect.colorize(:yellow)
@@ -345,7 +331,7 @@ module BlueprintsCLI
       # @example Show help
       #   command = ConfigCommand.new({})
       #   command.send(:show_help)
-      def show_help
+      private def show_help
         puts <<~HELP
           Configuration Management Commands:
 

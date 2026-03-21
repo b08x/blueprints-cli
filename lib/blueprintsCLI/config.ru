@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 
-require 'rack'
-require 'sequel'
-require 'json'
+require "rack"
+require "sequel"
+require "json"
 
 # Load environment
-require_relative 'config/environment'
+require_relative "config/environment"
 
 # Load models
-require_relative 'db/models/blueprint'
-require_relative 'db/models/category'
+require_relative "db/models/blueprint"
+require_relative "db/models/category"
 
 # Load services
-require_relative 'services/blueprint_service'
+require_relative "db/services/blueprint_service"
 
 # Main application class to handle both API requests and static file serving
 class App
@@ -32,11 +32,11 @@ class App
       return [
         200,
         {
-          'access-control-allow-origin' => '*',
-          'access-control-allow-methods' => 'GET, POST, PUT, DELETE, OPTIONS',
-          'access-control-allow-headers' => 'content-type, authorization'
+          "Access-Control-Allow-Origin" => "*",
+          "Access-Control-Allow-Methods" => "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers" => "Content-Type",
         },
-        []
+        [],
       ]
     end
 
@@ -46,15 +46,7 @@ class App
 
     # Route requests based on path
     case req.path_info
-    when '/'
-      serve_html_file('index.html')
-    when '/generator'
-      serve_html_file('generator.html')
-    when '/submission'
-      serve_html_file('submission.html')
-    when '/viewer'
-      serve_html_file('viewer.html')
-    when '/api/blueprints'
+    when "/blueprints"
       handle_blueprints_request(req)
     when %r{^/api/blueprints/(\d+)$}
       blueprint_id = $1.to_i
@@ -64,50 +56,20 @@ class App
     when '/api/blueprints/metadata'
       handle_metadata_generation_request(req)
     else
-      [404, { 'content-type' => 'text/html' }, 
-        [load_html_file('404.html') || '<h1>404 - Not Found</h1>']]
+      [404, { "Content-Type" => "application/json" }, ['{"error": "Not Found"}']]
     end
   end
 
-  private
-
-  def serve_html_file(filename)
-    html_content = load_html_file(filename)
-    if html_content
-      [200, { 'content-type' => 'text/html' }, [html_content]]
-    else
-      [404, { 'content-type' => 'text/html' }, ['<h1>404 - File Not Found</h1>']]
-    end
-  end
-
-  def load_html_file(filename)
-    file_path = File.expand_path("public/#{filename}", __dir__)
-    File.read(file_path) if File.exist?(file_path)
-  rescue
-    nil
-  end
-
-  def cors_headers
-    {
-      'access-control-allow-origin' => '*',
-      'access-control-allow-methods' => 'GET, POST, PUT, DELETE, OPTIONS',
-      'access-control-allow-headers' => 'Content-Type, authorization'
-    }
-  end
-
-  def json_headers
-    { 'content-type' => 'application/json' }.merge(cors_headers)
-  end
-
-  def handle_blueprints_request(req)
+  private def handle_blueprints_request(req)
     service = BlueprintService.new
+    headers = { "Content-Type" => "application/json", "Access-Control-Allow-Origin" => "*" }
 
     case req.request_method
     when 'GET'
       # Handle GET request for searching blueprints
-      blueprints = service.search(req.params['query'])
-      [200, json_headers, [blueprints.to_json]]
-    when 'POST'
+      blueprints = service.search(req.params["query"])
+      [200, headers, [blueprints.to_json]]
+    elsif req.post?
       # Handle POST request for creating a new blueprint
       begin
         data = JSON.parse(req.body.read)

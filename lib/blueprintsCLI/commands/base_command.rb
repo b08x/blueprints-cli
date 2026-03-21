@@ -23,7 +23,7 @@ module BlueprintsCLI
       # @example For a class named BlueprintsCLI::Commands::InstallCommand
       #   command_name #=> "install"
       def self.command_name
-        name.split('::').last.gsub(/Command$/, '').downcase
+        name.split("::").last.gsub(/Command$/, "").downcase
       end
 
       ##
@@ -60,24 +60,11 @@ module BlueprintsCLI
         raise NotImplementedError, "#{self.class} must implement #execute"
       end
 
-      protected
-
-      ##
-      # Provides access to the BlueprintsCLI logger instance with automatic context.
-      # The enhanced logger will automatically capture the calling class and method.
-      #
-      # @return [EnhancedLogger] the configured enhanced logger instance
-      def logger
+      protected def logger
         @logger ||= create_context_logger
       end
 
-      private
-
-      ##
-      # Creates a context-aware logger that includes class and method information.
-      #
-      # @return [EnhancedLogger] logger with context information
-      def create_context_logger
+      private def create_context_logger
         BlueprintsCLI.logger
       end
 
@@ -86,7 +73,7 @@ module BlueprintsCLI
       #
       # @param [String] message the success message to log
       # @param [Hash] data additional data to include with the log message
-      def log_success(message, **data)
+      private def log_success(message, **data)
         BlueprintsCLI.logger.success(message, **data)
       end
 
@@ -95,7 +82,7 @@ module BlueprintsCLI
       #
       # @param [String] message the failure message to log
       # @param [Hash] data additional data to include with the log message
-      def log_failure(message, **data)
+      private def log_failure(message, **data)
         BlueprintsCLI.logger.failure(message, **data)
       end
 
@@ -104,7 +91,7 @@ module BlueprintsCLI
       #
       # @param [String] message the warning message to log
       # @param [Hash] data additional data to include with the log message
-      def log_warning(message, **data)
+      private def log_warning(message, **data)
         BlueprintsCLI.logger.warn(message, **data)
       end
 
@@ -113,7 +100,7 @@ module BlueprintsCLI
       #
       # @param [String] message the tip message to log
       # @param [Hash] data additional data to include with the log message
-      def log_tip(message, **data)
+      private def log_tip(message, **data)
         BlueprintsCLI.logger.tip(message, **data)
       end
 
@@ -122,7 +109,7 @@ module BlueprintsCLI
       #
       # @param [String] message the step message to log
       # @param [Hash] data additional data to include with the log message
-      def log_step(message, **data)
+      private def log_step(message, **data)
         BlueprintsCLI.logger.step(message, **data)
       end
 
@@ -131,7 +118,7 @@ module BlueprintsCLI
       #
       # @param [String] message the informational message to log
       # @param [Hash] data additional data to include with the log message
-      def log_info(message, **data)
+      private def log_info(message, **data)
         BlueprintsCLI.logger.info(message, **data)
       end
 
@@ -140,7 +127,7 @@ module BlueprintsCLI
       #
       # @param [String] message the debug message to log
       # @param [Hash] data additional data to include with the log message
-      def log_debug(message, **data)
+      private def log_debug(message, **data)
         BlueprintsCLI.logger.debug(message, **data)
       end
 
@@ -149,7 +136,7 @@ module BlueprintsCLI
       #
       # @param [String] message the error message to log
       # @param [Hash] data additional data to include with the log message
-      def log_error(message, **data)
+      private def log_error(message, **data)
         BlueprintsCLI.logger.error(message, **data)
       end
     end

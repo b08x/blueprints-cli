@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'tty-box'
-require 'tty-cursor'
+require "tty-box"
+require "tty-cursor"
 
 module BlueprintsCLI
   module Actions
@@ -50,12 +50,12 @@ module BlueprintsCLI
       #   action = BlueprintsCLI::Actions::List.new
       #   action.call #=> true
       def call
-        BlueprintsCLI.logger.step('Fetching blueprints...')
+        BlueprintsCLI.logger.step("Fetching blueprints...")
 
         blueprints = @db.list_blueprints(limit: @limit)
 
         if blueprints.empty?
-          BlueprintsCLI.logger.warn('No blueprints found')
+          BlueprintsCLI.logger.warn("No blueprints found")
           return true
         end
 
@@ -68,20 +68,13 @@ module BlueprintsCLI
         end
 
         true
-      rescue StandardError => e
+      rescue => e
         BlueprintsCLI.logger.failure("Error listing blueprints: #{e.message}")
-        BlueprintsCLI.logger.debug(e) if ENV['DEBUG']
+        BlueprintsCLI.logger.debug(e) if ENV["DEBUG"]
         false
       end
 
-      private
-
-      ##
-      # Displays blueprints according to the specified format.
-      #
-      # @param blueprints [Array<Hash>] The collection of blueprints to display
-      # @return [void]
-      def display_blueprints(blueprints)
+      private def display_blueprints(blueprints)
         case @format
         when :table
           display_table(blueprints)
@@ -107,7 +100,7 @@ module BlueprintsCLI
       #   1     Sample Blueprint               This is a sample blueprint description               Category1, Category2
       #   2     Another Blueprint              Description of another blueprint                       Category3
       #   ========================================================================================================================
-      def display_table(blueprints)
+      private def display_table(blueprints)
         # Display header using TTY::Box
         header_box = TTY::Box.frame(
           "📚 Blueprint Collection",
@@ -117,22 +110,22 @@ module BlueprintsCLI
         )
         puts "\n#{header_box}"
 
-        printf "%-5s %-30s %-50s %-25s\n", 'ID', 'Name', 'Description', 'Categories'
-        puts '=' * 120
+        printf "%-5s %-30s %-50s %-25s\n", "ID", "Name", "Description", "Categories"
+        puts "=" * 120
 
         blueprints.each do |blueprint|
-          name = truncate_text(blueprint[:name] || 'Untitled', 28)
-          description = truncate_text(blueprint[:description] || 'No description', 48)
+          name = truncate_text(blueprint[:name] || "Untitled", 28)
+          description = truncate_text(blueprint[:description] || "No description", 48)
           categories = get_category_text(blueprint[:categories])
 
           printf "%-5s %-30s %-50s %-25s\n",
-                 blueprint[:id],
-                 name,
-                 description,
-                 categories
+            blueprint[:id],
+            name,
+            description,
+            categories
         end
-        puts '=' * 120
-        puts ''
+        puts "=" * 120
+        puts ""
       end
 
       ##
@@ -156,16 +149,14 @@ module BlueprintsCLI
       #   Most recent blueprints:
       #     42: Latest Blueprint
       #     41: Previous Blueprint
-      def display_summary(blueprints)
+      private def display_summary(blueprints)
         puts "\n📊 Blueprint Collection Summary".colorize(:blue)
-        puts '=' * 50
+        puts "=" * 50
         puts "Total blueprints: #{blueprints.length}"
 
         # Category analysis
         all_categories = blueprints.flat_map { |b| b[:categories].map { |c| c[:name] } }
-        category_counts = all_categories.each_with_object(Hash.new(0)) do |cat, hash|
-          hash[cat] += 1
-        end
+        category_counts = all_categories.tally
 
         if category_counts.any?
           puts "\nTop categories:"
@@ -179,7 +170,7 @@ module BlueprintsCLI
         blueprints.first(5).each do |blueprint|
           puts "  #{blueprint[:id]}: #{blueprint[:name]}"
         end
-        puts ''
+        puts ""
       end
 
       ##
@@ -189,7 +180,7 @@ module BlueprintsCLI
       #
       # @param blueprints [Array<Hash>] The collection of blueprints to browse
       # @return [void]
-      def interactive_blueprint_browser(blueprints)
+      private def interactive_blueprint_browser(blueprints)
         return unless tty_prompt_available?
 
         prompt = TTY::Prompt.new
@@ -203,26 +194,11 @@ module BlueprintsCLI
           else
             add_spacing(2)
           end
-          
-          display_browser_header(blueprints)
-          choices = build_browser_choices(blueprints)
-          selected = prompt.select('Select a blueprint or action:', choices, per_page: 15)
 
-          break if handle_browser_selection(selected, blueprints, prompt)
-        end
-      end
-
-      ##
-      # Displays the browser header with blueprint count.
-      #
-      # @param blueprints [Array<Hash>] The collection of blueprints being browsed
-      # @return [void]
-      def display_browser_header(blueprints)
-        puts '=' * 80
-        puts '📚 Blueprint Browser'.colorize(:blue)
-        puts "Found #{blueprints.length} blueprints"
-        puts '=' * 80
-      end
+          puts "=" * 80
+          puts "📚 Blueprint Browser".colorize(:blue)
+          puts "Found #{blueprints.length} blueprints"
+          puts "=" * 80
 
       ##
       # Builds the choices array for the blueprint browser prompt.
@@ -234,49 +210,31 @@ module BlueprintsCLI
       def build_browser_choices(blueprints)
         choices = prepare_blueprint_choices(blueprints)
 
-        # Add action options
-        choices << { name: '🔍 Search blueprints'.colorize(:blue), value: :search }
-        choices << { name: '📊 Show summary'.colorize(:yellow), value: :summary }
-        choices << { name: '➕ Submit new blueprint'.colorize(:green), value: :submit }
-        choices << { name: '🚪 Exit'.colorize(:red), value: :exit }
+          # Add action options
+          choices << { name: "🔍 Search blueprints".colorize(:blue), value: :search }
+          choices << { name: "📊 Show summary".colorize(:yellow), value: :summary }
+          choices << { name: "➕ Submit new blueprint".colorize(:green), value: :submit }
+          choices << { name: "🚪 Exit".colorize(:red), value: :exit }
 
-        choices
-      end
+          selected = prompt.select("Select a blueprint or action:", choices, per_page: 15)
 
-      ##
-      # Handles the user's selection from the browser menu.
-      #
-      # Routes to appropriate handlers based on the selection type.
-      #
-      # @param selected [Hash, Symbol] The user's selection from the prompt
-      # @param blueprints [Array<Hash>] The collection of blueprints (passed by reference for updates)
-      # @param prompt [TTY::Prompt] The prompt instance for user interaction
-      # @return [Boolean] Returns true if the browser should exit, false to continue
-      def handle_browser_selection(selected, blueprints, prompt)
-        case selected
-        when Hash
-          # A blueprint was selected
-          handle_selected_blueprint(selected, prompt)
-          false
-        when :search
-          handle_search_action(prompt)
-          false
-        when :summary
-          display_summary(blueprints)
-          prompt.keypress('Press any key to continue...')
-          false
-        when :submit
-          submission_success = handle_submit_action(prompt)
-          # Refresh blueprints if submission was successful
-          if submission_success
-            blueprints.replace(refresh_blueprint_list)
+          case selected
+          when Hash
+            # A blueprint was selected
+            handle_selected_blueprint(selected, prompt)
+          when :search
+            handle_search_action(prompt)
+          when :summary
+            display_summary(blueprints)
+            prompt.keypress("Press any key to continue...")
+          when :submit
+            submission_success = handle_submit_action(prompt)
+            # Refresh blueprints if submission was successful
+            blueprints = BlueprintsCLI.database.all_blueprints if submission_success
+          when :exit
+            puts "👋 Goodbye!".colorize(:green)
+            break
           end
-          false
-        when :exit
-          puts '👋 Goodbye!'.colorize(:green)
-          true
-        else
-          false
         end
       end
 
@@ -295,17 +253,17 @@ module BlueprintsCLI
       #
       # @param blueprints [Array<Hash>] The collection of blueprints to format
       # @return [Array<Hash>] Formatted choices for the prompt
-      def prepare_blueprint_choices(blueprints)
+      private def prepare_blueprint_choices(blueprints)
         blueprints.map do |blueprint|
-          name = truncate_text(blueprint[:name] || 'Untitled', 40)
-          description = truncate_text(blueprint[:description] || 'No description', 50)
+          name = truncate_text(blueprint[:name] || "Untitled", 40)
+          description = truncate_text(blueprint[:description] || "No description", 50)
           categories = get_category_text(blueprint[:categories], 20)
 
           display_text = "#{name.ljust(42)} | #{description.ljust(52)} | #{categories}"
 
           {
             name: display_text,
-            value: blueprint
+            value: blueprint,
           }
         end
       end
@@ -319,13 +277,14 @@ module BlueprintsCLI
       # @param blueprint [Hash] The selected blueprint
       # @param prompt [TTY::Prompt] The prompt instance for user interaction
       # @return [void]
-      def handle_selected_blueprint(blueprint, prompt)
+      private def handle_selected_blueprint(blueprint, prompt)
         actions = [
-          { name: '👁️  View details (with AI analysis)', value: :view },
-          { name: '✏️  Edit blueprint', value: :edit },
-          { name: '💾 Export code', value: :export },
-          { name: '📋 Copy ID', value: :copy_id },
-          { name: '↩️  Back to list', value: :back }
+          { name: "👁️  View details", value: :view },
+          { name: "✏️  Edit blueprint", value: :edit },
+          { name: "💾 Export code", value: :export },
+          { name: "🔍 View with AI analysis", value: :analyze },
+          { name: "📋 Copy ID", value: :copy_id },
+          { name: "↩️  Back to list", value: :back },
         ]
 
         action = prompt.select("What would you like to do with '#{blueprint[:name]}'?", actions)
@@ -337,23 +296,31 @@ module BlueprintsCLI
             format: :interactive,
             with_suggestions: true
           ).call
+          prompt.keypress("Press any key to continue...")
         when :edit
           BlueprintsCLI::Actions::Edit.new(
             id: blueprint[:id]
           ).call
-          prompt.keypress('Press any key to continue...')
+          prompt.keypress("Press any key to continue...")
         when :export
-          filename = prompt.ask('💾 Export filename:', default: generate_export_filename(blueprint))
+          filename = prompt.ask("💾 Export filename:", default: generate_export_filename(blueprint))
           BlueprintsCLI::Actions::Export.new(
             id: blueprint[:id],
             output_path: filename
           ).call
-          prompt.keypress('Press any key to continue...')
+          prompt.keypress("Press any key to continue...")
+        when :analyze
+          BlueprintsCLI::Actions::View.new(
+            id: blueprint[:id],
+            format: :detailed,
+            with_suggestions: true
+          ).call
+          prompt.keypress("Press any key to continue...")
         when :copy_id
           puts "📋 Blueprint ID: #{blueprint[:id]}".colorize(:green)
           # Try to copy to clipboard if available
           copy_to_clipboard(blueprint[:id].to_s)
-          prompt.keypress('Press any key to continue...')
+          prompt.keypress("Press any key to continue...")
         when :back
           # Return to blueprint list
           nil
@@ -367,15 +334,15 @@ module BlueprintsCLI
       #
       # @param prompt [TTY::Prompt] The prompt instance for user interaction
       # @return [void]
-      def handle_search_action(prompt)
-        query = prompt.ask('🔍 Enter search query:', required: true)
+      private def handle_search_action(prompt)
+        query = prompt.ask("🔍 Enter search query:", required: true)
 
         BlueprintsCLI::Actions::Search.new(
-          query: query,
+          query:,
           limit: 10
         ).call
 
-        prompt.keypress('Press any key to continue...')
+        prompt.keypress("Press any key to continue...")
       end
 
       ##
@@ -385,30 +352,30 @@ module BlueprintsCLI
       #
       # @param prompt [TTY::Prompt] The prompt instance for user interaction
       # @return [void]
-      def handle_submit_action(prompt)
-        submit_choice = prompt.select('Submit from:', [
-                                        { name: '📁 File', value: :file },
-                                        { name: '✏️  Text input', value: :text }
+      private def handle_submit_action(prompt)
+        submit_choice = prompt.select("Submit from:", [
+          { name: "📁 File", value: :file },
+          { name: "✏️  Text input", value: :text },
                                       ])
 
         success = false
         if submit_choice == :file
-          file_path = prompt.ask('📁 Enter file path:')
+          file_path = prompt.ask("📁 Enter file path:")
           if file_path && File.exist?(file_path)
             code = File.read(file_path)
-            success = BlueprintsCLI::Actions::Submit.new(code: code).call
+            success = BlueprintsCLI::Actions::Submit.new(code:).call
           else
             puts "❌ File not found: #{file_path}".colorize(:red)
           end
         else
-          code = prompt.multiline('✏️  Enter code (Ctrl+D to finish):')
+          code = prompt.multiline("✏️  Enter code (Ctrl+D to finish):")
           if code && !code.join("\n").strip.empty?
             success = BlueprintsCLI::Actions::Submit.new(code: code.join("\n")).call
           end
         end
 
-        prompt.keypress('Press any key to continue...')
-        
+        prompt.keypress("Press any key to continue...")
+
         # Return success status to indicate if blueprints need to be refreshed
         success
       end
@@ -422,11 +389,11 @@ module BlueprintsCLI
       #
       # @example
       #   get_category_text([{title: "Web"}, {title: "Ruby"}]) #=> "Web, Ruby"
-      def get_category_text(categories, max_length = 23)
-        return 'No categories' if categories.nil? || categories.empty?
+      private def get_category_text(categories, max_length = 23)
+        return "No categories" if categories.nil? || categories.empty?
 
         category_names = categories.map { |cat| cat[:title] }
-        text = category_names.join(', ')
+        text = category_names.join(", ")
         truncate_text(text, max_length)
       end
 
@@ -441,9 +408,9 @@ module BlueprintsCLI
       # @example
       #   generate_export_filename({name: "Sample", id: 42, code: "class Sample..."})
       #   #=> "sample_42.rb"
-      def generate_export_filename(blueprint)
-        base_name = (blueprint[:name] || 'blueprint').gsub(/[^a-zA-Z0-9_-]/, '_').downcase
-        extension = detect_file_extension(blueprint[:code] || '')
+      private def generate_export_filename(blueprint)
+        base_name = (blueprint[:name] || "blueprint").gsub(/[^a-zA-Z0-9_-]/, "_").downcase
+        extension = detect_file_extension(blueprint[:code] || "")
         "#{base_name}_#{blueprint[:id]}#{extension}"
       end
 
@@ -456,18 +423,18 @@ module BlueprintsCLI
       # @example
       #   detect_file_extension("class Sample...") #=> ".rb"
       #   detect_file_extension("function sample()") #=> ".js"
-      def detect_file_extension(code)
+      private def detect_file_extension(code)
         case code
         when /class\s+\w+.*<.*ApplicationRecord/m, /def\s+\w+.*end/m
-          '.rb'
+          ".rb"
         when /function\s+\w+\s*\(/m, /const\s+\w+\s*=/m
-          '.js'
+          ".js"
         when /def\s+\w+\s*\(/m, /import\s+\w+/m
-          '.py'
+          ".py"
         when /#include\s*<.*>/m, /int\s+main\s*\(/m
-          '.c'
+          ".c"
         else
-          '.txt'
+          ".txt"
         end
       end
 
@@ -478,22 +445,22 @@ module BlueprintsCLI
       #
       # @param text [String] The text to copy to clipboard
       # @return [Boolean] true if copying succeeded, false otherwise
-      def copy_to_clipboard(text)
+      private def copy_to_clipboard(text)
         # Try different clipboard commands
         commands = [
           "echo '#{text}' | pbcopy", # macOS
           "echo '#{text}' | xclip -selection clipboard", # Linux with xclip
-          "echo '#{text}' | xsel -i -b" # Linux with xsel
+          "echo '#{text}' | xsel -i -b", # Linux with xsel
         ]
 
         commands.each do |cmd|
-          if system(cmd + ' 2>/dev/null')
-            puts '📋 Copied to clipboard!'.colorize(:green)
+          if system("#{cmd} 2>/dev/null")
+            puts "📋 Copied to clipboard!".colorize(:green)
             return true
           end
         end
 
-        puts '⚠️  Could not copy to clipboard (clipboard tool not available)'.colorize(:yellow)
+        puts "⚠️  Could not copy to clipboard (clipboard tool not available)".colorize(:yellow)
         false
       end
 
@@ -506,17 +473,17 @@ module BlueprintsCLI
       #
       # @example
       #   truncate_text("This is a long text", 10) #=> "This is a..."
-      def truncate_text(text, length)
+      private def truncate_text(text, length)
         return text if text.length <= length
 
-        text[0..length - 4] + '...'
+        "#{text[0..(length - 4)]}..."
       end
 
       ##
       # Checks if TTY prompt is available for interactive mode.
       #
       # @return [Boolean] true if TTY::Prompt is defined and available
-      def tty_prompt_available?
+      private def tty_prompt_available?
         defined?(TTY::Prompt)
       end
 
@@ -524,7 +491,7 @@ module BlueprintsCLI
       # Smart screen clearing that only clears when necessary
       #
       # @return [void]
-      def clear_screen_smart
+      private def clear_screen_smart
         print TTY::Cursor.clear_screen_down if defined?(TTY::Cursor)
       end
 
@@ -533,7 +500,7 @@ module BlueprintsCLI
       #
       # @param lines [Integer] number of lines to add (default: 2)
       # @return [void]
-      def add_spacing(lines = 2)
+      private def add_spacing(lines = 2)
         puts "\n" * lines
       end
     end

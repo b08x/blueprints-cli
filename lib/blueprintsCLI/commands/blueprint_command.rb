@@ -13,7 +13,7 @@ module BlueprintsCLI
       #
       # @return [String] A description of the command's purpose
       def self.description
-        'Manage code blueprints with AI-enhanced metadata and vector search capabilities'
+        "Manage code blueprints with AI-enhanced metadata and vector search capabilities"
       end
 
       # Initializes a new BlueprintCommand with the given options
@@ -34,27 +34,27 @@ module BlueprintsCLI
         @args = args
 
         case @subcommand
-        when 'submit'
+        when "submit"
           handle_submit
-        when 'list'
+        when "list"
           handle_list
-        when 'browse'
+        when "browse"
           handle_browse
-        when 'view'
+        when "view"
           handle_view
-        when 'edit'
+        when "edit"
           handle_edit
-        when 'delete'
+        when "delete"
           handle_delete
-        when 'search'
+        when "search"
           handle_search
-        when 'export'
+        when "export"
           handle_export
-        when 'generate'
+        when "generate"
           handle_generate
-        when 'config'
+        when "config"
           handle_config
-        when 'help', nil
+        when "help", nil
           show_help
         else
           puts "❌ Unknown subcommand: #{@subcommand}".colorize(:red)
@@ -63,24 +63,12 @@ module BlueprintsCLI
         end
       end
 
-      private
-
-      # Handles the submission of a new blueprint
-      #
-      # Accepts either a file path or direct code string as input.
-      # Supports automatic description and categorization through AI features.
-      # If no input is provided and --interactive flag is set, enters multiline input mode.
-      #
-      # @return [Boolean] Returns false if submission fails due to missing input
-      def handle_submit
+      private def handle_submit
         input = @args.first
 
         unless input
-          return handle_interactive_submit if @options['interactive']
-
-          puts '❌ Please provide a file path or code string'.colorize(:red)
-          puts 'Usage: blueprint submit <file_path_or_code>'
-          puts 'Or use: blueprint submit --interactive for multiline input'
+          puts "❌ Please provide a file path or code string".colorize(:red)
+          puts "Usage: blueprint submit <file_path_or_code>"
           return false
 
         end
@@ -90,72 +78,35 @@ module BlueprintsCLI
           code = File.read(input)
           filename = File.basename(input)
         else
-          puts '📝 Submitting blueprint from code string'.colorize(:blue)
+          puts "📝 Submitting blueprint from code string".colorize(:blue)
           code = input
           filename = nil
         end
 
         BlueprintsCLI::Actions::Submit.new(
-          code: code,
-          filename: filename,
-          auto_describe: @options['auto_describe'] != false,
-          auto_categorize: @options['auto_categorize'] != false
-        ).call
-      end
-
-      # Handles interactive blueprint submission with multiline input support.
-      #
-      # @return [Boolean] Returns true if submission succeeds, false otherwise
-      def handle_interactive_submit
-        require 'tty-prompt'
-
-        prompt = TTY::Prompt.new
-
-        puts '📝 Interactive Blueprint Submission'
-        puts 'Enter your code below (press Ctrl+D when finished):'
-        puts
-
-        code_lines = prompt.multiline('', help: 'Press Ctrl+D to finish input')
-
-        if code_lines.nil? || code_lines.empty?
-          puts '❌ No code provided'.colorize(:red)
-          return false
-        end
-
-        code = code_lines.join("\n").strip
-
-        if code.empty?
-          puts '❌ No code provided'.colorize(:red)
-          return false
-        end
-
-        puts "\n📝 Submitting blueprint from interactive input".colorize(:blue)
-
-        BlueprintsCLI::Actions::Submit.new(
-          code: code,
-          filename: nil,
-          auto_describe: @options['auto_describe'] != false,
-          auto_categorize: @options['auto_categorize'] != false
+          code:,
+          auto_describe: @options["auto_describe"] != false,
+          auto_categorize: @options["auto_categorize"] != false
         ).call
       end
 
       # Lists available blueprints with optional formatting
       #
       # @return [void] Outputs the list of blueprints to the console
-      def handle_list
-        format = (@options['format'] || 'table').to_sym
-        interactive = @options['interactive'] || false
+      private def handle_list
+        format = (@options["format"] || "table").to_sym
+        interactive = @options["interactive"] || false
 
         BlueprintsCLI::Actions::List.new(
-          format: format,
-          interactive: interactive
+          format:,
+          interactive:
         ).call
       end
 
       # Provides an interactive browsing experience for blueprints
       #
       # @return [void] Initiates the interactive browsing session
-      def handle_browse
+      private def handle_browse
         BlueprintsCLI::Actions::List.new(
           interactive: true
         ).call
@@ -167,24 +118,21 @@ module BlueprintsCLI
       # @option options [Symbol] :format (:detailed) The output format
       # @option options [Boolean] :analyze (false) Whether to include AI analysis
       # @return [Boolean] Returns false if no ID is provided
-      def handle_view
+      private def handle_view
         id = @args.first
 
         unless id
-          puts '❌ Please provide a blueprint ID'.colorize(:red)
-          puts 'Usage: blueprint view <id>'
+          puts "❌ Please provide a blueprint ID".colorize(:red)
+          puts "Usage: blueprint view <id>"
           return false
         end
 
-        format = (@options['format'] || 'interactive').to_sym
-
-        # Ensure interactive is default for better UX unless explicitly specified
-        format = :interactive if format == :detailed && !@options['format']
+        format = (@options["format"] || "detailed").to_sym
 
         BlueprintsCLI::Actions::View.new(
           id: id.to_i,
-          format: format,
-          with_suggestions: @options['analyze'] || false
+          format:,
+          with_suggestions: @options["analyze"] || false
         ).call
       end
 
@@ -192,12 +140,12 @@ module BlueprintsCLI
       #
       # @param [String] id The ID of the blueprint to edit
       # @return [Boolean] Returns false if no ID is provided
-      def handle_edit
+      private def handle_edit
         id = @args.first
 
         unless id
-          puts '❌ Please provide a blueprint ID'.colorize(:red)
-          puts 'Usage: blueprint edit <id>'
+          puts "❌ Please provide a blueprint ID".colorize(:red)
+          puts "Usage: blueprint edit <id>"
           return false
         end
 
@@ -211,17 +159,17 @@ module BlueprintsCLI
       # @param [String] id The ID of the blueprint to delete
       # @param [Boolean] force Whether to skip confirmation prompts
       # @return [void] Initiates the delete action
-      def handle_delete
+      private def handle_delete
         # Check for force flag in arguments
-        force = @args.include?('--force')
+        force = @args.include?("--force")
 
         # Get ID (first non-flag argument)
-        id = @args.find { |arg| !arg.start_with?('--') }
+        id = @args.find { |arg| !arg.start_with?("--") }
 
         # If no ID provided, will trigger interactive selection
         BlueprintsCLI::Actions::Delete.new(
           id: id&.to_i,
-          force: force
+          force:
         ).call
       end
 
@@ -230,18 +178,18 @@ module BlueprintsCLI
       # @param [String] query The search query
       # @option options [Integer] :limit (10) The maximum number of results to return
       # @return [Boolean] Returns false if no query is provided
-      def handle_search
-        query = @args.join(' ')
+      private def handle_search
+        query = @args.join(" ")
 
         if query.empty?
-          puts '❌ Please provide a search query'.colorize(:red)
-          puts 'Usage: blueprint search <query>'
+          puts "❌ Please provide a search query".colorize(:red)
+          puts "Usage: blueprint search <query>"
           return false
         end
 
         BlueprintsCLI::Actions::Search.new(
-          query: query,
-          limit: @options['limit'] || 10
+          query:,
+          limit: @options["limit"] || 10
         ).call
       end
 
@@ -250,19 +198,19 @@ module BlueprintsCLI
       # @param [String] id The ID of the blueprint to export
       # @param [String] output_path The path to export the blueprint to
       # @return [Boolean] Returns false if no ID is provided
-      def handle_export
+      private def handle_export
         id = @args.first
-        output_path = @args[1] || @options['output']
+        output_path = @args[1] || @options["output"]
 
         unless id
-          puts '❌ Please provide a blueprint ID'.colorize(:red)
-          puts 'Usage: blueprint export <id> [output_file]'
+          puts "❌ Please provide a blueprint ID".colorize(:red)
+          puts "Usage: blueprint export <id> [output_file]"
           return false
         end
 
         BlueprintsCLI::Actions::Export.new(
           id: id.to_i,
-          output_path: output_path
+          output_path:
         ).call
       end
 
@@ -273,28 +221,28 @@ module BlueprintsCLI
       # @option options [Integer] :limit (5) Number of blueprints to use as context
       # @option options [Boolean] :force (false) Whether to overwrite existing files
       # @return [Boolean] Returns false if no prompt is provided
-      def handle_generate
-        prompt = @args.join(' ')
+      private def handle_generate
+        prompt = @args.join(" ")
 
         if prompt.empty?
-          puts '❌ Please provide a description of what you want to generate'.colorize(:red)
-          puts 'Usage: blueprint generate <description>'
+          puts "❌ Please provide a description of what you want to generate".colorize(:red)
+          puts "Usage: blueprint generate <description>"
           return false
         end
 
-        output_dir = @options['output_dir'] || @options['output'] || './generated'
-        limit = (@options['limit'] || 5).to_i
-        force = @options['force'] || false
+        output_dir = @options["output_dir"] || @options["output"] || "./generated"
+        limit = (@options["limit"] || 5).to_i
+        force = @options["force"] || false
 
         puts "🚀 Generating code based on: #{prompt}".colorize(:blue)
         puts "📁 Output directory: #{output_dir}".colorize(:cyan)
         puts "🔍 Using #{limit} relevant blueprints as context".colorize(:cyan)
 
         result = BlueprintsCLI::Actions::Generate.new(
-          prompt: prompt,
-          output_dir: output_dir,
-          limit: limit,
-          force: force
+          prompt:,
+          output_dir:,
+          limit:,
+          force:
         ).call
 
         if result[:success]
@@ -309,7 +257,9 @@ module BlueprintsCLI
             end
           end
 
-          puts "\n📚 Used blueprints for context: #{result[:relevant_blueprints].join(', ')}".colorize(:cyan) unless result[:relevant_blueprints].empty?
+          unless result[:relevant_blueprints].empty?
+            puts "\n📚 Used blueprints for context: #{result[:relevant_blueprints].join(', ')}".colorize(:cyan)
+          end
         else
           puts "❌ Code generation failed: #{result[:error]}".colorize(:red)
           false
@@ -320,18 +270,18 @@ module BlueprintsCLI
       #
       # @param [String] subcommand The configuration subcommand (default: 'show')
       # @return [void] Initiates the configuration action
-      def handle_config
-        subcommand = @args.first || 'show'
+      private def handle_config
+        subcommand = @args.first || "show"
 
         BlueprintsCLI::Actions::Config.new(
-          subcommand: subcommand
+          subcommand:
         ).call
       end
 
       # Displays help information for the blueprint command
       #
       # @return [void] Outputs help information to the console
-      def show_help
+      private def show_help
         puts <<~HELP
           Blueprint Management Commands:
 

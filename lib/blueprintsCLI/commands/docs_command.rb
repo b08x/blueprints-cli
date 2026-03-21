@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'base_command'
-require_relative '../services/yardoc_service'
+require_relative "base_command"
+require_relative "../services/yardoc_service"
 
 module BlueprintsCLI
   module Commands
@@ -10,7 +10,7 @@ module BlueprintsCLI
       # Provides a description of what this command does.
       # @return [String] A description of the command's purpose.
       def self.description
-        'Generate YARD documentation for Ruby files.'
+        "Generate YARD documentation for Ruby files."
       end
 
       # Initializes a new DocsCommand instance.
@@ -25,9 +25,9 @@ module BlueprintsCLI
       def execute(*args)
         subcommand = args.shift
         case subcommand
-        when 'generate'
+        when "generate"
           handle_generate(args.first)
-        when 'help', nil
+        when "help", nil
           show_help
         else
           puts "Unknown subcommand: #{subcommand}".colorize(:red)
@@ -36,11 +36,9 @@ module BlueprintsCLI
         end
       end
 
-      private
-
-      def handle_generate(file_path)
+      private def handle_generate(file_path)
         if file_path.nil?
-          puts 'Please provide a file path.'.colorize(:red)
+          puts "Please provide a file path.".colorize(:red)
           show_help
           return false
         end
@@ -50,7 +48,7 @@ module BlueprintsCLI
         service.call
       end
 
-      def show_help
+      private def show_help
         puts <<~HELP
           Usage: blueprintsCLI docs <subcommand> [options]
 

@@ -3,69 +3,56 @@
 # This file is part of the blueprintsCLI gem, which provides a command-line interface
 # for generating and managing code blueprints using Large Language Models (LLMs).
 
-lib_dir = File.expand_path(File.join(__dir__, '..', 'lib'))
+lib_dir = File.expand_path(File.join(__dir__, "..", "lib"))
 $LOAD_PATH.unshift lib_dir unless $LOAD_PATH.include?(lib_dir)
 
-require 'dotenv/load'
+require "dotenv/load"
 
 # Attempts to load the .env file, overwriting existing environment variables.
 # If an error occurs, it displays an error message.
 begin
-  Dotenv.load('.env', overwrite: true)
-rescue StandardError => e
+  Dotenv.load(".env", overwrite: true)
+rescue => e
   puts "Error loading .env file: #{e.message}"
 end
 
-require 'colorize'
-require 'fileutils'
-require 'git'
-require 'json'
-require 'net/http'
-require 'open3'
-require 'pg'
-require 'sequel'
-require 'ruby_llm'
-require 'ruby_llm/schema'
-require 'tempfile'
-require 'terrapin'
-require 'thor'
-require 'time'
-require 'tty-command'
-require 'tty-config'
-require 'tty-cursor'
-require 'tty-file'
-require 'tty-logger'
-require 'tty-prompt'
-require 'tty-table'
-require 'tty-which'
-require 'uri'
-require 'yaml'
+require "colorize"
+require "fileutils"
+require "git"
+require "json"
+require "net/http"
+require "open3"
+require "pg"
+require "sequel"
+require "ruby_llm"
+require "ruby_llm/schema"
+require "tempfile"
+require "terrapin"
+require "thor"
+require "time"
+require "tty-command"
+require "tty-config"
+require "tty-cursor"
+require "tty-file"
+require "tty-logger"
+require "tty-prompt"
+require "tty-table"
+require "tty-which"
+require "uri"
+require "yaml"
 
-require_relative 'blueprintsCLI/version'
-require_relative 'blueprintsCLI/configuration'
-require_relative 'blueprintsCLI/logger'
+require_relative "blueprintsCLI/version"
+require_relative "blueprintsCLI/configuration"
+require_relative "blueprintsCLI/logger"
+require_relative "blueprintsCLI/database"
 
-# Establish database connection early (global DB constant for models)
-require_relative 'blueprintsCLI/config/environment'
+Dir[File.join(__dir__, "blueprintsCLI", "commands", "*.rb")].each { |file| require file }
+Dir[File.join(__dir__, "blueprintsCLI", "generators", "*.rb")].each { |file| require file }
+Dir[File.join(__dir__, "blueprintsCLI", "actions", "*.rb")].each { |file| require file }
+Dir[File.join(__dir__, "blueprintsCLI", "ui", "*.rb")].each { |file| require file }
+Dir[File.join(__dir__, "blueprintsCLI", "setup", "*.rb")].each { |file| require file }
 
-# Load database interface and models after DB connection is established
-require_relative 'blueprintsCLI/database'
-require_relative 'blueprintsCLI/db/models/blueprint'
-require_relative 'blueprintsCLI/db/models/category'
-
-require_relative 'blueprintsCLI/cli_ui_integration'
-require_relative 'blueprintsCLI/slash_command_parser'
-require_relative 'blueprintsCLI/enhanced_menu'
-require_relative 'blueprintsCLI/simple_enhanced_menu'
-require_relative 'blueprintsCLI/autocomplete_handler'
-
-Dir[File.join(__dir__, 'blueprintsCLI', 'commands', '*.rb')].each { |file| require file }
-Dir[File.join(__dir__, 'blueprintsCLI', 'generators', '*.rb')].each { |file| require file }
-Dir[File.join(__dir__, 'blueprintsCLI', 'actions', '*.rb')].each { |file| require file }
-Dir[File.join(__dir__, 'blueprintsCLI', 'ui', '*.rb')].each { |file| require file }
-Dir[File.join(__dir__, 'blueprintsCLI', 'setup', '*.rb')].each { |file| require file }
-
-require_relative 'blueprintsCLI/cli'
+require_relative "blueprintsCLI/cli"
 
 module BlueprintsCLI
   class Error < StandardError; end

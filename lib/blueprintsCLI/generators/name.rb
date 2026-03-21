@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "../schemas/generator_schemas"
-require 'dry/monads'
-require 'json'
+require "dry/monads"
+require "json"
 
 module BlueprintsCLI
   module Generators
@@ -31,8 +31,8 @@ module BlueprintsCLI
       def generate
         BlueprintsCLI.configuration.configure_rubyllm!
         response = RubyLLM.chat(model: model_name)
-                          .with_schema(Schemas::NameSchema)
-                          .ask(prompt)
+          .with_schema(Schemas::NameSchema)
+          .ask(prompt)
 
         # Handle different response formats from various models
         name = extract_name_from_response(response)
@@ -40,24 +40,20 @@ module BlueprintsCLI
       rescue RubyLLM::Error => e
         BlueprintsCLI.logger.failure("Name generation failed: #{e.message}")
         Failure(e)
-      rescue StandardError => e
+      rescue => e
         BlueprintsCLI.logger.failure("Unexpected error in name generation: #{e.message}")
         Failure(e)
       end
 
-      private
-
-      def model_name
+      private def model_name
         BlueprintsCLI.configuration.fetch(:ai, :rubyllm, :default_model,
-                                          default: "gemini-2.0-flash")
+          default: "gemini-2.0-flash")
       end
 
       # Extract name from response, handling different model response formats
-      def extract_name_from_response(response)
+      private def extract_name_from_response(response)
         # First try standard content format
-        if response.content && response.content.is_a?(Hash) && response.content["name"]
-          return response.content["name"]
-        end
+        return response.content["name"] if response.content && response.content.is_a?(Hash) && response.content["name"]
 
         # Try reasoning format (GLM models)
         if response.respond_to?(:thinking) && response.thinking&.text
@@ -87,11 +83,11 @@ module BlueprintsCLI
         "Generated Blueprint Name"
       end
 
-      def prompt
+      private def prompt
         <<~PROMPT
           Generate a clear, descriptive name for this code blueprint.
 
-          #{@description ? "Description: #{@description}" : ""}
+          #{"Description: #{@description}" if @description}
 
           Code:
           ```

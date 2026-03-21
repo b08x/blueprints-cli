@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../configuration'
+require_relative "../configuration"
 
 module BlueprintsCLI
   module Actions
@@ -21,7 +21,7 @@ module BlueprintsCLI
       # @param subcommand [String] The configuration command to execute.
       #   Defaults to 'show'. Supported values: 'show', 'view', 'setup',
       #   'init', 'edit', 'test', 'validate', 'reset'.
-      def initialize(subcommand: 'show')
+      def initialize(subcommand: "show")
         super
         @subcommand = subcommand
         @config = BlueprintsCLI::Configuration.new
@@ -38,66 +38,56 @@ module BlueprintsCLI
       #   if an unknown subcommand is provided.
       def call
         case @subcommand
-        when 'show', 'view'
+        when "show", "view"
           show_configuration
-        when 'setup', 'init', 'edit'
+        when "setup", "init", "edit"
           setup_configuration
-        when 'test', 'validate'
+        when "test", "validate"
           test_configuration
-        when 'reset'
+        when "reset"
           reset_configuration
-        when 'migrate'
+        when "migrate"
           migrate_configuration
         else
           BlueprintsCLI.logger.failure("Unknown config subcommand: '#{@subcommand}'")
           show_config_help
           false
         end
-      rescue StandardError => e
+      rescue => e
         BlueprintsCLI.logger.failure("Error managing configuration: #{e.message}")
         BlueprintsCLI.logger.debug(e) # tty-logger will format the exception and backtrace
         false
       end
 
-      private
-
-      ##
-      # Displays the current configuration settings.
-      #
-      # Reads from the configuration file and prints a formatted summary of all
-      # settings, including database, AI, editor, and feature flags. Also shows
-      # the status of relevant environment variables.
-      #
-      # @return [Boolean] Returns `true`.
-      def show_configuration
-        BlueprintsCLI.logger.step('Blueprint Configuration')
-        puts '=' * 60
+      private def show_configuration
+        BlueprintsCLI.logger.step("Blueprint Configuration")
+        puts "=" * 60
         puts "Config file: #{@config.config_file_path || 'Not found'}"
         puts "File exists: #{@config.exist? ? 'Yes' : 'No'}"
-        puts ''
+        puts ""
 
         if @config.exist? || @config.to_hash.any?
           # Database Configuration
-          puts 'Database Configuration:'.colorize(:cyan)
+          puts "Database Configuration:".colorize(:cyan)
           puts "  URL: #{mask_password(@config.database_url || 'Not set')}"
-          puts ''
+          puts ""
 
           # AI Configuration
-          puts 'AI Configuration:'.colorize(:cyan)
+          puts "AI Configuration:".colorize(:cyan)
           puts "  Provider: #{@config.fetch(:ai, :sublayer, :provider, default: 'Not set')}"
           puts "  Model: #{@config.fetch(:ai, :sublayer, :model, default: 'Not set')}"
-          ai_provider = @config.fetch(:ai, :sublayer, :provider, default: '').downcase
-          api_key_status = @config.ai_api_key(ai_provider) ? 'Set' : 'Not set'
+          ai_provider = @config.fetch(:ai, :sublayer, :provider, default: "").downcase
+          api_key_status = @config.ai_api_key(ai_provider) ? "Set" : "Not set"
           puts "  API Key: #{api_key_status}"
           puts "  Embedding Model: #{@config.fetch(:ai, :embedding_model, default: 'Not set')}"
-          puts ''
+          puts ""
 
           # AI Configuration - Ruby LLM
-          puts 'AI Configuration (Ruby LLM):'.colorize(:cyan)
+          puts "AI Configuration (Ruby LLM):".colorize(:cyan)
           ruby_llm_config = @config.ruby_llm_config
           if ruby_llm_config.any?
             ruby_llm_config.each do |key, value|
-              next if key.to_s.end_with?('_api_key')
+              next if key.to_s.end_with?("_api_key")
 
               puts "  #{key}: #{value}"
             end
@@ -105,54 +95,54 @@ module BlueprintsCLI
               k.to_s.end_with?('_api_key')
             end.join(', ')}"
           else
-            puts '  No Ruby LLM configuration found'
+            puts "  No Ruby LLM configuration found"
           end
-          puts ''
+          puts ""
 
           # Editor Configuration
-          puts 'Editor Configuration:'.colorize(:cyan)
+          puts "Editor Configuration:".colorize(:cyan)
           puts "  Editor: #{@config.fetch(:blueprints, :editor, default: 'Not set')}"
           puts "  Auto-save: #{@config.fetch(:blueprints, :auto_save_edits, default: 'Not set')}"
-          puts ''
+          puts ""
 
           # Feature Flags
-          puts 'Feature Flags:'.colorize(:cyan)
+          puts "Feature Flags:".colorize(:cyan)
           puts "  Auto-description: #{@config.fetch(:blueprints, :features, :auto_description,
-                                                    default: 'Not set')}"
+            default: 'Not set')}"
           puts "  Auto-categorization: #{@config.fetch(:blueprints, :features, :auto_categorize,
-                                                       default: 'Not set')}"
+            default: 'Not set')}"
           puts "  Improvement analysis: #{@config.fetch(:blueprints, :features, :improvement_analysis,
-                                                        default: 'Not set')}"
-          puts ''
+            default: 'Not set')}"
+          puts ""
 
           # Logger Configuration
-          puts 'Logger Configuration:'.colorize(:cyan)
+          puts "Logger Configuration:".colorize(:cyan)
           puts "  Level: #{@config.fetch(:logger, :level, default: 'Not set')}"
           puts "  File logging: #{@config.fetch(:logger, :file_logging, default: 'Not set')}"
           puts "  File path: #{@config.fetch(:logger, :file_path, default: 'Not set')}"
-          puts ''
+          puts ""
 
           # Search Configuration
-          puts 'Search Configuration:'.colorize(:cyan)
+          puts "Search Configuration:".colorize(:cyan)
           puts "  Default limit: #{@config.fetch(:blueprints, :search, :default_limit,
-                                                 default: 'Not set')}"
+            default: 'Not set')}"
           puts "  Semantic search: #{@config.fetch(:blueprints, :search, :semantic_search,
-                                                   default: 'Not set')}"
-          puts ''
+            default: 'Not set')}"
+          puts ""
 
           # Performance Configuration
-          puts 'Performance Configuration:'.colorize(:cyan)
+          puts "Performance Configuration:".colorize(:cyan)
           puts "  Batch size: #{@config.fetch(:blueprints, :performance, :batch_size,
-                                              default: 'Not set')}"
+            default: 'Not set')}"
           puts "  Connection pool size: #{@config.fetch(:blueprints, :performance, :connection_pool_size,
-                                                        default: 'Not set')}"
+            default: 'Not set')}"
         else
-          BlueprintsCLI.logger.failure('No configuration found')
+          BlueprintsCLI.logger.failure("No configuration found")
           BlueprintsCLI.logger.tip("Run 'blueprint config setup' to create configuration")
         end
 
-        puts '=' * 60
-        puts ''
+        puts "=" * 60
+        puts ""
 
         # Show environment variables
         show_environment_variables
@@ -169,78 +159,78 @@ module BlueprintsCLI
       #
       # @return [Boolean] Returns `true` if the configuration is saved
       #   successfully, `false` otherwise.
-      def setup_configuration
-        BlueprintsCLI.logger.step('Blueprint Configuration Setup')
-        puts '=' * 50
-        puts ''
+      private def setup_configuration
+        BlueprintsCLI.logger.step("Blueprint Configuration Setup")
+        puts "=" * 50
+        puts ""
 
         config = load_configuration || {}
 
         # Database configuration
-        puts '📊 Database Configuration'.colorize(:cyan)
-        current_db = config.dig('database', 'url') || BlueprintsCLI.configuration.database_url
-        db_url = prompt_for_input('Database URL', current_db)
+        puts "📊 Database Configuration".colorize(:cyan)
+        current_db = config.dig("database", "url") || BlueprintsCLI.configuration.database_url
+        db_url = prompt_for_input("Database URL", current_db)
 
-        config['database'] = { 'url' => db_url }
+        config["database"] = { "url" => db_url }
 
         # AI configuration
         puts "\n🤖 AI Configuration".colorize(:cyan)
-        current_provider = config.dig('ai', 'provider') || 'gemini'
-        provider = prompt_for_choice('AI Provider', %w[gemini openai], current_provider)
+        current_provider = config.dig("ai", "provider") || "gemini"
+        provider = prompt_for_choice("AI Provider", %w[gemini openai], current_provider)
 
-        current_model = config.dig('ai',
-                                   'model') || (provider == 'gemini' ? 'text-embedding-004' : 'text-embedding-3-small')
-        model = prompt_for_input('AI Model', current_model)
+        current_model = config.dig("ai",
+          "model") || ((provider == "gemini") ? "text-embedding-004" : "text-embedding-3-small")
+        model = prompt_for_input("AI Model", current_model)
 
-        puts '💡 Set API key via environment variable:'.colorize(:yellow)
-        puts '   export GEMINI_API_KEY=your_key_here' if provider == 'gemini'
-        puts '   export OPENAI_API_KEY=your_key_here' if provider == 'openai'
+        puts "💡 Set API key via environment variable:".colorize(:yellow)
+        puts "   export GEMINI_API_KEY=your_key_here" if provider == "gemini"
+        puts "   export OPENAI_API_KEY=your_key_here" if provider == "openai"
 
-        config['ai'] = {
-          'provider' => provider,
-          'model' => model
+        config["ai"] = {
+          "provider" => provider,
+          "model" => model,
         }
 
         # Editor configuration
         puts "\n✏️  Editor Configuration".colorize(:cyan)
         current_editor = @config.fetch(:blueprints, :editor,
-                                       default: ENV['EDITOR'] || ENV['VISUAL'] || 'vim')
-        editor = prompt_for_input('Preferred editor', current_editor)
+          default: ENV["EDITOR"] || ENV["VISUAL"] || "vim")
+        editor = prompt_for_input("Preferred editor", current_editor)
         @config.set(:blueprints, :editor, value: editor)
 
         current_auto_save = @config.fetch(:blueprints, :auto_save_edits, default: false)
-        auto_save = prompt_for_boolean('Auto-save edits', current_auto_save)
+        auto_save = prompt_for_boolean("Auto-save edits", current_auto_save)
         @config.set(:blueprints, :auto_save_edits, value: auto_save)
 
         # Feature flags
         puts "\n🎛️  Feature Configuration".colorize(:cyan)
         current_auto_desc = @config.fetch(:blueprints, :features, :auto_description, default: true)
-        auto_desc = prompt_for_boolean('Auto-generate descriptions', current_auto_desc)
+        auto_desc = prompt_for_boolean("Auto-generate descriptions", current_auto_desc)
         @config.set(:blueprints, :features, :auto_description, value: auto_desc)
 
         current_auto_cat = @config.fetch(:blueprints, :features, :auto_categorize, default: true)
-        auto_cat = prompt_for_boolean('Auto-generate categories', current_auto_cat)
+        auto_cat = prompt_for_boolean("Auto-generate categories", current_auto_cat)
         @config.set(:blueprints, :features, :auto_categorize, value: auto_cat)
 
         current_improvement = @config.fetch(:blueprints, :features, :improvement_analysis,
-                                            default: true)
-        improvement = prompt_for_boolean('Enable AI improvement analysis', current_improvement)
+          default: true)
+        improvement = prompt_for_boolean("Enable AI improvement analysis", current_improvement)
         @config.set(:blueprints, :features, :improvement_analysis, value: improvement)
 
         # Logger configuration
         puts "\n📝 Logger Configuration".colorize(:cyan)
-        current_level = @config.fetch(:logger, :level, default: 'info')
-        log_level = prompt_for_choice('Log level', %w[debug info warn error fatal], current_level)
+        current_level = @config.fetch(:logger, :level, default: "info")
+        log_level = prompt_for_choice("Log level", %w[debug info warn error fatal], current_level)
         @config.set(:logger, :level, value: log_level)
 
         current_file_logging = @config.fetch(:logger, :file_logging, default: false)
-        file_logging = prompt_for_boolean('Enable file logging', current_file_logging)
+        file_logging = prompt_for_boolean("Enable file logging", current_file_logging)
         @config.set(:logger, :file_logging, value: file_logging)
 
         if file_logging
           current_file_path = @config.fetch(:logger, :file_path,
-                                            default: @config.send(:default_log_path))
-          file_path = prompt_for_input('Log file path', current_file_path)
+            default: @config.send(:default_log_path))
+          file_path = prompt_for_input("Log file path", current_file_path)
           @config.set(:logger, :file_path, value: file_path)
         end
 
@@ -249,11 +239,11 @@ module BlueprintsCLI
         save_success = @config.write(force: true, create: true)
 
         if save_success
-          BlueprintsCLI.logger.success('Configuration saved successfully!',
-                                       file: @config.config_file_path)
+          BlueprintsCLI.logger.success("Configuration saved successfully!",
+            file: @config.config_file_path)
           BlueprintsCLI.logger.tip("Run 'blueprint config test' to validate the configuration")
         else
-          BlueprintsCLI.logger.failure('Failed to save configuration')
+          BlueprintsCLI.logger.failure("Failed to save configuration")
         end
 
         save_success
@@ -266,9 +256,9 @@ module BlueprintsCLI
       # AI providers, and editor availability.
       #
       # @return [Boolean] Returns `true` if all tests pass, `false` otherwise.
-      def test_configuration
-        BlueprintsCLI.logger.step('Testing Blueprint Configuration')
-        puts '=' * 50
+      private def test_configuration
+        BlueprintsCLI.logger.step("Testing Blueprint Configuration")
+        puts "=" * 50
 
         all_tests_passed = true
 
@@ -276,7 +266,7 @@ module BlueprintsCLI
         puts "\n📋 Validating configuration structure...".colorize(:cyan)
         begin
           @config.validate!
-          BlueprintsCLI.logger.success('Configuration structure is valid')
+          BlueprintsCLI.logger.success("Configuration structure is valid")
         rescue BlueprintsCLI::Configuration::ValidationError => e
           BlueprintsCLI.logger.failure("Configuration validation failed: #{e.message}")
           all_tests_passed = false
@@ -302,11 +292,11 @@ module BlueprintsCLI
         logger_success = test_logger_config
         all_tests_passed &&= logger_success
 
-        puts "\n" + ('=' * 50)
+        puts "\n#{'=' * 50}"
         if all_tests_passed
-          BlueprintsCLI.logger.success('All configuration tests passed!')
+          BlueprintsCLI.logger.success("All configuration tests passed!")
         else
-          BlueprintsCLI.logger.failure('Some configuration tests failed')
+          BlueprintsCLI.logger.failure("Some configuration tests failed")
           BlueprintsCLI.logger.tip("Run 'blueprint config setup' to fix issues")
         end
 
@@ -320,24 +310,24 @@ module BlueprintsCLI
       #
       # @return [Boolean] Returns `true` if the file is deleted or if it didn't
       #   exist initially. Returns `false` if the user cancels the operation.
-      def reset_configuration
+      private def reset_configuration
         config_file = @config.config_file_path
 
         if config_file && File.exist?(config_file)
-          print '⚠️  This will delete the existing configuration. Continue? (y/N): '
-          response = STDIN.gets.chomp.downcase
+          print "⚠️  This will delete the existing configuration. Continue? (y/N): "
+          response = $stdin.gets.chomp.downcase
 
           if %w[y yes].include?(response)
             File.delete(config_file)
-            BlueprintsCLI.logger.success('Configuration reset successfully')
+            BlueprintsCLI.logger.success("Configuration reset successfully")
             BlueprintsCLI.logger.tip("Run 'blueprint config setup' to create new configuration")
             true
           else
-            BlueprintsCLI.logger.warn('Reset cancelled')
+            BlueprintsCLI.logger.warn("Reset cancelled")
             false
           end
         else
-          BlueprintsCLI.logger.info('No configuration file found to reset')
+          BlueprintsCLI.logger.info("No configuration file found to reset")
           true
         end
       end
@@ -346,12 +336,12 @@ module BlueprintsCLI
       # Migrate existing configuration files to new format
       #
       # @return [Boolean] Returns `true` if migration succeeded
-      def migrate_configuration
-        BlueprintsCLI.logger.step('Migrating Configuration Files')
-        puts '=' * 50
-        puts ''
+      private def migrate_configuration
+        BlueprintsCLI.logger.step("Migrating Configuration Files")
+        puts "=" * 50
+        puts ""
 
-        puts 'ℹ️  Migration is no longer needed - using unified configuration system'
+        puts "ℹ️  Migration is no longer needed - using unified configuration system"
 
         true
       end
@@ -359,7 +349,7 @@ module BlueprintsCLI
       ##
       # Displays help text for the configuration command.
       # @return [nil]
-      def show_config_help
+      private def show_config_help
         puts <<~HELP
           Blueprint Configuration Commands:
 
@@ -374,56 +364,55 @@ module BlueprintsCLI
         HELP
       end
 
-
       ##
       # Displays the status of relevant environment variables.
       # @return [void]
-      def show_environment_variables
-        puts '🌍 Environment Variables:'.colorize(:blue)
+      private def show_environment_variables
+        puts "🌍 Environment Variables:".colorize(:blue)
 
         env_vars = {
-          'GEMINI_API_KEY' => ENV.fetch('GEMINI_API_KEY', nil),
-          'GOOGLE_API_KEY' => ENV.fetch('GOOGLE_API_KEY', nil),
-          'OPENAI_API_KEY' => ENV.fetch('OPENAI_API_KEY', nil),
-          'ANTHROPIC_API_KEY' => ENV.fetch('ANTHROPIC_API_KEY', nil),
-          'DEEPSEEK_API_KEY' => ENV.fetch('DEEPSEEK_API_KEY', nil),
-          'BLUEPRINT_DATABASE_URL' => ENV.fetch('BLUEPRINT_DATABASE_URL', nil),
-          'DATABASE_URL' => ENV.fetch('DATABASE_URL', nil),
-          'BLUEPRINTS_DEBUG' => ENV.fetch('BLUEPRINTS_DEBUG', nil),
-          'DEBUG' => ENV.fetch('DEBUG', nil),
-          'EDITOR' => ENV.fetch('EDITOR', nil),
-          'VISUAL' => ENV.fetch('VISUAL', nil)
+          "GEMINI_API_KEY" => ENV.fetch("GEMINI_API_KEY", nil),
+          "GOOGLE_API_KEY" => ENV.fetch("GOOGLE_API_KEY", nil),
+          "OPENAI_API_KEY" => ENV.fetch("OPENAI_API_KEY", nil),
+          "ANTHROPIC_API_KEY" => ENV.fetch("ANTHROPIC_API_KEY", nil),
+          "DEEPSEEK_API_KEY" => ENV.fetch("DEEPSEEK_API_KEY", nil),
+          "BLUEPRINT_DATABASE_URL" => ENV.fetch("BLUEPRINT_DATABASE_URL", nil),
+          "DATABASE_URL" => ENV.fetch("DATABASE_URL", nil),
+          "BLUEPRINTS_DEBUG" => ENV.fetch("BLUEPRINTS_DEBUG", nil),
+          "DEBUG" => ENV.fetch("DEBUG", nil),
+          "EDITOR" => ENV.fetch("EDITOR", nil),
+          "VISUAL" => ENV.fetch("VISUAL", nil),
         }
 
         env_vars.each do |key, value|
           status = if value
-                     key.include?('KEY') ? 'Set (hidden)' : value
-                   else
-                     'Not set'
-                   end
+            key.include?("KEY") ? "Set (hidden)" : value
+          else
+            "Not set"
+          end
           puts "  #{key}: #{status}"
         end
-        puts ''
+        puts ""
       end
 
       ##
       # Tests the database connection using the URL from the configuration.
       #
       # @return [Boolean] `true` if the connection is successful, `false` otherwise.
-      def test_database_connection
-        require 'sequel'
+      private def test_database_connection
+        require "sequel"
         db_url = @config.database_url
 
         if db_url.nil? || db_url.empty?
-          BlueprintsCLI.logger.failure('No database URL configured')
+          BlueprintsCLI.logger.failure("No database URL configured")
           return false
         end
 
         db = Sequel.connect(db_url)
         db.test_connection
-        BlueprintsCLI.logger.success('Database connection successful')
+        BlueprintsCLI.logger.success("Database connection successful")
         true
-      rescue StandardError => e
+      rescue => e
         BlueprintsCLI.logger.failure("Database connection failed: #{e.message}")
         false
       end
@@ -434,12 +423,12 @@ module BlueprintsCLI
       # Tests AI provider connections by checking for configured API keys.
       #
       # @return [Boolean] `true` if at least one API key is found, `false` otherwise.
-      def test_ai_connections
+      private def test_ai_connections
         success_count = 0
         total_tests = 0
 
         # Test configured AI provider
-        ai_provider = @config.fetch(:ai, :sublayer, :provider, default: '').downcase
+        ai_provider = @config.fetch(:ai, :sublayer, :provider, default: "").downcase
         unless ai_provider.empty?
           total_tests += 1
           api_key = @config.ai_api_key(ai_provider)
@@ -453,24 +442,24 @@ module BlueprintsCLI
 
         # Test Ruby LLM configuration
         ruby_llm_config = @config.ruby_llm_config
-        api_keys = ruby_llm_config.select { |k, v| k.to_s.end_with?('_api_key') && v }
+        api_keys = ruby_llm_config.select { |k, v| k.to_s.end_with?("_api_key") && v }
 
         if api_keys.any?
-          api_keys.each do |key, _|
-            provider = key.to_s.gsub('_api_key', '')
+          api_keys.each_key do |key|
+            provider = key.to_s.gsub("_api_key", "")
             BlueprintsCLI.logger.success("Ruby LLM API key found for #{provider}")
             success_count += 1
             total_tests += 1
           end
         else
-          BlueprintsCLI.logger.warn('No Ruby LLM API keys configured')
+          BlueprintsCLI.logger.warn("No Ruby LLM API keys configured")
         end
 
-        if total_tests == 0
-          BlueprintsCLI.logger.warn('No AI providers configured')
+        if total_tests.zero?
+          BlueprintsCLI.logger.warn("No AI providers configured")
           false
         else
-          success_count > 0
+          success_count.positive?
         end
       end
 
@@ -478,11 +467,11 @@ module BlueprintsCLI
       # Tests if the configured editor is available in the system's PATH.
       #
       # @return [Boolean] `true` if the editor command is found, `false` otherwise.
-      def test_editor
-        editor = @config.fetch(:blueprints, :editor, default: 'vim')
+      private def test_editor
+        editor = @config.fetch(:blueprints, :editor, default: "vim")
 
         if editor.nil? || editor.empty?
-          BlueprintsCLI.logger.failure('No editor configured')
+          BlueprintsCLI.logger.failure("No editor configured")
           return false
         end
 
@@ -499,8 +488,8 @@ module BlueprintsCLI
       # Tests the logger configuration.
       #
       # @return [Boolean] `true` if logger config is valid, `false` otherwise.
-      def test_logger_config
-        level = @config.fetch(:logger, :level, default: 'info')
+      private def test_logger_config
+        level = @config.fetch(:logger, :level, default: "info")
         valid_levels = %w[debug info warn error fatal]
 
         unless valid_levels.include?(level.to_s.downcase)
@@ -511,7 +500,7 @@ module BlueprintsCLI
         if @config.fetch(:logger, :file_logging, default: false)
           file_path = @config.fetch(:logger, :file_path)
           if file_path.nil? || file_path.empty?
-            BlueprintsCLI.logger.failure('File logging enabled but no file path configured')
+            BlueprintsCLI.logger.failure("File logging enabled but no file path configured")
             return false
           end
 
@@ -523,9 +512,9 @@ module BlueprintsCLI
           end
         end
 
-        BlueprintsCLI.logger.success('Logger configuration is valid')
+        BlueprintsCLI.logger.success("Logger configuration is valid")
         true
-      rescue StandardError => e
+      rescue => e
         BlueprintsCLI.logger.failure("Logger configuration test failed: #{e.message}")
         false
       end
@@ -536,12 +525,12 @@ module BlueprintsCLI
       # @param prompt [String] The message to display to the user.
       # @param default [String, nil] The default value to use if the user enters nothing.
       # @return [String] The user's input or the default value.
-      def prompt_for_input(prompt, default = nil)
-        print "#{prompt}"
+      private def prompt_for_input(prompt, default = nil)
+        print prompt
         print " [#{default}]" if default
-        print ': '
+        print ": "
 
-        input = STDIN.gets.chomp
+        input = $stdin.gets.chomp
         input.empty? ? default : input
       end
 
@@ -552,11 +541,11 @@ module BlueprintsCLI
       # @param choices [Array<String>] A list of available options.
       # @param default [String, nil] The default choice if the user enters nothing.
       # @return [String] The user's selection or the default value.
-      def prompt_for_choice(prompt, choices, default = nil)
+      private def prompt_for_choice(prompt, choices, default = nil)
         puts "#{prompt} (#{choices.join('/')})"
-        print default ? "[#{default}]: " : ': '
+        print default ? "[#{default}]: " : ": "
 
-        input = STDIN.gets.chomp
+        input = $stdin.gets.chomp
         input.empty? ? default : input
       end
 
@@ -568,20 +557,20 @@ module BlueprintsCLI
       #   to use if the user enters nothing.
       # @return [Boolean, nil] Returns `true` for 'y', `false` for 'n', or the
       #   default value for any other input.
-      def prompt_for_boolean(prompt, default = nil)
+      private def prompt_for_boolean(prompt, default = nil)
         default_text = case default
-                       when true then ' [Y/n]'
-                       when false then ' [y/N]'
-                       else ' [y/n]'
-                       end
+                       when true then " [Y/n]"
+                       when false then " [y/N]"
+                       else " [y/n]"
+        end
 
         print "#{prompt}#{default_text}: "
-        input = STDIN.gets.chomp.downcase
+        input = $stdin.gets.chomp.downcase
 
         case input
-        when 'y', 'yes', 'true'
+        when "y", "yes", "true"
           true
-        when 'n', 'no', 'false'
+        when "n", "no", "false"
           false
         else
           default
@@ -593,10 +582,10 @@ module BlueprintsCLI
       #
       # @param url [String] The database URL to process.
       # @return [String] The URL with the password replaced by '***'.
-      def mask_password(url)
-        return url unless url.include?(':') && url.include?('@')
+      private def mask_password(url)
+        return url unless url.include?(":") && url.include?("@")
 
-        url.gsub(/:[^:@]*@/, ':***@')
+        url.gsub(/:[^:@]*@/, ":***@")
       end
     end
   end

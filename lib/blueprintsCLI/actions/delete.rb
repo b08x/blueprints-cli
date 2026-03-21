@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'tty-box'
+require "tty-box"
 
 module BlueprintsCLI
   module Actions
@@ -64,60 +64,48 @@ module BlueprintsCLI
         return false if !@force && !confirm_deletion?(blueprint)
 
         # Perform the deletion
-        BlueprintsCLI.logger.step('Deleting blueprint...')
+        BlueprintsCLI.logger.step("Deleting blueprint...")
 
         if @db.delete_blueprint(@id)
           BlueprintsCLI.logger.success("Blueprint '#{blueprint[:name]}' (ID: #{@id}) deleted successfully")
           true
         else
-          BlueprintsCLI.logger.failure('Failed to delete blueprint')
+          BlueprintsCLI.logger.failure("Failed to delete blueprint")
           false
         end
-      rescue StandardError => e
+      rescue => e
         BlueprintsCLI.logger.failure("Error deleting blueprint: #{e.message}")
-        BlueprintsCLI.logger.debug(e) if ENV['DEBUG']
+        BlueprintsCLI.logger.debug(e) if ENV["DEBUG"]
         false
       end
 
-      private
-
-      # Presents an interactive menu to select a blueprint for deletion
-      #
-      # Displays a numbered list of available blueprints with their
-      # basic information and allows the user to select one by number.
-      #
-      # @return [Integer, nil] The ID of the selected blueprint or nil if cancelled
-      #
-      # @example
-      #   select_blueprint_interactively
-      #   # Shows menu and returns selected blueprint ID or nil
-      def select_blueprint_interactively
-        puts '🔍 Loading blueprints for selection...'.colorize(:blue)
+      private def select_blueprint_interactively
+        puts "🔍 Loading blueprints for selection...".colorize(:blue)
 
         blueprints = @db.list_blueprints(limit: 50)
 
         if blueprints.empty?
-          puts '❌ No blueprints found'.colorize(:red)
+          puts "❌ No blueprints found".colorize(:red)
           return nil
         end
 
         puts "\nSelect a blueprint to delete:"
-        puts '=' * 60
+        puts "=" * 60
 
         blueprints.each_with_index do |blueprint, index|
-          categories = blueprint[:categories].map { |c| c[:title] }.join(', ')
+          categories = blueprint[:categories].map { |c| c[:title] }.join(", ")
           puts "#{index + 1}. #{blueprint[:name]} (ID: #{blueprint[:id]})"
           puts "   Description: #{blueprint[:description]}"
           puts "   Categories: #{categories}" unless categories.empty?
           puts "   Created: #{blueprint[:created_at]}"
-          puts ''
+          puts ""
         end
 
         print "Enter the number of the blueprint to delete (1-#{blueprints.length}), or 'q' to quit: "
         response = $stdin.gets.chomp
 
-        if response.downcase == 'q'
-          puts '❌ Operation cancelled'.colorize(:yellow)
+        if response.downcase == "q"
+          puts "❌ Operation cancelled".colorize(:yellow)
           return nil
         end
 
@@ -125,7 +113,7 @@ module BlueprintsCLI
         if index >= 0 && index < blueprints.length
           blueprints[index][:id]
         else
-          puts '❌ Invalid selection'.colorize(:red)
+          puts "❌ Invalid selection".colorize(:red)
           nil
         end
       end
@@ -142,8 +130,8 @@ module BlueprintsCLI
       #   blueprint = { id: 123, name: "Example", code: "puts 'hello'" }
       #   confirm_deletion?(blueprint)
       #   # Shows confirmation dialog and returns true/false based on user input
-      def confirm_deletion?(blueprint)
-        categories = blueprint[:categories].map { |c| c[:title] }.join(', ')
+      private def confirm_deletion?(blueprint)
+        categories = blueprint[:categories].map { |c| c[:title] }.join(", ")
         # Show first few lines of code as preview
         code_lines = blueprint[:code].lines
         code_preview = code_lines.first(5).each_with_index.map do |line, i|
@@ -153,38 +141,38 @@ module BlueprintsCLI
 
         # Create content for the warning box
         content = <<~CONTENT
-        ID: #{blueprint[:id]}
-        Name: #{blueprint[:name]}
-        Description: #{blueprint[:description]}
-        Categories: #{categories.empty? ? 'None' : categories}
-        Created: #{blueprint[:created_at]}
-        Updated: #{blueprint[:updated_at]}
-        Code length: #{blueprint[:code].length} characters
-
-        Code preview (first 5 lines):
-#{code_preview}
-
-        ⚠️  WARNING: This action cannot be undone!
-        The blueprint and all its metadata will be permanently deleted.
+                  ID: #{blueprint[:id]}
+                  Name: #{blueprint[:name]}
+                  Description: #{blueprint[:description]}
+                  Categories: #{categories.empty? ? 'None' : categories}
+                  Created: #{blueprint[:created_at]}
+                  Updated: #{blueprint[:updated_at]}
+                  Code length: #{blueprint[:code].length} characters
+          
+                  Code preview (first 5 lines):
+          #{code_preview}
+          
+                  ⚠️  WARNING: This action cannot be undone!
+                  The blueprint and all its metadata will be permanently deleted.
         CONTENT
 
         # Display the warning box with red border
         warning_box = TTY::Box.frame(
           content,
-          title: { top_left: '🗑️ Deletion Confirmation' },
+          title: { top_left: "🗑️ Deletion Confirmation" },
           style: { border: { fg: :red } },
           padding: 1
         )
         puts "\n#{warning_box}"
 
-        print 'Are you sure you want to delete this blueprint? (y/N): '
+        print "Are you sure you want to delete this blueprint? (y/N): "
         response = $stdin.gets.chomp.downcase
 
         if %w[y yes].include?(response)
-          puts '✅ Deletion confirmed'.colorize(:green)
+          puts "✅ Deletion confirmed".colorize(:green)
           true
         else
-          puts '❌ Deletion cancelled'.colorize(:yellow)
+          puts "❌ Deletion cancelled".colorize(:yellow)
           false
         end
       end

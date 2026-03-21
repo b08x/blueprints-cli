@@ -7,10 +7,10 @@ require "ruby_llm/schema"
 # dependency during configuration loading. This initializer runs in Rack context;
 # CLI context uses configuration.rb's configure_rubyllm method instead.
 RubyLLM.configure do |config|
-  config.gemini_api_key    = ENV["GEMINI_API_KEY"] || ENV["GOOGLE_API_KEY"]
-  config.openai_api_key    = ENV["OPENROUTER_API_KEY"] || ENV["OPENAI_API_KEY"]
-  config.anthropic_api_key = ENV["ANTHROPIC_API_KEY"]
-  config.deepseek_api_key  = ENV["DEEPSEEK_API_KEY"]
+  config.gemini_api_key    = ENV["GEMINI_API_KEY"] || ENV.fetch("GOOGLE_API_KEY", nil)
+  config.openai_api_key    = ENV["OPENROUTER_API_KEY"] || ENV.fetch("OPENAI_API_KEY", nil)
+  config.anthropic_api_key = ENV.fetch("ANTHROPIC_API_KEY", nil)
+  config.deepseek_api_key  = ENV.fetch("DEEPSEEK_API_KEY", nil)
 
   config.openrouter_api_key = ENV["OPENROUTER_API_KEY"] if ENV["OPENROUTER_API_KEY"]
   config.ollama_api_base    = ENV["OLLAMA_API_BASE"] if ENV["OLLAMA_API_BASE"]

@@ -2,8 +2,8 @@
 
 require_relative "../schemas/generator_schemas"
 require_relative "../utils/language_detector"
-require 'dry/monads'
-require 'json'
+require "dry/monads"
+require "json"
 
 module BlueprintsCLI
   module Generators
@@ -34,8 +34,8 @@ module BlueprintsCLI
       def generate
         BlueprintsCLI.configuration.configure_rubyllm!
         response = RubyLLM.chat(model: model_name)
-                          .with_schema(Schemas::DescriptionSchema)
-                          .ask(prompt)
+          .with_schema(Schemas::DescriptionSchema)
+          .ask(prompt)
 
         # Handle different response formats from various models
         description = extract_description_from_response(response)
@@ -43,19 +43,14 @@ module BlueprintsCLI
       rescue RubyLLM::Error => e
         BlueprintsCLI.logger.failure("Description generation failed: #{e.message}")
         Failure(e)
-      rescue StandardError => e
+      rescue => e
         BlueprintsCLI.logger.failure("Unexpected error in description generation: #{e.message}")
         Failure(e)
       end
 
-      private
-
-      # Extract description from response, handling different model response formats
-      def extract_description_from_response(response)
+      private def extract_description_from_response(response)
         # First try standard content format
-        if response.content && response.content.is_a?(Hash) && response.content["description"]
-          return response.content["description"]
-        end
+        return response.content["description"] if response.content.is_a?(Hash) && response.content["description"]
 
         # Try reasoning format (GLM models)
         if response.respond_to?(:thinking) && response.thinking&.text
@@ -85,12 +80,12 @@ module BlueprintsCLI
         "Generated description for this code blueprint."
       end
 
-      def model_name
+      private def model_name
         BlueprintsCLI.configuration.fetch(:ai, :rubyllm, :default_model,
-                                          default: "gemini-2.0-flash")
+          default: "gemini-2.0-flash")
       end
 
-      def prompt
+      private def prompt
         <<~PROMPT
           Analyze this #{@language} code and generate a clear, concise description of what it does.
 

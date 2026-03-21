@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'sequel'
+require "sequel"
 
 # Represents a category that can be used to tag and organize blueprints.
 class Category < Sequel::Model

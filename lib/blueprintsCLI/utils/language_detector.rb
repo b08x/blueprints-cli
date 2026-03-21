@@ -7,21 +7,21 @@ module BlueprintsCLI
       # Common file extensions mapped to language identifiers
       EXTENSION_PATTERNS = {
         python: /\A\s*(?:#.*\n)*\s*(?:def |class |import |from |print\(|if __name__|@\w+)/m,
-        ruby: /\A\s*(?:#.*\n)*\s*(?:class |module |def |require |puts |p |print |gem |bundle|end\s*$|\@\w+\s*=)/m,
-        javascript: /\A\s*(?:\/\/.*\n|\/\*[\s\S]*?\*\/)*\s*(?:function|const|let|var|=>|console\.|document\.|window\.)/m,
-        java: /\A\s*(?:\/\/.*\n|\/\*[\s\S]*?\*\/)*\s*(?:public|private|protected|class|interface|import|package)/m,
+        ruby: /\A\s*(?:#.*\n)*\s*(?:class |module |def |require |puts |p |print |gem |bundle|end\s*$|@\w+\s*=)/m,
+        javascript: %r{\A\s*(?://.*\n|/\*[\s\S]*?\*/)*\s*(?:function|const|let|var|=>|console\.|document\.|window\.)}m,
+        java: %r{\A\s*(?://.*\n|/\*[\s\S]*?\*/)*\s*(?:public|private|protected|class|interface|import|package)}m,
         php: /\A\s*<\?php/m,
-        shell: /\A\s*#!.*\/(?:bash|sh|zsh)/m,
-        go: /\A\s*(?:\/\/.*\n)*\s*(?:package |import |func |var |type |const )/m,
-        rust: /\A\s*(?:\/\/.*\n)*\s*(?:fn |let |use |mod |pub |struct |enum |impl )/m,
-        cpp: /\A\s*(?:\/\/.*\n|\/\*[\s\S]*?\*\/)*\s*(?:#include|using namespace|int main|class |template)/m,
-        c: /\A\s*(?:\/\/.*\n|\/\*[\s\S]*?\*\/)*\s*(?:#include|int main|void |struct |typedef)/m,
+        shell: %r{\A\s*#!.*/(?:bash|sh|zsh)}m,
+        go: %r{\A\s*(?://.*\n)*\s*(?:package |import |func |var |type |const )}m,
+        rust: %r{\A\s*(?://.*\n)*\s*(?:fn |let |use |mod |pub |struct |enum |impl )}m,
+        cpp: %r{\A\s*(?://.*\n|/\*[\s\S]*?\*/)*\s*(?:#include|using namespace|int main|class |template)}m,
+        c: %r{\A\s*(?://.*\n|/\*[\s\S]*?\*/)*\s*(?:#include|int main|void |struct |typedef)}m,
         sql: /\A\s*(?:--.*\n)*\s*(?:SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)/im,
         yaml: /\A\s*(?:#.*\n)*\s*(?:[a-zA-Z][a-zA-Z0-9_]*\s*:|---|\.\.\.|version\s*:)/m,
         json: /\A\s*[{\[]/m,
         html: /\A\s*(?:<!DOCTYPE|<html|<head|<body|<div|<span|<p|<script|<style)/im,
-        css: /\A\s*(?:\/\*[\s\S]*?\*\/)*\s*(?:[.#]?[a-zA-Z][a-zA-Z0-9_-]*\s*\{|@media|@import)/m,
-        xml: /\A\s*<\?xml|<[a-zA-Z][a-zA-Z0-9_-]*[^>]*>/m
+        css: %r{\A\s*(?:/\*[\s\S]*?\*/)*\s*(?:[.#]?[a-zA-Z][a-zA-Z0-9_-]*\s*\{|@media|@import)}m,
+        xml: /\A\s*<\?xml|<[a-zA-Z][a-zA-Z0-9_-]*[^>]*>/m,
       }.freeze
 
       # Additional content-based patterns for better detection
@@ -40,7 +40,7 @@ module BlueprintsCLI
         yaml: %w[version name description dependencies],
         html: %w[<!DOCTYPE <html <head <body <div <span],
         css: %w[color background margin padding font],
-        xml: %w[<?xml version encoding]
+        xml: %w[<?xml version encoding],
       }.freeze
 
       class << self
@@ -48,7 +48,7 @@ module BlueprintsCLI
         # @param code [String] The code content to analyze
         # @return [String] The detected language identifier
         def detect(code)
-          return 'text' if code.nil? || code.strip.empty?
+          return "text" if code.nil? || code.strip.empty?
 
           normalized_code = code.strip.downcase
 
@@ -61,21 +61,16 @@ module BlueprintsCLI
           detect_by_keywords(normalized_code)
         end
 
-        private
-
-        # Detect language by counting keyword matches
-        # @param normalized_code [String] The normalized code content
-        # @return [String] The detected language identifier
-        def detect_by_keywords(normalized_code)
+        private def detect_by_keywords(normalized_code)
           scores = {}
 
           KEYWORD_PATTERNS.each do |language, keywords|
             score = keywords.sum { |keyword| normalized_code.scan(keyword.downcase).size }
-            scores[language] = score if score > 0
+            scores[language] = score if score.positive?
           end
 
           # Return the language with the highest score, or 'text' if no matches
-          return 'text' if scores.empty?
+          return "text" if scores.empty?
 
           scores.max_by { |_, score| score }.first.to_s
         end

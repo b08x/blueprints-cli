@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'tty-box'
-require 'tty-cursor'
-require 'tty-pager'
+require "tty-box"
+require "tty-cursor"
+require "tty-pager"
 
 module BlueprintsCLI
   module Commands
@@ -22,7 +22,7 @@ module BlueprintsCLI
       # @option debug [Boolean] :debug (false) enables debug output if true
       def initialize(debug: false)
         @prompt = TTY::Prompt.new(input: $stdin, output: $stdout, enable_color: true,
-                                  interrupt: :exit)
+          interrupt: :exit)
         @commands = available_commands
         @debug = debug
       end
@@ -45,8 +45,8 @@ module BlueprintsCLI
       #
       # @return [Boolean] true if interactive mode can work
       def interactive_mode_available?
-        $stdin.tty? && $stdout.tty? && ENV.fetch('TERM', nil) && !ENV['CI']
-      rescue StandardError
+        $stdin.tty? && $stdout.tty? && ENV.fetch("TERM", nil) && !ENV["CI"]
+      rescue
         false
       end
 
@@ -65,7 +65,7 @@ module BlueprintsCLI
 
           case choice
           when :exit
-            puts '👋 Goodbye!'.colorize(:green)
+            puts "👋 Goodbye!".colorize(:green)
             break
           else
             # All command names are strings, so handle them directly
@@ -82,8 +82,8 @@ module BlueprintsCLI
       #
       # @return [void]
       def start_fallback_mode
-        puts '🚀 BlueprintsCLI - Non-interactive mode'.colorize(:cyan)
-        puts 'Available commands:'.colorize(:yellow)
+        puts "🚀 BlueprintsCLI - Non-interactive mode".colorize(:cyan)
+        puts "Available commands:".colorize(:yellow)
 
         @commands.each_with_index do |cmd, index|
           puts "  #{index + 1}. #{cmd[:name]} - #{cmd[:description]}"
@@ -96,7 +96,7 @@ module BlueprintsCLI
         input = $stdin.gets&.chomp
 
         if input.nil? || input.empty?
-          puts 'No input received. Exiting.'.colorize(:yellow)
+          puts "No input received. Exiting.".colorize(:yellow)
           return
         end
 
@@ -106,7 +106,7 @@ module BlueprintsCLI
           if choice_index >= 0 && choice_index < @commands.length
             choice = @commands[choice_index][:name]
           elsif choice_index == @commands.length
-            choice = 'logs'
+            choice = "logs"
           elsif choice_index == @commands.length + 1
             choice = :exit
           else
@@ -116,32 +116,26 @@ module BlueprintsCLI
         else
           # Handle text input
           choice = input.downcase
-          choice = :exit if choice == 'exit'
+          choice = :exit if choice == "exit"
         end
 
         case choice
         when :exit
-          puts '👋 Goodbye!'.colorize(:green)
+          puts "👋 Goodbye!".colorize(:green)
         else
           result = handle_command(choice)
           puts "Command completed with result: #{result}".colorize(:green) if result != :continue
         end
       end
 
-      private
-
-      # Logs debug messages when debug mode is enabled.
-      #
-      # @param message [String] the debug message to log
-      # @return [void]
-      def debug_log(message)
+      private def debug_log(message)
         puts "🔍 DEBUG: #{message}".colorize(:magenta) if @debug
       end
 
       # Smart screen clearing that only clears when necessary
       #
       # @return [void]
-      def clear_screen_smart
+      private def clear_screen_smart
         print TTY::Cursor.clear_screen_down
       end
 
@@ -149,14 +143,14 @@ module BlueprintsCLI
       #
       # @param lines [Integer] number of lines to add (default: 2)
       # @return [void]
-      def add_spacing(lines = 2)
+      private def add_spacing(lines = 2)
         puts "\n" * lines
       end
 
       # Clears only the current line and moves cursor to beginning
       #
       # @return [void]
-      def clear_current_line
+      private def clear_current_line
         print TTY::Cursor.clear_line if defined?(TTY::Cursor)
         print "\r"
       end
@@ -165,7 +159,7 @@ module BlueprintsCLI
       # Excludes base classes and the MenuCommand itself.
       #
       # @return [Array<Hash>] array of command hashes with name, description, and class
-      def available_commands
+      private def available_commands
         excluded_commands = %i[BaseCommand MenuCommand]
         valid_commands = BlueprintsCLI::Commands.constants.reject do |command_class|
           excluded_commands.include?(command_class)
@@ -176,7 +170,7 @@ module BlueprintsCLI
           {
             name: command.command_name,
             description: command.description,
-            class: command
+            class: command,
           }
         end
       end
@@ -184,7 +178,7 @@ module BlueprintsCLI
       # Displays the main menu and captures user selection.
       #
       # @return [Symbol, String] the selected command name or :exit symbol
-      def main_menu
+      private def main_menu
         debug_log("Building main menu with commands: #{@commands.map { |cmd| cmd[:name] }}")
 
         # Add some spacing between iterations instead of clearing
@@ -195,27 +189,27 @@ module BlueprintsCLI
           "🚀 BlueprintsCLI 🚀\n\nYour Blueprint Management Hub",
           padding: 1,
           align: :center,
-          title: { top_left: 'v1.0' },
+          title: { top_left: "v1.0" },
           style: { border: { fg: :cyan } }
         )
         puts banner
 
         begin
-          result = @prompt.select('Select a command:'.colorize(:cyan)) do |menu|
+          result = @prompt.select("Select a command:".colorize(:cyan)) do |menu|
             @commands.each do |cmd|
               debug_log("Adding menu choice: '#{cmd[:name].capitalize} - #{cmd[:description]}' -> #{cmd[:name].inspect}")
               menu.choice "#{cmd[:name].capitalize} - #{cmd[:description]}", cmd[:name]
             end
-            menu.choice '📋 View Logs', 'logs'
-            menu.choice 'Exit', :exit
+            menu.choice "📋 View Logs", "logs"
+            menu.choice "Exit", :exit
           end
 
           debug_log("Menu selection returned: #{result.inspect}")
           result
         rescue TTY::Reader::InputInterrupt, Interrupt
-          debug_log('User interrupted menu selection')
+          debug_log("User interrupted menu selection")
           :exit
-        rescue StandardError => e
+        rescue => e
           debug_log("Error in menu selection: #{e.message}")
           puts "❌ Menu error: #{e.message}".colorize(:red)
           :exit
@@ -226,13 +220,13 @@ module BlueprintsCLI
       #
       # @param command_name [String] the name of the command to execute
       # @return [Symbol] :continue to keep the menu running, or :exit to stop
-      def handle_command(command_name)
+      private def handle_command(command_name)
         debug_log("Looking for command: #{command_name.inspect}")
         debug_log("Available commands: #{@commands.map { |cmd| cmd[:name] }}")
 
         # Special handling for logs command which is not in the commands array
-        if command_name == 'logs'
-          debug_log('Executing logs command (special menu command)')
+        if command_name == "logs"
+          debug_log("Executing logs command (special menu command)")
           return handle_logs_command
         end
 
@@ -243,15 +237,15 @@ module BlueprintsCLI
 
         debug_log("Executing command handler for: #{command_name}")
         case command_name
-        when 'blueprint'
+        when "blueprint"
           handle_blueprint_command
-        when 'config'
+        when "config"
           handle_config_command
-        when 'docs'
+        when "docs"
           handle_docs_command
-        when 'setup'
+        when "setup"
           handle_setup_command
-        when 'logs'
+        when "logs"
           handle_logs_command
         else
           puts "❌ Unknown command: #{command_name}".colorize(:red)
@@ -262,48 +256,48 @@ module BlueprintsCLI
       # Handles the blueprint command submenu and operations.
       #
       # @return [Symbol] :continue to keep the menu running
-      def handle_blueprint_command
-        debug_log('Entering handle_blueprint_command')
-        subcommand = @prompt.select('📋 Blueprint - Choose operation:'.colorize(:blue)) do |menu|
-          menu.choice 'Submit new blueprint', 'submit'
-          menu.choice 'List all blueprints', 'list'
-          menu.choice 'Browse blueprints interactively', 'browse'
-          menu.choice 'View specific blueprint', 'view'
-          menu.choice 'Edit blueprint', 'edit'
-          menu.choice 'Delete blueprint', 'delete'
-          menu.choice 'Search blueprints', 'search'
-          menu.choice 'Export blueprint', 'export'
-          menu.choice '🤖 Generate code from description', 'generate'
-          menu.choice 'Configuration', 'config'
-          menu.choice 'Back to main menu', :back
+      private def handle_blueprint_command
+        debug_log("Entering handle_blueprint_command")
+        subcommand = @prompt.select("📋 Blueprint - Choose operation:".colorize(:blue)) do |menu|
+          menu.choice "Submit new blueprint", "submit"
+          menu.choice "List all blueprints", "list"
+          menu.choice "Browse blueprints interactively", "browse"
+          menu.choice "View specific blueprint", "view"
+          menu.choice "Edit blueprint", "edit"
+          menu.choice "Delete blueprint", "delete"
+          menu.choice "Search blueprints", "search"
+          menu.choice "Export blueprint", "export"
+          menu.choice "🤖 Generate code from description", "generate"
+          menu.choice "Configuration", "config"
+          menu.choice "Back to main menu", :back
         end
 
         return :continue if subcommand == :back
 
         begin
           case subcommand
-          when 'submit'
+          when "submit"
             handle_blueprint_submit
-          when 'list'
+          when "list"
             handle_blueprint_list
-          when 'browse'
-            execute_blueprint_command('browse')
-          when 'view'
+          when "browse"
+            execute_blueprint_command("browse")
+          when "view"
             handle_blueprint_view
-          when 'edit'
+          when "edit"
             handle_blueprint_edit
-          when 'delete'
+          when "delete"
             handle_blueprint_delete
-          when 'search'
+          when "search"
             handle_blueprint_search
-          when 'export'
+          when "export"
             handle_blueprint_export
-          when 'generate'
+          when "generate"
             handle_blueprint_generate
-          when 'config'
+          when "config"
             handle_blueprint_config
           end
-        rescue StandardError => e
+        rescue => e
           BlueprintsCLI.logger.failure("Error executing blueprint command: #{e.message}")
         end
 
@@ -315,285 +309,188 @@ module BlueprintsCLI
       # @param subcommand [String] the blueprint subcommand to execute
       # @param args [Array] additional arguments for the command
       # @return [void]
-      def execute_blueprint_command(subcommand, *args)
+      private def execute_blueprint_command(subcommand, *)
         blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new({})
-        blueprint_command.execute(subcommand, *args)
+        blueprint_command.execute(subcommand, *)
       end
 
       # Handles the blueprint submission process.
       # Prompts the user for input method and options, then executes the submit command.
       #
       # @return [void]
-      def handle_blueprint_submit
-        # Let user choose input method
-        input_method = @prompt.select('📝 How would you like to provide the code?') do |menu|
-          menu.choice 'File path', :file
-          menu.choice 'Single line input', :single_line
-          menu.choice 'Multi-line input (Ctrl+D to finish)', :multiline
-          menu.choice 'Open in editor', :editor
-        end
-
-        input = case input_method
-                when :file
-                  get_file_input
-                when :single_line
-                  get_single_line_input
-                when :multiline
-                  get_multiline_input
-                when :editor
-                  get_editor_input
-                end
-
+      private def handle_blueprint_submit
+        input = @prompt.ask("📁 Enter file path or code string:")
         return if input.nil? || input.empty?
 
-        auto_describe = @prompt.yes?('🤖 Auto-generate description?')
-        auto_categorize = @prompt.yes?('🏷️ Auto-categorize?')
+        auto_describe = @prompt.yes?("🤖 Auto-generate description?")
+        auto_categorize = @prompt.yes?("🏷️ Auto-categorize?")
 
         args = [input]
         options = {}
-        options['auto_describe'] = false unless auto_describe
-        options['auto_categorize'] = false unless auto_categorize
+        options["auto_describe"] = false unless auto_describe
+        options["auto_categorize"] = false unless auto_categorize
 
         blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new(options)
-        blueprint_command.execute('submit', *args)
-      end
-
-      # Gets file path input from user
-      #
-      # @return [String, nil] File path or nil if cancelled
-      def get_file_input
-        @prompt.ask('📁 Enter file path:') do |q|
-          q.required true
-          q.validate(->(input) { File.exist?(input) }, 'File must exist')
-        end
-      end
-
-      # Gets single line code input from user
-      #
-      # @return [String, nil] Code string or nil if cancelled
-      def get_single_line_input
-        @prompt.ask('📝 Enter code:') do |q|
-          q.required true
-        end
-      end
-
-      # Gets multiline code input from user
-      #
-      # @return [String, nil] Joined code lines or nil if cancelled
-      def get_multiline_input
-        puts '📝 Enter your code (press Ctrl+D when finished):'
-        code_lines = @prompt.multiline('', help: 'Press Ctrl+D to finish input')
-
-        if code_lines && !code_lines.empty?
-          joined_code = code_lines.join("\n").strip
-          return joined_code.empty? ? nil : joined_code
-        end
-
-        nil
-      end
-
-      # Gets code input via external editor
-      #
-      # @return [String, nil] Editor content or nil if cancelled
-      def get_editor_input
-        require 'tty-editor'
-        require 'tempfile'
-
-        # Create a temporary file with appropriate extension
-        temp_file = Tempfile.new(['blueprint_', '.rb'])
-        temp_file.write("# Enter your code here\n")
-        temp_file.close
-
-        begin
-          # Get configured editor or use default
-          config = BlueprintsCLI::Configuration.new
-          editor = config.fetch(:editor, :command) || ENV['EDITOR'] || 'nano'
-
-          puts "🖊️  Opening editor (#{editor})..."
-
-          # Open the editor
-          if TTY::Editor.open(temp_file.path, command: editor)
-            content = File.read(temp_file.path).strip
-
-            # Remove the default comment if user didn't add anything else
-            if content == '# Enter your code here'
-              puts '❌ No code entered in editor'
-              return nil
-            end
-
-            # Remove the default comment line if it's still there
-            content = content.gsub(/^# Enter your code here\n?/, '').strip
-
-            content.empty? ? nil : content
-          else
-            puts '❌ Editor session cancelled or failed'
-            nil
-          end
-        rescue StandardError => e
-          puts "❌ Error opening editor: #{e.message}"
-          nil
-        ensure
-          temp_file&.unlink
-        end
+        blueprint_command.execute("submit", *args)
       end
 
       # Handles listing blueprints with various format options.
       #
       # @return [void]
-      def handle_blueprint_list
-        format = @prompt.select('📊 Choose format:') do |menu|
-          menu.choice 'Table', 'table'
-          menu.choice 'Summary', 'summary'
-          menu.choice 'JSON', 'json'
+      private def handle_blueprint_list
+        format = @prompt.select("📊 Choose format:") do |menu|
+          menu.choice "Table", "table"
+          menu.choice "Summary", "summary"
+          menu.choice "JSON", "json"
         end
 
-        interactive = @prompt.yes?('🔄 Interactive mode?')
+        interactive = @prompt.yes?("🔄 Interactive mode?")
 
-        options = { 'format' => format }
-        options['interactive'] = true if interactive
+        options = { "format" => format }
+        options["interactive"] = true if interactive
 
         blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new(options)
-        blueprint_command.execute('list')
+        blueprint_command.execute("list")
       end
 
       # Handles viewing a specific blueprint with various format options.
       #
       # @return [void]
-      def handle_blueprint_view
-        id = @prompt.ask('🔍 Enter blueprint ID:')
+      private def handle_blueprint_view
+        id = @prompt.ask("🔍 Enter blueprint ID:")
         return if id.nil? || id.empty?
 
-        format = @prompt.select('📊 Choose format:') do |menu|
-          menu.choice 'Detailed', 'detailed'
-          menu.choice 'Summary', 'summary'
-          menu.choice 'JSON', 'json'
+        format = @prompt.select("📊 Choose format:") do |menu|
+          menu.choice "Detailed", "detailed"
+          menu.choice "Summary", "summary"
+          menu.choice "JSON", "json"
         end
 
-        analyze = @prompt.yes?('🧠 Include AI analysis?')
+        analyze = @prompt.yes?("🧠 Include AI analysis?")
 
-        options = { 'format' => format }
-        options['analyze'] = true if analyze
+        options = { "format" => format }
+        options["analyze"] = true if analyze
 
         blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new(options)
-        blueprint_command.execute('view', id)
+        blueprint_command.execute("view", id)
       end
 
       # Handles editing a blueprint.
       #
       # @return [void]
-      def handle_blueprint_edit
-        id = @prompt.ask('✏️ Enter blueprint ID to edit:')
+      private def handle_blueprint_edit
+        id = @prompt.ask("✏️ Enter blueprint ID to edit:")
         return if id.nil? || id.empty?
 
         blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new({})
-        blueprint_command.execute('edit', id)
+        blueprint_command.execute("edit", id)
       end
 
       # Handles deleting a blueprint with options for ID input or interactive selection.
       #
       # @return [void]
-      def handle_blueprint_delete
-        choice = @prompt.select('🗑️ How would you like to select the blueprint to delete?') do |menu|
-          menu.choice 'Enter blueprint ID', 'id'
-          menu.choice 'Select from list', 'interactive'
+      private def handle_blueprint_delete
+        choice = @prompt.select("🗑️ How would you like to select the blueprint to delete?") do |menu|
+          menu.choice "Enter blueprint ID", "id"
+          menu.choice "Select from list", "interactive"
         end
 
         case choice
-        when 'id'
-          id = @prompt.ask('🗑️ Enter blueprint ID to delete:')
+        when "id"
+          id = @prompt.ask("🗑️ Enter blueprint ID to delete:")
           return if id.nil? || id.empty?
 
-          force = @prompt.yes?('⚠️ Skip confirmation? (Use with caution)')
+          force = @prompt.yes?("⚠️ Skip confirmation? (Use with caution)")
 
           args = [id]
-          args << '--force' if force
+          args << "--force" if force
 
           blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new({})
-          blueprint_command.execute('delete', *args)
-        when 'interactive'
+          blueprint_command.execute("delete", *args)
+        when "interactive"
           blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new({})
-          blueprint_command.execute('delete')
+          blueprint_command.execute("delete")
         end
       end
 
       # Handles searching blueprints with query and limit options.
       #
       # @return [void]
-      def handle_blueprint_search
-        query = @prompt.ask('🔍 Enter search query:')
+      private def handle_blueprint_search
+        query = @prompt.ask("🔍 Enter search query:")
         return if query.nil? || query.empty?
 
-        limit = @prompt.ask('📊 Number of results (default 10):', default: '10')
+        limit = @prompt.ask("📊 Number of results (default 10):", default: "10")
 
-        options = { 'limit' => limit.to_i }
+        options = { "limit" => limit.to_i }
         blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new(options)
-        blueprint_command.execute('search', query)
+        blueprint_command.execute("search", query)
       end
 
       # Handles exporting a blueprint with optional output path.
       #
       # @return [void]
-      def handle_blueprint_export
-        id = @prompt.ask('📤 Enter blueprint ID to export:')
+      private def handle_blueprint_export
+        id = @prompt.ask("📤 Enter blueprint ID to export:")
         return if id.nil? || id.empty?
 
-        output_path = @prompt.ask('💾 Output file path (optional):')
+        output_path = @prompt.ask("💾 Output file path (optional):")
 
         args = [id]
         args << output_path unless output_path.nil? || output_path.empty?
 
         blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new({})
-        blueprint_command.execute('export', *args)
+        blueprint_command.execute("export", *args)
       end
 
       # Handles code generation from natural language description.
       #
       # @return [void]
-      def handle_blueprint_generate
-        description = @prompt.ask('🤖 Describe what you want to generate:')
+      private def handle_blueprint_generate
+        description = @prompt.ask("🤖 Describe what you want to generate:")
         return if description.nil? || description.empty?
 
-        output_dir = @prompt.ask('📁 Output directory:', default: './generated')
-        limit = @prompt.ask('🔢 Number of blueprints to use as context:', default: '5').to_i
-        force = @prompt.yes?('⚡ Overwrite existing files?')
+        output_dir = @prompt.ask("📁 Output directory:", default: "./generated")
+        limit = @prompt.ask("🔢 Number of blueprints to use as context:", default: "5").to_i
+        force = @prompt.yes?("⚡ Overwrite existing files?")
 
         options = {
-          'output_dir' => output_dir,
-          'limit' => limit,
-          'force' => force
+          "output_dir" => output_dir,
+          "limit" => limit,
+          "force" => force,
         }
 
         blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new(options)
-        blueprint_command.execute('generate', description)
+        blueprint_command.execute("generate", description)
       end
 
       # Handles blueprint configuration options.
       #
       # @return [void]
-      def handle_blueprint_config
-        subcommand = @prompt.select('⚙️ Configuration:') do |menu|
-          menu.choice 'Show current config', 'show'
-          menu.choice 'Setup configuration', 'setup'
+      private def handle_blueprint_config
+        subcommand = @prompt.select("⚙️ Configuration:") do |menu|
+          menu.choice "Show current config", "show"
+          menu.choice "Setup configuration", "setup"
         end
 
         blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new({})
-        blueprint_command.execute('config', subcommand)
+        blueprint_command.execute("config", subcommand)
       end
 
       # Handles configuration commands with various sub-options.
       #
       # @return [Symbol] :continue to keep the menu running
-      def handle_config_command
-        debug_log('Entering handle_config_command')
+      private def handle_config_command
+        debug_log("Entering handle_config_command")
 
-        subcommand = @prompt.select('⚙️ Configuration - Choose operation:'.colorize(:blue)) do |menu|
-          menu.choice '🔧 Setup configuration', 'setup'
-          menu.choice '📋 Show current config', 'show'
-          menu.choice '✏️ Edit configuration', 'edit'
-          menu.choice '🔍 Validate configuration', 'validate'
-          menu.choice '🔄 Reset configuration', 'reset'
-          menu.choice '❓ Help', 'help'
-          menu.choice 'Back to main menu', :back
+        subcommand = @prompt.select("⚙️ Configuration - Choose operation:".colorize(:blue)) do |menu|
+          menu.choice "🔧 Setup configuration", "setup"
+          menu.choice "📋 Show current config", "show"
+          menu.choice "✏️ Edit configuration", "edit"
+          menu.choice "🔍 Validate configuration", "validate"
+          menu.choice "🔄 Reset configuration", "reset"
+          menu.choice "❓ Help", "help"
+          menu.choice "Back to main menu", :back
         end
 
         return :continue if subcommand == :back
@@ -601,7 +498,7 @@ module BlueprintsCLI
         begin
           config_command = BlueprintsCLI::Commands::ConfigCommand.new({})
           config_command.execute(subcommand)
-        rescue StandardError => e
+        rescue => e
           BlueprintsCLI.logger.failure("Error executing config command: #{e.message}")
         end
 
@@ -611,32 +508,32 @@ module BlueprintsCLI
       # Handles the docs command submenu and operations.
       #
       # @return [Symbol] :continue to keep the menu running
-      def handle_docs_command
-        debug_log('Entering handle_docs_command')
+      private def handle_docs_command
+        debug_log("Entering handle_docs_command")
 
-        subcommand = @prompt.select('📖 Documentation - Choose operation:'.colorize(:blue)) do |menu|
-          menu.choice '🏗️ Generate YARD docs for file', 'generate'
-          menu.choice '❓ Help', 'help'
-          menu.choice 'Back to main menu', :back
+        subcommand = @prompt.select("📖 Documentation - Choose operation:".colorize(:blue)) do |menu|
+          menu.choice "🏗️ Generate YARD docs for file", "generate"
+          menu.choice "❓ Help", "help"
+          menu.choice "Back to main menu", :back
         end
 
         return :continue if subcommand == :back
 
         case subcommand
-        when 'generate'
-          file_path = @prompt.ask('Enter the Ruby file path to document:', default: './')
+        when "generate"
+          file_path = @prompt.ask("Enter the Ruby file path to document:", default: "./")
 
           begin
             docs_command = BlueprintsCLI::Commands::DocsCommand.new({})
-            docs_command.execute('generate', file_path)
-          rescue StandardError => e
+            docs_command.execute("generate", file_path)
+          rescue => e
             BlueprintsCLI.logger.failure("Error executing docs command: #{e.message}")
           end
-        when 'help'
+        when "help"
           begin
             docs_command = BlueprintsCLI::Commands::DocsCommand.new({})
-            docs_command.execute('help')
-          rescue StandardError => e
+            docs_command.execute("help")
+          rescue => e
             BlueprintsCLI.logger.failure("Error executing docs help: #{e.message}")
           end
         end
@@ -647,17 +544,17 @@ module BlueprintsCLI
       # Handles the setup command submenu and operations.
       #
       # @return [Symbol] :continue to keep the menu running
-      def handle_setup_command
-        debug_log('Entering handle_setup_command')
+      private def handle_setup_command
+        debug_log("Entering handle_setup_command")
 
-        subcommand = @prompt.select('🔧 Setup - Choose operation:'.colorize(:blue)) do |menu|
-          menu.choice '🚀 Run complete setup wizard', 'wizard'
-          menu.choice '🤖 Setup AI providers only', 'providers'
-          menu.choice '🗄️ Setup database only', 'database'
-          menu.choice '📊 Setup AI models only', 'models'
-          menu.choice '✅ Verify current setup', 'verify'
-          menu.choice '❓ Help', 'help'
-          menu.choice 'Back to main menu', :back
+        subcommand = @prompt.select("🔧 Setup - Choose operation:".colorize(:blue)) do |menu|
+          menu.choice "🚀 Run complete setup wizard", "wizard"
+          menu.choice "🤖 Setup AI providers only", "providers"
+          menu.choice "🗄️ Setup database only", "database"
+          menu.choice "📊 Setup AI models only", "models"
+          menu.choice "✅ Verify current setup", "verify"
+          menu.choice "❓ Help", "help"
+          menu.choice "Back to main menu", :back
         end
 
         return :continue if subcommand == :back
@@ -665,7 +562,7 @@ module BlueprintsCLI
         begin
           setup_command = BlueprintsCLI::Commands::SetupCommand.new({})
           setup_command.execute(subcommand)
-        rescue StandardError => e
+        rescue => e
           BlueprintsCLI.logger.failure("Error executing setup command: #{e.message}")
         end
 
@@ -675,8 +572,8 @@ module BlueprintsCLI
       # Handles the logs command using tty-pager to display log files.
       #
       # @return [Symbol] :continue to keep the menu running
-      def handle_logs_command
-        debug_log('Entering handle_logs_command')
+      private def handle_logs_command
+        debug_log("Entering handle_logs_command")
 
         begin
           # Get the default log path from the logger
@@ -697,7 +594,7 @@ module BlueprintsCLI
 
           # Use tty-pager to display the log file
           TTY::Pager.page(path: log_path)
-        rescue StandardError => e
+        rescue => e
           BlueprintsCLI.logger.failure("Error viewing logs: #{e.message}")
           puts "❌ Error viewing logs: #{e.message}".colorize(:red)
         end
@@ -709,7 +606,7 @@ module BlueprintsCLI
       #
       # @param size [Integer] file size in bytes
       # @return [String] formatted file size
-      def format_file_size(size)
+      private def format_file_size(size)
         units = %w[B KB MB GB TB]
         unit_index = 0
         size_float = size.to_f
@@ -719,6 +616,7 @@ module BlueprintsCLI
           unit_index += 1
         end
 
+        if unit_index.zero?
         if unit_index.zero?
           "#{size_float.to_i} #{units[unit_index]}"
         else

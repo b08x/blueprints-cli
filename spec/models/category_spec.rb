@@ -2,11 +2,11 @@
 
 # spec/models/category_spec.rb
 
-require 'spec_helper'
+require "spec_helper"
 
 RSpec.describe Category, type: :model do
-  describe 'associations' do
-    it 'has and belongs to many blueprints' do
+  describe "associations" do
+    it "has and belongs to many blueprints" do
       # Create a category and associate it with two blueprints
       category = create(:category)
       blueprint1 = create(:blueprint)
@@ -20,10 +20,10 @@ RSpec.describe Category, type: :model do
     end
   end
 
-  describe 'validations' do
-    it 'requires a unique name' do
-      create(:category, name: 'Unique Name')
-      duplicate_category = build(:category, name: 'Unique Name')
+  describe "validations" do
+    it "requires a unique name" do
+      create(:category, name: "Unique Name")
+      duplicate_category = build(:category, name: "Unique Name")
       expect { duplicate_category.save(validate: true) }.to raise_error(Sequel::UniqueConstraintViolation)
     end
   end

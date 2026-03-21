@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'tty-prompt'
-require 'tty-box'
+require "tty-prompt"
+require "tty-box"
 
 module BlueprintsCLI
   module Setup
@@ -18,10 +18,12 @@ module BlueprintsCLI
     #   setup.setup_database
     class SetupManager
       # Error raised when setup is cancelled by user
-      SetupCancelledError = Class.new(StandardError)
+      class SetupCancelledError < StandardError
+      end
 
       # Error raised when setup validation fails
-      SetupValidationError = Class.new(StandardError)
+      class SetupValidationError < StandardError
+      end
 
       # Initialize the setup manager
       #
@@ -48,7 +50,7 @@ module BlueprintsCLI
         rescue SetupCancelledError
           display_cancellation
           false
-        rescue StandardError => e
+        rescue => e
           handle_setup_error(e)
           false
         end
@@ -104,15 +106,12 @@ module BlueprintsCLI
         first_time_setup? || @prompt.yes?('Configuration exists. Run setup anyway?')
       end
 
-      private
-
-      # Display welcome message with ASCII art
-      def display_welcome
+      private def display_welcome
         welcome_box = TTY::Box.frame(
           "🚀 Welcome to BlueprintsCLI Setup! 🚀\n\n" \
-          "This wizard will guide you through the initial configuration\n" \
-          "including AI providers, database setup, and preferences.\n\n" \
-          'Setup typically takes 2-5 minutes.',
+            "This wizard will guide you through the initial configuration\n" \
+            "including AI providers, database setup, and preferences.\n\n" \
+            "Setup typically takes 2-5 minutes.",
           padding: 1,
           align: :center,
           style: { border: { fg: :cyan } }
@@ -123,7 +122,7 @@ module BlueprintsCLI
       # Confirm user wants to continue with setup
       #
       # @return [Boolean] True if user confirms
-      def confirm_continue
+      private def confirm_continue
         if first_time_setup?
           @prompt.yes?('Ready to begin setup?', default: true)
         else
@@ -132,21 +131,23 @@ module BlueprintsCLI
       end
 
       # Run all setup phases in order
-      def run_setup_phases
+      private def run_setup_phases
         phases = [
-          { name: 'Prerequisites Check', method: :check_prerequisites },
-          { name: 'AI Providers', method: :setup_providers },
-          { name: 'Model Configuration', method: :setup_models },
-          { name: 'Database Setup', method: :setup_database },
-          { name: 'Application Preferences', method: :setup_preferences },
-          { name: 'Configuration Generation', method: :generate_config },
-          { name: 'Setup Verification', method: :verify_setup }
+          { name: "Prerequisites Check", method: :check_prerequisites },
+          { name: "AI Providers", method: :setup_providers },
+          { name: "Model Configuration", method: :setup_models },
+          { name: "Database Setup", method: :setup_database },
+          { name: "Application Preferences", method: :setup_preferences },
+          { name: "Configuration Generation", method: :generate_config },
+          { name: "Setup Verification", method: :verify_setup },
         ]
 
         phases.each_with_index do |phase, index|
           @logger.step("Phase #{index + 1}/#{phases.length}: #{phase[:name]}")
 
+
           success = send(phase[:method])
+          raise SetupValidationError, "Setup failed at phase: #{phase[:name]}" unless success
           raise SetupValidationError, "Setup failed at phase: #{phase[:name]}" unless success
 
           display_phase_completion(phase[:name])
@@ -156,16 +157,17 @@ module BlueprintsCLI
       # Check system prerequisites
       #
       # @return [Boolean] True if prerequisites are met
-      def check_prerequisites
-        @logger.info('Checking Ruby version...')
+      private def check_prerequisites
+        @logger.info("Checking Ruby version...")
         ruby_version = RUBY_VERSION
         @logger.success("Ruby #{ruby_version} detected")
 
         @logger.info('Checking required gems...')
         required_gems = %w[tty-prompt tty-config ruby_llm sequel pg]
 
+
         required_gems.each do |gem_name|
-          require gem_name.tr('-', '/')
+          require gem_name.gsub("-", "/")
           @logger.success("✓ #{gem_name}")
         rescue LoadError
           @logger.failure("✗ #{gem_name} (please run: bundle install)")
@@ -178,33 +180,33 @@ module BlueprintsCLI
       # Setup application preferences
       #
       # @return [Boolean] True if preferences setup completed
-      def setup_preferences
-        @logger.info('Configuring application preferences...')
+      private def setup_preferences
+        @logger.info("Configuring application preferences...")
 
         # Editor preference
-        current_editor = ENV['EDITOR'] || ENV['VISUAL'] || 'vim'
-        editor = @prompt.ask('Default editor:', default: current_editor)
+        current_editor = ENV["EDITOR"] || ENV["VISUAL"] || "vim"
+        editor = @prompt.ask("Default editor:", default: current_editor)
         @setup_data[:editor] = { default: editor, auto_save: true }
 
         # Logging preferences
-        log_level = @prompt.select('Console log level:', %w[debug info warn error])
-        file_logging = @prompt.yes?('Enable file logging?', default: true)
+        log_level = @prompt.select("Console log level:", %w[debug info warn error])
+        file_logging = @prompt.yes?("Enable file logging?", default: true)
 
         @setup_data[:logger] = {
           level: log_level,
-          file_logging: file_logging,
+          file_logging:,
           context_enabled: true,
-          context_detail_level: 'full'
+          context_detail_level: "full",
         }
 
         # UI preferences
-        colors = @prompt.yes?('Enable colored output?', default: true)
-        interactive = @prompt.yes?('Enable interactive prompts?', default: true)
+        colors = @prompt.yes?("Enable colored output?", default: true)
+        interactive = @prompt.yes?("Enable interactive prompts?", default: true)
 
         @setup_data[:ui] = {
-          colors: colors,
-          interactive: interactive,
-          pager: 'most'
+          colors:,
+          interactive:,
+          pager: "most",
         }
 
         true
@@ -213,8 +215,8 @@ module BlueprintsCLI
       # Verify the complete setup
       #
       # @return [Boolean] True if verification passes
-      def verify_setup
-        @logger.info('Verifying setup...')
+      private def verify_setup
+        @logger.info("Verifying setup...")
 
         # Test database connection
         if @setup_data[:database]
@@ -232,6 +234,11 @@ module BlueprintsCLI
             @logger.info("Testing #{provider} connection...")
             # Provider verification logic here
             @logger.success("#{provider} connection verified")
+            next unless config[:api_key]
+
+            @logger.info("Testing #{provider} connection...")
+            # Provider verification logic here
+            @logger.success("#{provider} connection verified")
           end
         end
 
@@ -242,21 +249,21 @@ module BlueprintsCLI
       # Display phase completion message
       #
       # @param phase_name [String] Name of completed phase
-      def display_phase_completion(phase_name)
+      private def display_phase_completion(phase_name)
         @logger.success("✓ #{phase_name} completed")
         puts # Add spacing
       end
 
       # Display setup completion message
-      def display_completion
+      private def display_completion
         completion_box = TTY::Box.frame(
           "🎉 Setup Complete! 🎉\n\n" \
-          "BlueprintsCLI has been successfully configured.\n" \
-          "You can now start using the application.\n\n" \
-          "Next steps:\n" \
-          "• Run 'bin/blueprintsCLI' to access the interactive menu\n" \
-          "• Try 'bin/blueprintsCLI blueprint list' to see existing blueprints\n" \
-          '• Visit the documentation for more features',
+            "BlueprintsCLI has been successfully configured.\n" \
+            "You can now start using the application.\n\n" \
+            "Next steps:\n" \
+            "• Run 'bin/blueprintsCLI' to access the interactive menu\n" \
+            "• Try 'bin/blueprintsCLI blueprint list' to see existing blueprints\n" \
+            "• Visit the documentation for more features",
           padding: 1,
           align: :center,
           style: { border: { fg: :green } }
@@ -265,17 +272,17 @@ module BlueprintsCLI
       end
 
       # Display setup cancellation message
-      def display_cancellation
-        @logger.info('Setup cancelled by user.')
-        puts 'You can run setup again anytime with: bin/blueprintsCLI setup'
+      private def display_cancellation
+        @logger.info("Setup cancelled by user.")
+        puts "You can run setup again anytime with: bin/blueprintsCLI setup"
       end
 
       # Handle setup errors
       #
       # @param error [StandardError] The error that occurred
-      def handle_setup_error(error)
+      private def handle_setup_error(error)
         @logger.failure("Setup failed: #{error.message}")
-        @logger.debug(error.backtrace.join("\n")) if ENV['DEBUG']
+        @logger.debug(error.backtrace.join("\n")) if ENV["DEBUG"]
 
         puts "\nSetup encountered an error. Please check the logs and try again."
         puts 'If the problem persists, please create an issue at:'
@@ -285,13 +292,13 @@ module BlueprintsCLI
       # Check if critical configuration is missing
       #
       # @return [Boolean] True if critical config is missing
-      def missing_critical_config?
+      private def missing_critical_config?
         return true unless @config.exist?
 
         # Check for essential configuration
         required_keys = [
           %i[database url],
-          %i[ai sublayer provider]
+          %i[ai sublayer provider],
         ]
 
         required_keys.any? do |keys|
@@ -301,3 +308,4 @@ module BlueprintsCLI
     end
   end
 end
+

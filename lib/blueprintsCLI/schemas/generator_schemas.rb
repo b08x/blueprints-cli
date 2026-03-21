@@ -14,15 +14,15 @@ module BlueprintsCLI
     # Replaces: `llm_output_adapter type: :single_string, name: 'description'`
     class DescriptionSchema < RubyLLM::Schema
       string :description,
-             description: "A clear, concise description of what this code blueprint accomplishes"
+        description: "A clear, concise description of what this code blueprint accomplishes"
     end
 
     # Structured output schema for blueprint category generation.
     # Replaces: `llm_output_adapter type: :list_of_strings, name: 'categories'`
     class CategorySchema < RubyLLM::Schema
       array :categories,
-            of: :string,
-            description: "2-4 relevant category tags for organising this code blueprint"
+        of: :string,
+        description: "2-4 relevant category tags for organising this code blueprint"
     end
   end
 end

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative '../db/models/blueprint'
-require_relative '../db/models/category'
-require 'ruby_llm'
-require 'pgvector'
+require_relative "../models/blueprint"
+require_relative "../models/category"
+require "ruby_llm"
+require "pgvector"
 
 # This service encapsulates the business logic for managing blueprints.
 # It handles the creation and searching of blueprints, interacting with
@@ -31,9 +31,9 @@ class BlueprintService
     DB.transaction do
       # Create a new Blueprint instance.
       blueprint = Blueprint.new(
-        name: params['name'],
-        description: params['description'],
-        code: params['code']
+        name: params["name"],
+        description: params["description"],
+        code: params["code"]
       )
 
       # Generate a vector embedding from the name and description for semantic search.
@@ -52,8 +52,8 @@ class BlueprintService
       blueprint.save
 
       # Process and associate categories if they are provided.
-      if params['categories'] && params['categories'].is_a?(Array)
-        params['categories'].each do |category_name|
+      if params["categories"].is_a?(Array)
+        params["categories"].each do |category_name|
           # Find an existing category or create a new one.
           # This prevents duplicate categories.
           category = Category.find_or_create(name: category_name)

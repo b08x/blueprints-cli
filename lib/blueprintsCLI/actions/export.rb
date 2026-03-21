@@ -59,7 +59,7 @@ module BlueprintsCLI
 
         # Check if file already exists
         if File.exist?(@output_path) && !confirm_overwrite
-          puts '❌ Export cancelled'.colorize(:yellow)
+          puts "❌ Export cancelled".colorize(:yellow)
           return false
         end
 
@@ -71,33 +71,18 @@ module BlueprintsCLI
           show_export_summary(blueprint)
           true
         else
-          puts '❌ Failed to export blueprint'.colorize(:red)
+          puts "❌ Failed to export blueprint".colorize(:red)
           false
         end
-      rescue StandardError => e
+      rescue => e
         BlueprintsCLI.logger.failure("Error exporting blueprint: #{e.message}")
-        BlueprintsCLI.logger.debug(e) if ENV['DEBUG']
+        BlueprintsCLI.logger.debug(e) if ENV["DEBUG"]
         false
       end
 
-      private
-
-      ##
-      # Generates a safe output path for the blueprint file.
-      #
-      # Creates a filename based on the blueprint name and ID, with an appropriate
-      # extension based on the code content. If the file already exists, appends
-      # a number to make it unique.
-      #
-      # @param blueprint [Hash] The blueprint data
-      # @return [String] A unique, safe file path for the blueprint
-      #
-      # @example Generating a path
-      #   generate_output_path(blueprint: {name: "My Blueprint", id: 123, code: "def hello\nend"})
-      #   #=> "my_blueprint_123.rb"
-      def generate_output_path(blueprint)
+      private def generate_output_path(blueprint)
         # Create safe filename from blueprint name
-        safe_name = (blueprint[:name] || 'blueprint').gsub(/[^a-zA-Z0-9_-]/, '_').downcase
+        safe_name = (blueprint[:name] || "blueprint").gsub(/[^a-zA-Z0-9_-]/, "_").downcase
         extension = detect_file_extension(blueprint[:code])
 
         base_filename = "#{safe_name}_#{@id}#{extension}"
@@ -129,30 +114,30 @@ module BlueprintsCLI
       #
       # @example Detecting JavaScript code
       #   detect_file_extension("function hello() {\n}") #=> ".js"
-      def detect_file_extension(code)
+      private def detect_file_extension(code)
         case code
         when /class\s+\w+.*<.*ApplicationRecord/m, /def\s+\w+.*end/m, /require ['"].*['"]/m
-          '.rb'
+          ".rb"
         when /function\s+\w+\s*\(/m, /const\s+\w+\s*=/m, /import\s+.*from/m
-          '.js'
+          ".js"
         when /def\s+\w+\s*\(/m, /import\s+\w+/m, /from\s+\w+\s+import/m
-          '.py'
+          ".py"
         when /#include\s*<.*>/m, /int\s+main\s*\(/m
-          '.c'
+          ".c"
         when /public\s+class\s+\w+/m, /import\s+java\./m
-          '.java'
+          ".java"
         when /fn\s+\w+\s*\(/m, /use\s+std::/m
-          '.rs'
+          ".rs"
         when /func\s+\w+\s*\(/m, /package\s+main/m
-          '.go'
+          ".go"
         when /<\?php/m, /namespace\s+\w+/m
-          '.php'
+          ".php"
         when /<!DOCTYPE html/mi, /<html/mi
-          '.html'
+          ".html"
         when /^#!/m
-          '' # Script files often have no extension
+          "" # Script files often have no extension
         else
-          '.txt'
+          ".txt"
         end
       end
 
@@ -163,9 +148,9 @@ module BlueprintsCLI
       #
       # @example Confirming overwrite
       #   confirm_overwrite #=> Prompts user and returns true if they respond "y" or "yes"
-      def confirm_overwrite
+      private def confirm_overwrite
         print "⚠️  File '#{@output_path}' already exists. Overwrite? (y/N): "
-        response = STDIN.gets.chomp.downcase
+        response = $stdin.gets.chomp.downcase
         %w[y yes].include?(response)
       end
 
@@ -179,18 +164,18 @@ module BlueprintsCLI
       #
       # @example Exporting a blueprint
       #   export_blueprint(blueprint: {id: 123, code: "def hello\nend"}) #=> true
-      def export_blueprint(blueprint)
+      private def export_blueprint(blueprint)
         content = build_export_content(blueprint)
 
         begin
           # Ensure directory exists
           dir = File.dirname(@output_path)
-          FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
+          FileUtils.mkdir_p(dir)
 
           # Write the file
           File.write(@output_path, content)
           true
-        rescue StandardError => e
+        rescue => e
           BlueprintsCLI.logger.failure("Failed to write file: #{e.message}")
           false
         end
@@ -204,7 +189,7 @@ module BlueprintsCLI
       #
       # @example Building content with metadata
       #   build_export_content(blueprint: {id: 123, code: "def hello\nend"}) #=> String with metadata
-      def build_export_content(blueprint)
+      private def build_export_content(blueprint)
         if @include_metadata
           build_content_with_metadata(blueprint)
         else
@@ -224,26 +209,26 @@ module BlueprintsCLI
       # @example Building content with metadata
       #   build_content_with_metadata(blueprint: {id: 123, code: "def hello\nend"})
       #   #=> String with metadata comments followed by code
-      def build_content_with_metadata(blueprint)
+      private def build_content_with_metadata(blueprint)
         content = []
 
         # Add metadata as comments based on file type
         comment_style = get_comment_style(@output_path)
 
-        content << format_comment('Blueprint Export', comment_style)
-        content << format_comment('=' * 50, comment_style)
+        content << format_comment("Blueprint Export", comment_style)
+        content << format_comment("=" * 50, comment_style)
         content << format_comment("ID: #{blueprint[:id]}", comment_style)
         content << format_comment("Name: #{blueprint[:name]}", comment_style)
         content << format_comment("Description: #{blueprint[:description]}", comment_style)
 
-        if blueprint[:categories] && blueprint[:categories].any?
+        if blueprint[:categories]&.any?
           category_names = blueprint[:categories].map { |cat| cat[:title] }
           content << format_comment("Categories: #{category_names.join(', ')}", comment_style)
         end
 
         content << format_comment("Exported: #{Time.now}", comment_style)
-        content << format_comment('=' * 50, comment_style)
-        content << ''
+        content << format_comment("=" * 50, comment_style)
+        content << ""
         content << blueprint[:code]
 
         content.join("\n")
@@ -260,18 +245,18 @@ module BlueprintsCLI
       #
       # @example Getting comment style for JavaScript file
       #   get_comment_style("example.js") #=> "//"
-      def get_comment_style(filename)
+      private def get_comment_style(filename)
         case File.extname(filename).downcase
-        when '.rb', '.py', '.sh'
-          '#'
-        when '.js', '.java', '.c', '.cpp', '.cs', '.go', '.rs', '.php'
-          '//'
-        when '.html', '.xml'
-          '<!--'
-        when '.css'
-          '/*'
+        when ".rb", ".py", ".sh"
+          "#"
+        when ".js", ".java", ".c", ".cpp", ".cs", ".go", ".rs", ".php"
+          "//"
+        when ".html", ".xml"
+          "<!--"
+        when ".css"
+          "/*"
         else
-          '#'
+          "#"
         end
       end
 
@@ -287,11 +272,11 @@ module BlueprintsCLI
       #
       # @example Formatting an HTML comment
       #   format_comment("Hello", "<!--") #=> "<!-- Hello -->"
-      def format_comment(text, style)
+      private def format_comment(text, style)
         case style
-        when '<!--'
+        when "<!--"
           "<!-- #{text} -->"
-        when '/*'
+        when "/*"
           "/* #{text} */"
         else
           "#{style} #{text}"
@@ -307,21 +292,21 @@ module BlueprintsCLI
       # @example Showing export summary
       #   show_export_summary(blueprint: {id: 123, name: "Example"})
       #   #=> Outputs a summary to the console
-      def show_export_summary(blueprint)
+      private def show_export_summary(blueprint)
         puts "\n📋 Export Summary:".colorize(:blue)
         puts "   Blueprint: #{blueprint[:name]} (ID: #{@id})"
         puts "   File: #{@output_path}"
         puts "   Size: #{File.size(@output_path)} bytes"
         puts "   Format: #{@include_metadata ? 'Code with metadata' : 'Code only'}"
 
-        if blueprint[:categories] && blueprint[:categories].any?
+        if blueprint[:categories]&.any?
           category_names = blueprint[:categories].map { |cat| cat[:title] }
           puts "   Categories: #{category_names.join(', ')}"
         end
 
-        puts ''
-        puts '💡 Tip: Use --include-metadata flag to export with blueprint information'.colorize(:cyan)
-        puts ''
+        puts ""
+        puts "💡 Tip: Use --include-metadata flag to export with blueprint information".colorize(:cyan)
+        puts ""
       end
     end
   end
