@@ -21,7 +21,7 @@ module BlueprintsCLI
     include Dry::Monads[:result, :do]
 
     # The Ollama embedding model used for generating text embeddings.
-    EMBEDDING_MODEL = "embeddinggemma:latest"
+    EMBEDDING_MODEL = "embeddinggemma"
     # The number of dimensions for the text embedding vectors.
     EMBEDDING_DIMENSIONS = 768
 

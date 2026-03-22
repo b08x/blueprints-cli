@@ -139,7 +139,7 @@ module BlueprintsCLI
     # Analyzes a given code blueprint using RubyLLM to suggest specific, actionable
     # improvements across various categories like quality, performance, and security.
     #
-    # This generator replaces the previous Sublayer-based implementation with RubyLLM,
+    # This generator uses RubyLLM,
     # providing the same interface while adding metadata access capabilities and
     # improved reliability.
     #
@@ -178,10 +178,10 @@ module BlueprintsCLI
       # @param code [String] The source code to be analyzed.
       # @param description [String, nil] An optional high-level description of the code's
       #   functionality to provide more context to the LLM.
-      def initialize(code:, description: nil)
+      def initialize(code:, description: nil, config: BlueprintsCLI.configuration)
         @code = code
         @description = description
-        @config = BlueprintsCLI::Configuration.new
+        @config = config
       end
 
       # Executes the code analysis and returns the suggested improvements.

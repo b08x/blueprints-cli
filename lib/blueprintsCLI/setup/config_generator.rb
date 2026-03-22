@@ -13,7 +13,8 @@ module BlueprintsCLI
       CONFIG_TEMPLATE = {
         database: {},
         ai: {
-          sublayer: {},
+          provider: nil,
+          model: nil,
           rubyllm: {},
           openai: { log_errors: true },
         },
@@ -107,13 +108,13 @@ module BlueprintsCLI
 
       # Build AI configuration section
       private def build_ai_config
-        build_sublayer_config
+        build_ai_provider_config
         build_rubyllm_config
         build_provider_specific_config
       end
 
-      # Build Sublayer AI configuration
-      private def build_sublayer_config
+      # Build AI provider configuration (provider and model at top level of ai: section)
+      private def build_ai_provider_config
         primary_provider = @setup_data[:primary_provider]
         return unless primary_provider
 
@@ -125,13 +126,8 @@ module BlueprintsCLI
           deepseek: "DeepSeek",
         }
 
-        @generated_config[:ai][:sublayer] = {
-          provider: provider_map[primary_provider] || "Gemini",
-          model: @setup_data[:models]&.dig(:chat, :id) || "gemini-2.0-flash",
-          project_name: "BlueprintsCLI",
-          template: "default",
-          project_template: "CLI",
-        }
+        @generated_config[:ai][:provider] = provider_map[primary_provider] || "Gemini"
+        @generated_config[:ai][:model] = @setup_data[:models]&.dig(:chat, :id) || "gemini-2.0-flash"
       end
 
       # Build RubyLLM configuration
@@ -231,7 +227,7 @@ module BlueprintsCLI
         end
 
         # Validate AI provider configuration
-        raise StandardError, "AI provider must be specified" unless @generated_config[:ai][:sublayer][:provider]
+        raise StandardError, "AI provider must be specified" unless @generated_config[:ai][:provider]
 
         @logger.success("Configuration validation passed")
       end
@@ -291,10 +287,8 @@ module BlueprintsCLI
       # @return [String] AI section YAML
       private def generate_ai_yaml_section
         content = "ai:\n"
-        content += "  sublayer:\n"
-        @generated_config[:ai][:sublayer].each do |key, value|
-          content += "    #{key}: #{value}\n"
-        end
+        content += "  provider: #{@generated_config[:ai][:provider]}\n" if @generated_config[:ai][:provider]
+        content += "  model: #{@generated_config[:ai][:model]}\n" if @generated_config[:ai][:model]
 
         content += "  rubyllm:\n"
         @generated_config[:ai][:rubyllm].each do |key, value|

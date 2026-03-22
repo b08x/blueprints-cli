@@ -119,7 +119,7 @@ module BlueprintsCLI
           BlueprintsCLI.logger.info("\nTroubleshooting:")
           BlueprintsCLI.logger.info("1. Ensure Ollama is running: ollama serve")
           BlueprintsCLI.logger.info("2. Check if embeddinggemma model is available: ollama list | grep embeddinggemma")
-          BlueprintsCLI.logger.info("3. Pull the model if missing: ollama pull embeddinggemma:latest")
+          BlueprintsCLI.logger.info("3. Pull the model if missing: ollama pull embeddinggemma")
           BlueprintsCLI.logger.info("4. Verify OLLAMA_API_BASE environment variable if using custom endpoint")
         end
 

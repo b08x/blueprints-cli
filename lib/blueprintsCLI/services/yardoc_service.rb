@@ -287,21 +287,9 @@ module BlueprintsCLI
         @prompt.yes?("Apply YARD documentation to file?")
       end
 
-      # Configure RubyLLM with available API keys
+      # Delegate RubyLLM configuration to the unified Configuration singleton.
       private def configure_rubyllm
-        RubyLLM.configure do |config|
-          # Use Gemini if available
-          if ENV["GEMINI_API_KEY"]
-            config.gemini_api_key = ENV["GEMINI_API_KEY"]
-          # Use OpenRouter if available
-          elsif ENV["OPENROUTER_API_KEY"]
-            config.openai_api_key = ENV["OPENROUTER_API_KEY"]
-            config.openai_api_base = "https://openrouter.ai/api/v1"
-          # Use OpenAI if available
-          elsif ENV["OPENAI_API_KEY"]
-            config.openai_api_key = ENV["OPENAI_API_KEY"]
-          end
-        end
+        BlueprintsCLI.configuration.configure_rubyllm!
       end
 
       # Create chat instance with appropriate model and provider

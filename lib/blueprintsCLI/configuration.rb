@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "dry/monads"
 require "tty-config"
 require "fileutils"
 require "ruby_llm"
@@ -12,18 +13,20 @@ module BlueprintsCLI
   #
   # Handles configuration for:
   # - BlueprintsCLI application settings
-  # - Sublayer AI provider configuration
+  # - AI provider configuration
   # - Ruby LLM provider settings
   # - Logger configuration
   #
   # @example Basic usage
   #   config = BlueprintsCLI::Configuration.new
-  #   config.fetch(:blueprints, :database, :url)
+  #   config.fetch(:database, :url)
   #
   # @example Environment variables
   #   ENV['BLUEPRINTS_DATABASE_URL'] = 'postgres://...'
-  #   config.fetch(:blueprints, :database, :url) # Returns env var value
+  #   config.fetch(:database, :url) # Returns env var value
   class Configuration
+    include Dry::Monads[:result, :try]
+
     # Error raised when configuration validation fails
     class ValidationError < StandardError
     end
@@ -64,7 +67,7 @@ module BlueprintsCLI
     #
     # @example
     #   config.fetch(:blueprints, :database, :url)
-    #   config.fetch(:ai, :sublayer, :provider, default: 'gemini')
+    #   config.fetch(:ai, :provider, default: 'gemini')
     def fetch(*keys, default: nil)
       @config.fetch(*keys, default:)
     end
@@ -131,34 +134,13 @@ module BlueprintsCLI
 
     # Validate entire configuration
     #
-    # @return [Array<String>] Array of validation error messages (empty if valid)
+    # @return [true] Returns true on success, raises ValidationError on failure
     def validate!
-      errors = []
-
-      begin
-        validate_blueprints!
-      rescue ValidationError => e
-        errors << e.message
-      end
-
-      begin
-        validate_ai!
-      rescue ValidationError => e
-        errors << e.message
-      end
-
-      begin
-        validate_logger!
-      rescue ValidationError => e
-        errors << e.message
-      end
-
-      unless errors.empty?
-        raise ValidationError,
-          "Configuration validation failed:\n#{errors.join("\n")}"
-      end
-
-      true
+      validate_blueprints
+        .bind { validate_ai }
+        .bind { validate_logger }
+        .or { |msg| raise ValidationError, msg }
+        .value!
     end
 
     # Check if configuration is valid
@@ -175,7 +157,7 @@ module BlueprintsCLI
     #
     # @return [String, nil] Database URL
     def database_url
-      fetch(:blueprints, :database, :url) ||
+      fetch(:database, :url) ||
         ENV["BLUEPRINT_DATABASE_URL"] ||
         ENV["DATABASE_URL"] ||
         build_database_url
@@ -226,8 +208,7 @@ module BlueprintsCLI
       config_hash[:deepseek_api_key] = ai_api_key(:deepseek) if ai_api_key(:deepseek)
 
       # Add custom API base if configured
-      config_hash[:openai_api_base] = fetch(:ai, :ruby_llm, :openai_api_base) if fetch(:ai,
-        :ruby_llm, :openai_api_base)
+      config_hash[:openai_api_base] = fetch(:ai, :rubyllm, :openai_api_base) if fetch(:ai, :rubyllm, :openai_api_base)
 
       config_hash
     end
@@ -304,49 +285,45 @@ module BlueprintsCLI
       write(force: true)
     end
 
-    # Configure external provider libraries based on unified configuration
-    def configure_providers
-      # configure_rubyllm  # MOVED TO POST-INIT - was causing circular dependency
-      configure_openai_gem
-    end
-
     # Configure RubyLLM on-demand (lazy loading to avoid circular dependencies)
     def configure_rubyllm!
       return if @rubyllm_configured
 
-      RubyLLM.configure do |config|
-        # API Keys - use the existing ai_api_key method that checks environment variables
-        config.openai_api_key = ai_api_key(:openai)
-        config.openrouter_api_key = ai_api_key(:openrouter)
-        config.gemini_api_key = ai_api_key(:gemini)
-        config.anthropic_api_key = ai_api_key(:anthropic)
-        config.deepseek_api_key = ai_api_key(:deepseek)
+      result = Try(:StandardError) do
+        RubyLLM.configure do |config|
+          # API Keys - use the existing ai_api_key method that checks environment variables
+          config.openai_api_key = ai_api_key(:openai)
+          config.openrouter_api_key = ai_api_key(:openrouter)
+          config.gemini_api_key = ai_api_key(:gemini)
+          config.anthropic_api_key = ai_api_key(:anthropic)
+          config.deepseek_api_key = ai_api_key(:deepseek)
 
-        # Custom endpoints
-        config.openai_api_base = fetch(:ai, :rubyllm, :openai_api_base)
-        config.ollama_api_base = fetch(:ai, :rubyllm, :ollama_api_base)
+          # Custom endpoints
+          config.openai_api_base = fetch(:ai, :rubyllm, :openai_api_base)
+          config.ollama_api_base = fetch(:ai, :rubyllm, :ollama_api_base)
 
-        # Default models
-        config.default_model = fetch(:ai, :rubyllm, :default_model)
-        config.default_embedding_model = fetch(:ai, :rubyllm, :default_embedding_model)
-        config.default_image_model = fetch(:ai, :rubyllm, :default_image_model)
+          # Default models
+          config.default_model = fetch(:ai, :rubyllm, :default_model)
+          config.default_embedding_model = fetch(:ai, :rubyllm, :default_embedding_model)
+          config.default_image_model = fetch(:ai, :rubyllm, :default_image_model)
 
-        # Connection settings
-        config.request_timeout = fetch(:ai, :rubyllm, :request_timeout)
-        config.max_retries = fetch(:ai, :rubyllm, :max_retries)
-        config.retry_interval = fetch(:ai, :rubyllm, :retry_interval)
-        config.retry_backoff_factor = fetch(:ai, :rubyllm, :retry_backoff_factor)
-        config.retry_interval_randomness = fetch(:ai, :rubyllm, :retry_interval_randomness)
+          # Connection settings
+          config.request_timeout = fetch(:ai, :rubyllm, :request_timeout)
+          config.max_retries = fetch(:ai, :rubyllm, :max_retries)
+          config.retry_interval = fetch(:ai, :rubyllm, :retry_interval)
+          config.retry_backoff_factor = fetch(:ai, :rubyllm, :retry_backoff_factor)
+          config.retry_interval_randomness = fetch(:ai, :rubyllm, :retry_interval_randomness)
 
-        # Logging settings
-        log_file = fetch(:ai, :rubyllm, :log_file)
-        config.log_file = log_file unless log_file.nil?
-        config.log_level = fetch(:ai, :rubyllm, :log_level)&.to_sym || :info
-      end
+          # Logging settings
+          log_file = fetch(:ai, :rubyllm, :log_file)
+          config.log_file = log_file unless log_file.nil?
+          config.log_level = fetch(:ai, :rubyllm, :log_level)&.to_sym || :info
+        end
 
-      @rubyllm_configured = true
-    rescue => e
-      BlueprintsCLI.logger.failure("Error configuring RubyLLM: #{e.message}")
+        @rubyllm_configured = true
+      end.to_result
+
+      result.or { |e| BlueprintsCLI.logger.failure("Error configuring RubyLLM: #{e.message}") }
     end
 
     private def validate_terminal_command
@@ -370,7 +347,7 @@ module BlueprintsCLI
       puts "\n🤖 AI Provider Configuration"
 
       provider = prompt.select("Select AI provider:", %w[Gemini OpenAI Anthropic DeepSeek])
-      set(:ai, :sublayer, :provider, value: provider)
+      set(:ai, :provider, value: provider)
 
       case provider.downcase
       when "gemini"
@@ -454,15 +431,12 @@ module BlueprintsCLI
 
       # Map common environment variables
       setup_env_mappings
-
-      # Configure external providers
-      configure_providers
     end
 
     # Set default configuration values
     private def set_defaults
-      # Blueprints defaults
-      @config.set_if_empty(:blueprints, :database, :url,
+      # Database defaults (top-level key matching config.yml)
+      @config.set_if_empty(:database, :url,
         value: "postgresql://postgres:blueprints@localhost:5432/blueprints")
       @config.set_if_empty(:blueprints, :features, :auto_description, value: true)
       @config.set_if_empty(:blueprints, :features, :auto_categorize, value: true)
@@ -480,13 +454,13 @@ module BlueprintsCLI
       @config.set_if_empty(:blueprints, :ui, :pager, value: true)
 
       # AI defaults
-      @config.set_if_empty(:ai, :sublayer, :provider, value: "Gemini")
-      @config.set_if_empty(:ai, :sublayer, :model, value: "gemini-2.0-flash")
-      @config.set_if_empty(:ai, :embedding_model, value: "embeddinggemma:latest")
+      @config.set_if_empty(:ai, :provider, value: "Gemini")
+      @config.set_if_empty(:ai, :model, value: "gemini-2.0-flash")
+      @config.set_if_empty(:ai, :embedding_model, value: "embeddinggemma")
 
       # RubyLLM defaults
       @config.set_if_empty(:ai, :rubyllm, :default_model, value: "gemini-2.0-flash")
-      @config.set_if_empty(:ai, :rubyllm, :default_embedding_model, value: "embeddinggemma:latest")
+      @config.set_if_empty(:ai, :rubyllm, :default_embedding_model, value: "embeddinggemma")
       @config.set_if_empty(:ai, :rubyllm, :default_image_model, value: "imagen-3.0-generate-002")
       @config.set_if_empty(:ai, :rubyllm, :request_timeout, value: 120)
       @config.set_if_empty(:ai, :rubyllm, :max_retries, value: 3)
@@ -508,8 +482,8 @@ module BlueprintsCLI
     # Setup environment variable mappings
     private def setup_env_mappings
       # Database
-      @config.set_from_env(:blueprints, :database, :url) { "BLUEPRINT_DATABASE_URL" }
-      @config.set_from_env(:blueprints, :database, :url) { "DATABASE_URL" }
+      @config.set_from_env(:database, :url) { "BLUEPRINT_DATABASE_URL" }
+      @config.set_from_env(:database, :url) { "DATABASE_URL" }
 
       # Editor
       @config.set_from_env(:blueprints, :editor) { "EDITOR" }
@@ -537,7 +511,7 @@ module BlueprintsCLI
     # Setup validation rules
     private def setup_validations
       # Database URL validation
-      @config.validate(:blueprints, :database, :url) do |key, value|
+      @config.validate(:database, :url) do |key, value|
         unless value.is_a?(String) && !value.empty?
           raise ValidationError,
             "#{key} must be a non-empty string"
@@ -573,7 +547,7 @@ module BlueprintsCLI
       end
 
       # AI provider validation
-      @config.validate(:ai, :sublayer, :provider) do |key, value|
+      @config.validate(:ai, :provider) do |key, value|
         valid_providers = %w[Gemini OpenAI Anthropic DeepSeek]
         unless valid_providers.include?(value)
           raise ValidationError, "#{key} must be one of: #{valid_providers.join(', ')}"
@@ -622,31 +596,38 @@ module BlueprintsCLI
     end
 
     # Validate blueprints section
-    private def validate_blueprints!
-      database_url = fetch(:blueprints, :database, :url)
-      # Only validate if we're not using the default fallback
-      return unless database_url.nil? || (database_url.empty? && !ENV["BLUEPRINT_DATABASE_URL"] && !ENV["DATABASE_URL"])
+    #
+    # @return [Dry::Monads::Result] Success or Failure
+    private def validate_blueprints
+      db_url = fetch(:database, :url)
+      # Only validate if we're not using the env-var fallback
+      if db_url.nil? || (db_url.empty? && !ENV["BLUEPRINT_DATABASE_URL"] && !ENV["DATABASE_URL"])
+        return Failure("Database URL is required")
+      end
 
-      raise ValidationError, "Database URL is required"
+      Success(true)
     end
 
     # Validate AI section
-    private def validate_ai!
-      provider = fetch(:ai, :sublayer, :provider)
-      model = fetch(:ai, :sublayer, :model)
+    #
+    # @return [Dry::Monads::Result] Success or Failure
+    private def validate_ai
+      provider = fetch(:ai, :provider)
+      model = fetch(:ai, :model)
 
-      raise ValidationError, "AI provider is required" if provider.nil? || provider.empty?
+      return Failure("AI provider is required") if provider.nil? || provider.empty?
+      return Failure("AI model is required") if model.nil? || model.empty?
 
-      raise ValidationError, "AI model is required" if model.nil? || model.empty?
-
-      # Check if API key is available for the provider
+      # Check if API key is available for the provider (warn only, not a hard failure)
       api_key = ai_api_key(provider)
       if api_key.nil? || api_key.empty?
         BlueprintsCLI.logger.warn("No API key found for AI provider '#{provider}'. Set the appropriate environment variable.")
       end
 
-      # Validate Ollama-specific configuration
+      # Validate Ollama-specific configuration (warns only)
       validate_ollama_config!
+
+      Success(true)
     end
 
     # Validate Ollama-specific configuration
@@ -665,38 +646,25 @@ module BlueprintsCLI
     end
 
     # Validate logger section
-    private def validate_logger!
+    #
+    # @return [Dry::Monads::Result] Success or Failure
+    private def validate_logger
       level = fetch(:logger, :level)
       if level && !%w[debug info warn error fatal].include?(level.to_s.downcase)
-        raise ValidationError, "Invalid logger level: #{level}"
+        return Failure("Invalid logger level: #{level}")
       end
 
-      return unless fetch(:logger, :file_logging) && fetch(:logger, :file_path).nil?
+      if fetch(:logger, :file_logging) && fetch(:logger, :file_path).nil?
+        return Failure("Logger file path is required when file logging is enabled")
+      end
 
-      raise ValidationError, "Logger file path is required when file logging is enabled"
+      Success(true)
     end
 
     # Get default log file path
     private def default_log_path
       state_home = ENV["XDG_STATE_HOME"] || File.expand_path("~/.local/state")
       File.join(state_home, "BlueprintsCLI", "app.log")
-    end
-
-    # Configure legacy OpenAI gem with settings from unified config system
-    def configure_openai_gem
-      return unless defined?(OpenAI)
-
-      OpenAI.configure do |config|
-        # Use environment variables directly for OpenAI gem
-        access_token = ENV["OPENAI_ACCESS_TOKEN"] || ai_api_key(:openai)
-        base_uri = ENV.fetch("OPENAI_BASE_URI", nil)
-
-        config.access_token = access_token if access_token
-        config.uri_base = base_uri if base_uri
-        config.log_errors = fetch(:ai, :openai, :log_errors, default: true)
-      end
-    rescue => e
-      BlueprintsCLI.logger.failure("Error configuring OpenAI gem: #{e.message}")
     end
   end
 end

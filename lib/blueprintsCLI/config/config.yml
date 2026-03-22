@@ -9,15 +9,11 @@ database:
 
 # AI Provider Configuration
 ai:
-  sublayer:
-    provider: OpenAI
-    model: z-ai/glm-4.7
-    project_name: BlueprintsCLI
-    template: default
-    project_template: CLI
+  provider: OpenAI
+  model: minimax/minimax-m2.5
   rubyllm:
-    default_model: z-ai/glm-4.7
-    default_embedding_model: embeddinggemma:latest
+    default_model: minimax/minimax-m2.5
+    default_embedding_model: embeddinggemma
     default_image_model: imagen-3.0-generate-002
     ollama_api_base: http://tinybot:11434
     request_timeout: 120
@@ -30,7 +26,7 @@ ai:
     openai_api_base: https://openrouter.ai/api/v1
   openai:
     log_errors: true
-  embedding_model: embeddinggemma:latest
+  embedding_model: embeddinggemma
 
 # Logging Configuration
 logger:

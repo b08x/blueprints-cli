@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Migration to clear existing Google text-embedding-004 embeddings
-# in preparation for switching to Ollama embeddinggemma:latest model.
+# in preparation for switching to Ollama embeddinggemma model.
 #
 # This migration sets all existing embeddings to NULL so they can be
 # regenerated using the new Ollama model, ensuring consistency across

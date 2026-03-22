@@ -74,9 +74,9 @@ module BlueprintsCLI
 
           # AI Configuration
           puts "AI Configuration:".colorize(:cyan)
-          puts "  Provider: #{@config.fetch(:ai, :sublayer, :provider, default: 'Not set')}"
-          puts "  Model: #{@config.fetch(:ai, :sublayer, :model, default: 'Not set')}"
-          ai_provider = @config.fetch(:ai, :sublayer, :provider, default: "").downcase
+          puts "  Provider: #{@config.fetch(:ai, :provider, default: 'Not set')}"
+          puts "  Model: #{@config.fetch(:ai, :model, default: 'Not set')}"
+          ai_provider = @config.fetch(:ai, :provider, default: "").downcase
           api_key_status = @config.ai_api_key(ai_provider) ? "Set" : "Not set"
           puts "  API Key: #{api_key_status}"
           puts "  Embedding Model: #{@config.fetch(:ai, :embedding_model, default: 'Not set')}"
@@ -428,7 +428,7 @@ module BlueprintsCLI
         total_tests = 0
 
         # Test configured AI provider
-        ai_provider = @config.fetch(:ai, :sublayer, :provider, default: "").downcase
+        ai_provider = @config.fetch(:ai, :provider, default: "").downcase
         unless ai_provider.empty?
           total_tests += 1
           api_key = @config.ai_api_key(ai_provider)
@@ -475,7 +475,7 @@ module BlueprintsCLI
           return false
         end
 
-        if system("which #{editor} > /dev/null 2>&1")
+        if TTY::Which.exist?(editor)
           BlueprintsCLI.logger.success("Editor '#{editor}' found")
           true
         else

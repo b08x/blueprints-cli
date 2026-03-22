@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "dry/monads"
 require_relative "../generators/description"
 require_relative "../generators/improvement"
 require_relative "../generators/name"
@@ -7,12 +8,12 @@ require_relative "../generators/name"
 module BlueprintsCLI
   module Services
     #
-    # AI-powered code generation service that uses the existing Sublayer
-    # infrastructure to generate code based on user prompts and requirements.
+    # AI-powered code generation service that uses RubyLLM to generate code
+    # based on user prompts and requirements.
     #
     # This service integrates with the existing generator classes and uses
-    # the configured LLM providers (Ollama/OpenRouter) to create code snippets
-    # based on natural language descriptions.
+    # the configured LLM providers to create code snippets based on natural
+    # language descriptions.
     #
     class AICodeGenerator
       #
@@ -26,30 +27,24 @@ module BlueprintsCLI
       # @return [Hash] Generated code and metadata
       #
       def generate_code(prompt:, language: "javascript", framework: "react", options: {})
-        # Use Sublayer to generate code based on the prompt
-        generator = CodeGenerationAgent.new(
-          prompt:,
-          language:,
-          framework:,
-          options:
-        )
+        result = CodeGenerator.new(prompt:, language:, framework:, options:).call
 
-        result = generator.generate
-
-        {
-          code: result,
-          language:,
-          framework:,
-          prompt:,
-          generated_at: Time.now.iso8601,
-          success: true,
-        }
-      rescue => e
-        {
-          error: "Code generation failed: #{e.message}",
-          success: false,
-          generated_at: Time.now.iso8601,
-        }
+        if result.success?
+          {
+            code: result.value!,
+            language:,
+            framework:,
+            prompt:,
+            generated_at: Time.now.iso8601,
+            success: true,
+          }
+        else
+          {
+            error: "Code generation failed: #{result.failure}",
+            success: false,
+            generated_at: Time.now.iso8601,
+          }
+        end
       end
 
       #
@@ -59,11 +54,9 @@ module BlueprintsCLI
       # @return [Hash] Generated metadata
       #
       def generate_metadata(code)
-        # Use the existing Description generator
         description_generator = BlueprintsCLI::Generators::Description.new(code:)
         description = description_generator.generate
 
-        # Use the existing Name generator if available
         name_generator = BlueprintsCLI::Generators::Name.new(code:)
         name = name_generator.generate
 
@@ -122,8 +115,6 @@ module BlueprintsCLI
 
       private def estimate_complexity(code)
         lines = code.lines.count
-
-        # Count complexity indicators
         complexity_score = 0
         complexity_score += code.scan(/if\s+|else\s+|elsif\s+|case\s+|when\s+/).length
         complexity_score += code.scan(/for\s+|while\s+|forEach|map\(|filter\(/).length
@@ -137,23 +128,32 @@ module BlueprintsCLI
       end
     end
 
-    # Sublayer generator for code generation
-    class CodeGenerationAgent < Sublayer::Generators::Base
-      llm_output_adapter type: :single_string,
-        name: "generated_code",
-        description: "The generated source code based on the user prompt"
+    # Plain Ruby code generator using RubyLLM.
+    # Follows the Generators::Description pattern: RubyLLM.chat + Dry::Monads Result.
+    class CodeGenerator
+      include Dry::Monads[:result]
 
-      def initialize(prompt:, language:, framework:, options: {})
+      def initialize(prompt:, language:, framework:, options: {}, config: BlueprintsCLI.configuration)
         @prompt = prompt
         @language = language
         @framework = framework
         @options = options
+        @config = config
       end
 
-      def prompt
+      def call
+        @config.configure_rubyllm!
+        model = @config.fetch(:ai, :rubyllm, :default_model) || "gemini-2.0-flash"
+        response = RubyLLM.chat(model:).ask(build_prompt)
+        Success(response.content)
+      rescue => e
+        Failure(e.message)
+      end
+
+      private def build_prompt
         base_prompt = <<~PROMPT
           Generate #{@language} code for the following request: #{@prompt}
-          
+
           Requirements:
           - Language: #{@language}
           - Framework: #{@framework}
@@ -161,14 +161,13 @@ module BlueprintsCLI
           - Follow best practices for #{@language} and #{@framework}
           - Include proper error handling where appropriate
           - Make the code reusable and modular
-          
+
         PROMPT
 
-        # Add framework-specific guidance
         case @framework.downcase
         when "react"
           base_prompt += <<~REACT_PROMPT
-            
+
             React-specific requirements:
             - Use functional components with hooks
             - Include proper PropTypes or TypeScript interfaces if applicable
@@ -178,7 +177,7 @@ module BlueprintsCLI
           REACT_PROMPT
         when "vue"
           base_prompt += <<~VUE_PROMPT
-            
+
             Vue-specific requirements:
             - Use Vue 3 composition API style
             - Include proper template, script, and style sections
@@ -187,7 +186,7 @@ module BlueprintsCLI
           VUE_PROMPT
         when "express"
           base_prompt += <<~EXPRESS_PROMPT
-            
+
             Express-specific requirements:
             - Use proper middleware structure
             - Include error handling middleware

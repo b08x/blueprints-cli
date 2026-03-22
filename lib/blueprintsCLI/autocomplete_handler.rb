@@ -500,8 +500,8 @@ module BlueprintsCLI
         logger.level
         logger.file_logging
         logger.file_path
-        ai.sublayer.provider
-        ai.sublayer.model
+        ai.provider
+        ai.model
         ai.rubyllm.default_model
         database.url
         editor.default

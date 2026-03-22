@@ -290,7 +290,7 @@ module BlueprintsCLI
         # Check for essential configuration
         required_keys = [
           %i[database url],
-          %i[ai sublayer provider],
+          %i[ai provider],
         ]
 
         required_keys.any? do |keys|
