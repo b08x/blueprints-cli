@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require_relative 'base_processor'
+require_relative "base_processor"
 
 begin
-  require 'ruby-spacy'
+  require "ruby-spacy"
   SPACY_AVAILABLE = true
 rescue LoadError
   SPACY_AVAILABLE = false
-  puts 'Warning: ruby-spacy gem not available. SpaCy processor will be disabled.'
+  puts "Warning: ruby-spacy gem not available. SpaCy processor will be disabled."
 end
 
 module BlueprintsCLI
@@ -18,7 +18,7 @@ module BlueprintsCLI
       class SpacyProcessor < BaseProcessor
         attr_reader :nlp_model, :model_name
 
-        def initialize(model_name: 'en_core_web_sm')
+        def initialize(model_name: "en_core_web_sm")
           super()
           @model_name = model_name
 
@@ -27,7 +27,7 @@ module BlueprintsCLI
             build_linguistic_trie
           else
             @nlp_model = nil
-            puts 'SpaCy processor initialized in fallback mode'
+            puts "SpaCy processor initialized in fallback mode"
           end
         end
 
@@ -55,7 +55,7 @@ module BlueprintsCLI
               dependencies: extract_dependencies(doc),
               sentences: extract_sentences(doc),
               noun_phrases: extract_noun_phrases(doc),
-              keywords: extract_spacy_keywords(doc)
+              keywords: extract_spacy_keywords(doc),
             }
 
             # Cache the result
@@ -65,7 +65,7 @@ module BlueprintsCLI
             update_metrics(:spacy_processing, duration, true)
 
             result
-          rescue StandardError => e
+          rescue => e
             duration = Time.now - start_time
             update_metrics(:spacy_processing, duration, false)
 
@@ -78,7 +78,7 @@ module BlueprintsCLI
               sentences: [text],
               noun_phrases: [],
               keywords: [],
-              error: e.message
+              error: e.message,
             }
           end
         end
@@ -93,7 +93,7 @@ module BlueprintsCLI
               label: entity.label_,
               start: entity.start_char,
               end: entity.end_char,
-              confidence: entity._.get('confidence') || 0.8 # Default confidence
+              confidence: entity._.get("confidence") || 0.8, # Default confidence
             }
 
             # Add to priority queue for ranking
@@ -122,7 +122,7 @@ module BlueprintsCLI
               is_alpha: token.is_alpha,
               is_stop: token.is_stop,
               shape: token.shape_,
-              dependency: token.dep_
+              dependency: token.dep_,
             }
 
             pos_data << pos_info
@@ -145,7 +145,7 @@ module BlueprintsCLI
               token: token.text,
               head: token.head.text,
               relation: token.dep_,
-              children: token.children.map(&:text)
+              children: token.children.map(&:text),
             }
 
             dependencies << dep_info
@@ -164,7 +164,7 @@ module BlueprintsCLI
               root: chunk.root.text,
               root_pos: chunk.root.pos_,
               start: chunk.start,
-              end: chunk.end
+              end: chunk.end,
             }
 
             noun_phrases << phrase_info
@@ -193,7 +193,7 @@ module BlueprintsCLI
               text: token.text,
               lemma: token.lemma_,
               pos: token.pos_,
-              score: score
+              score:,
             }
 
             keywords << keyword
@@ -202,9 +202,7 @@ module BlueprintsCLI
 
           # Return top keywords using priority queue
           top_keywords = []
-          while !@priority_queue.empty? && top_keywords.length < 20
-            top_keywords << @priority_queue.pop
-          end
+          top_keywords << @priority_queue.pop while !@priority_queue.empty? && top_keywords.length < 20
 
           top_keywords
         end
@@ -218,30 +216,28 @@ module BlueprintsCLI
             token_count: doc.length,
             avg_sentence_length: doc.length.to_f / doc.sents.count,
             complexity_score: calculate_complexity_score(doc),
-            readability: estimate_readability(doc)
+            readability: estimate_readability(doc),
           }
         end
 
-        private
-
-        def load_spacy_model
+        private def load_spacy_model
           return nil unless SPACY_AVAILABLE
 
           begin
             Spacy::Language.new(@model_name)
-          rescue StandardError
+          rescue
             # Fallback to basic English model
             puts "Warning: Could not load #{@model_name}, falling back to basic model"
             begin
-              Spacy::Language.new('en_core_web_sm')
-            rescue StandardError => e2
+              Spacy::Language.new("en_core_web_sm")
+            rescue => e2
               puts "Warning: Could not load any SpaCy model: #{e2.message}"
               nil
             end
           end
         end
 
-        def fallback_processing(text)
+        private def fallback_processing(text)
           {
             tokens: basic_tokenize(text),
             entities: [],
@@ -250,50 +246,54 @@ module BlueprintsCLI
             sentences: [text],
             noun_phrases: [],
             keywords: extract_basic_keywords(text),
-            fallback: true
+            fallback: true,
           }
         end
 
-        def basic_tokenize(text)
+        private def basic_tokenize(text)
           text.split(/\s+/).map do |word|
             {
               text: word,
               lemma: word.downcase,
-              pos: 'UNKNOWN',
+              pos: "UNKNOWN",
               is_alpha: word.match?(/\A[a-zA-Z]+\z/),
-              is_stop: false
+              is_stop: false,
             }
           end
         end
 
-        def extract_basic_keywords(text)
+        private def extract_basic_keywords(text)
           words = text.downcase.scan(/\b\w+\b/)
           word_freq = words.tally
 
           # Simple keyword extraction based on frequency and length
           word_freq.select { |word, freq| word.length > 3 && freq.positive? }
-                   .map do |word, freq|
-            { text: word, lemma: word, pos: 'UNKNOWN',
-              score: freq.to_f / words.length }
+            .map do |word, freq|
+            {
+              text: word,
+              lemma: word,
+              pos: "UNKNOWN",
+              score: freq.to_f / words.length,
+            }
           end
-                   .sort_by { |kw| -kw[:score] }
-                   .first(10)
+            .sort_by { |kw| -kw[:score] }
+            .first(10)
         end
 
-        def build_linguistic_trie
+        private def build_linguistic_trie
           # Pre-populate Trie with common linguistic patterns
           common_patterns = {
-            'artificial intelligence' => 'AI_CONCEPT',
-            'machine learning' => 'ML_CONCEPT',
-            'natural language processing' => 'NLP_CONCEPT',
-            'deep learning' => 'DL_CONCEPT',
-            'neural network' => 'NN_CONCEPT'
+            "artificial intelligence" => "AI_CONCEPT",
+            "machine learning" => "ML_CONCEPT",
+            "natural language processing" => "NLP_CONCEPT",
+            "deep learning" => "DL_CONCEPT",
+            "neural network" => "NN_CONCEPT",
           }
 
           common_patterns.each { |pattern, label| @trie_index[pattern] = label }
         end
 
-        def extract_tokens(doc)
+        private def extract_tokens(doc)
           tokens = []
 
           doc.each do |token|
@@ -304,26 +304,26 @@ module BlueprintsCLI
               lemma: token.lemma_,
               pos: token.pos_,
               is_alpha: token.is_alpha,
-              is_stop: token.is_stop
+              is_stop: token.is_stop,
             }
           end
 
           tokens
         end
 
-        def extract_sentences(doc)
+        private def extract_sentences(doc)
           doc.sents.map(&:text)
         end
 
-        def calculate_spacy_score(token)
+        private def calculate_spacy_score(token)
           score = 0.0
 
           # Base score from token properties
           score += 0.3 if token.is_alpha
-          score += 0.2 if token.pos_ == 'NOUN'
-          score += 0.15 if token.pos_ == 'VERB'
-          score += 0.1 if token.pos_ == 'ADJ'
-          score += 0.4 if token.ent_type_ != '' # Is part of named entity
+          score += 0.2 if token.pos_ == "NOUN"
+          score += 0.15 if token.pos_ == "VERB"
+          score += 0.1 if token.pos_ == "ADJ"
+          score += 0.4 if token.ent_type_ != "" # Is part of named entity
           score -= 0.2 if token.is_stop
 
           # Length bonus
@@ -335,25 +335,25 @@ module BlueprintsCLI
           score.clamp(0.0, 1.0)
         end
 
-        def calculate_complexity_score(doc)
+        private def calculate_complexity_score(doc)
           # Simple complexity based on sentence structure
           avg_deps_per_token = doc.sum { |token| token.children.count }.to_f / doc.length
           avg_deps_per_token / 3.0 # Normalize
         end
 
-        def estimate_readability(doc)
+        private def estimate_readability(doc)
           # Simple readability estimate
           avg_word_length = doc.select(&:is_alpha).sum { |t| t.text.length }.to_f /
-                            doc.count(&:is_alpha)
+            doc.count(&:is_alpha)
 
           case avg_word_length
-          when 0..4 then 'easy'
-          when 4..6 then 'medium'
-          else 'hard'
+          when 0..4 then "easy"
+          when 4..6 then "medium"
+          else "hard"
           end
         end
 
-        def generate_cache_key(text)
+        private def generate_cache_key(text)
           "spacy_#{@model_name}_#{Digest::MD5.hexdigest(text[0..100])}"
         end
       end

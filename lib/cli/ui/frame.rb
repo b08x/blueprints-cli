@@ -1,9 +1,9 @@
 # typed: true
 # frozen_string_literal: true
 
-require 'cli/ui'
-require 'cli/ui/frame/frame_stack'
-require 'cli/ui/frame/frame_style'
+require "cli/ui"
+require "cli/ui/frame/frame_stack"
+require "cli/ui/frame/frame_style"
 
 module CLI
   module UI
@@ -101,20 +101,20 @@ module CLI
 
           unless block_given?
             if failure_text
-              raise ArgumentError, 'failure_text is not compatible with blockless invocation'
+              raise ArgumentError, "failure_text is not compatible with blockless invocation"
             elsif success_text
-              raise ArgumentError, 'success_text is not compatible with blockless invocation'
+              raise ArgumentError, "success_text is not compatible with blockless invocation"
             elsif timing
-              raise ArgumentError, 'timing is not compatible with blockless invocation'
+              raise ArgumentError, "timing is not compatible with blockless invocation"
             end
           end
 
           t_start = Time.now
           CLI::UI.raw do
             to.print(prefix.chop)
-            to.puts(frame_style.start(text, color: color))
+            to.puts(frame_style.start(text, color:))
           end
-          FrameStack.push(color: color, style: frame_style)
+          FrameStack.push(color:, style: frame_style)
 
           return unless block_given?
 
@@ -122,10 +122,10 @@ module CLI
           begin
             success = false
             success = yield
-          rescue StandardError
+          rescue
             closed = true
             t_diff = elapsed(t_start, timing)
-            close(failure_text, color: :red, elapsed: t_diff, to: to)
+            close(failure_text, color: :red, elapsed: t_diff, to:)
             raise
           else
             success
@@ -133,9 +133,9 @@ module CLI
             unless closed
               t_diff = elapsed(t_start, timing)
               if T.unsafe(success) == false
-                close(failure_text, color: :red, elapsed: t_diff, to: to)
+                close(failure_text, color: :red, elapsed: t_diff, to:)
               else
-                close(success_text, color: color, elapsed: t_diff, to: to)
+                close(success_text, color:, elapsed: t_diff, to:)
               end
             end
           end
@@ -178,7 +178,7 @@ module CLI
         end
         def divider(text, color: nil, frame_style: nil, to: $stdout)
           fs_item = FrameStack.pop
-          raise UnnestedFrameException, 'No frame nesting to unnest' unless fs_item
+          raise UnnestedFrameException, "No frame nesting to unnest" unless fs_item
 
           divider_color = CLI::UI.resolve_color(color || fs_item.color)
           frame_style = CLI::UI.resolve_style(frame_style || fs_item.frame_style)
@@ -228,7 +228,7 @@ module CLI
         end
         def close(text, color: nil, elapsed: nil, frame_style: nil, to: $stdout)
           fs_item = FrameStack.pop
-          raise UnnestedFrameException, 'No frame nesting to unnest' unless fs_item
+          raise UnnestedFrameException, "No frame nesting to unnest" unless fs_item
 
           close_color = CLI::UI.resolve_color(color || fs_item.color)
           frame_style = CLI::UI.resolve_style(frame_style || fs_item.frame_style)
@@ -248,7 +248,7 @@ module CLI
         #
         sig { params(color: T.nilable(Colorable)).returns(String) }
         def prefix(color: Thread.current[:cliui_frame_color_override])
-          (+'').tap do |output|
+          (+"").tap do |output|
             items = FrameStack.items
 
             items[0..-2].to_a.each do |item|
@@ -262,7 +262,7 @@ module CLI
               output << CLI::UI.resolve_color(final_color).code if CLI::UI.enable_color?
               output << item.frame_style.prefix
               output << CLI::UI::Color::RESET.code if CLI::UI.enable_color?
-              output << ' '
+              output << " "
             end
           end
         end
@@ -296,14 +296,8 @@ module CLI
           Thread.current[:cliui_frame_color_override] = prev
         end
 
-        private
-
-        # If timing is:
-        #   Numeric: return it
-        #   false: return nil
-        #   true: defaults to Time.new
         sig { params(start: Time, timing: T.any(Numeric, T::Boolean)).returns(T.nilable(Numeric)) }
-        def elapsed(start, timing)
+        private def elapsed(start, timing)
           return timing if timing.is_a?(Numeric)
           return if timing.is_a?(FalseClass)
 

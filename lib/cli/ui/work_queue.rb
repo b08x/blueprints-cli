@@ -114,10 +114,8 @@ module CLI
         end
       end
 
-      private
-
       sig { void }
-      def start_worker
+      private def start_worker
         @workers << Thread.new do
           loop do
             work = @queue.pop
@@ -132,7 +130,7 @@ module CLI
             rescue Interrupt => e
               future.fail(e)
               raise # Always re-raise interrupts to terminate the worker
-            rescue StandardError => e
+            rescue => e
               future.fail(e)
               # Don't re-raise standard errors - allow worker to continue
             end

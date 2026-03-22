@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'singleton'
-require_relative '../providers/embedding_provider'
-require_relative '../providers/informers_provider'
-require_relative '../providers/ruby_llm_provider'
+require "singleton"
+require_relative "../providers/embedding_provider"
+require_relative "../providers/informers_provider"
+require_relative "../providers/ruby_llm_provider"
 
 module BlueprintsCLI
   module Services
@@ -44,11 +44,11 @@ module BlueprintsCLI
           failed_requests: 0,
           provider_usage: {},
           cache_hits: 0,
-          average_response_time: 0.0
+          average_response_time: 0.0,
         }
         @mutex = Mutex.new
 
-        BlueprintsCLI.logger.info('InformersEmbeddingService initialized')
+        BlueprintsCLI.logger.info("InformersEmbeddingService initialized")
       end
 
       # Generate embedding for given text
@@ -61,7 +61,7 @@ module BlueprintsCLI
       # @option options [Array<Symbol>] :fallback_providers Alternative providers to try
       # @return [Array<Float>] Embedding vector
       # @raise [Providers::EmbeddingProvider::EmbeddingError] If all providers fail
-      def embed(text, provider: nil, **options)
+      def embed(text, provider: nil, **)
         start_time = Time.now
 
         @mutex.synchronize do
@@ -69,7 +69,7 @@ module BlueprintsCLI
         end
 
         begin
-          result = generate_embedding(text, provider, **options)
+          result = generate_embedding(text, provider, **)
 
           @mutex.synchronize do
             @stats[:successful_requests] += 1
@@ -77,7 +77,7 @@ module BlueprintsCLI
           end
 
           result
-        rescue StandardError => e
+        rescue => e
           @mutex.synchronize do
             @stats[:failed_requests] += 1
           end
@@ -93,7 +93,7 @@ module BlueprintsCLI
       # @param provider [Symbol, nil] Specific provider to use
       # @param options [Hash] Generation options
       # @return [Array<Array<Float>>] Array of embedding vectors
-      def embed_batch(texts, provider: nil, **options)
+      def embed_batch(texts, provider: nil, **)
         return [] if texts.nil? || texts.empty?
 
         start_time = Time.now
@@ -107,11 +107,11 @@ module BlueprintsCLI
           selected_provider = get_provider(provider || @config[:default_provider])
 
           result = if selected_provider.respond_to?(:embed_batch)
-                     selected_provider.embed_batch(texts, **options)
-                   else
-                     # Fallback to individual processing
-                     texts.map { |text| selected_provider.embed(text, **options) }
-                   end
+            selected_provider.embed_batch(texts, **)
+          else
+            # Fallback to individual processing
+            texts.map { |text| selected_provider.embed(text, **) }
+          end
 
           @mutex.synchronize do
             @stats[:successful_requests] += texts.length
@@ -121,7 +121,7 @@ module BlueprintsCLI
           end
 
           result
-        rescue StandardError => e
+        rescue => e
           @mutex.synchronize do
             @stats[:failed_requests] += texts.length
           end
@@ -151,12 +151,12 @@ module BlueprintsCLI
           results[provider_name] = {
             healthy: provider.healthy?,
             info: provider.respond_to?(:info) ? provider.info : {},
-            stats: provider.respond_to?(:stats) ? provider.stats : {}
+            stats: provider.respond_to?(:stats) ? provider.stats : {},
           }
-        rescue StandardError => e
+        rescue => e
           results[provider_name] = {
             healthy: false,
-            error: e.message
+            error: e.message,
           }
         end
 
@@ -179,7 +179,7 @@ module BlueprintsCLI
             failed_requests: 0,
             provider_usage: {},
             cache_hits: 0,
-            average_response_time: 0.0
+            average_response_time: 0.0,
           }
         end
 
@@ -195,7 +195,7 @@ module BlueprintsCLI
       def service_stats
         @mutex.synchronize do
           @stats.merge(
-            success_rate: success_rate,
+            success_rate:,
             provider_count: @providers.size,
             cache_stats: aggregate_cache_stats
           )
@@ -215,10 +215,7 @@ module BlueprintsCLI
         results
       end
 
-      private
-
-      # Generate embedding with provider fallback
-      def generate_embedding(text, provider_name, **options)
+      private def generate_embedding(text, provider_name, **options)
         providers_to_try = determine_providers(provider_name, options[:fallback_providers])
         last_error = nil
 
@@ -232,17 +229,17 @@ module BlueprintsCLI
           end
 
           return result
-        rescue StandardError => e
+        rescue => e
           last_error = e
           BlueprintsCLI.logger.warn("Provider #{prov_name} failed: #{e.message}")
           next
         end
 
-        raise last_error || Providers::EmbeddingProvider::EmbeddingError.new('All providers failed')
+        raise last_error || Providers::EmbeddingProvider::EmbeddingError.new("All providers failed")
       end
 
       # Get or create provider instance
-      def get_provider(name)
+      private def get_provider(name)
         return @providers[name] if @providers[name]
 
         @mutex.synchronize do
@@ -255,7 +252,7 @@ module BlueprintsCLI
       end
 
       # Determine which providers to try
-      def determine_providers(requested_provider, fallback_providers)
+      private def determine_providers(requested_provider, fallback_providers)
         if requested_provider
           providers = [requested_provider]
           providers.concat(fallback_providers) if fallback_providers
@@ -268,7 +265,7 @@ module BlueprintsCLI
       end
 
       # Load configuration from BlueprintsCLI configuration
-      def load_configuration
+      private def load_configuration
         config = BlueprintsCLI.configuration
 
         {
@@ -277,21 +274,21 @@ module BlueprintsCLI
           providers: {
             informers: {
               model: config.fetch(:embedding, :informers, :model,
-                                  default: 'sentence-transformers/all-MiniLM-L6-v2'),
-              device: config.fetch(:embedding, :informers, :device, default: 'cpu'),
+                default: "sentence-transformers/all-MiniLM-L6-v2"),
+              device: config.fetch(:embedding, :informers, :device, default: "cpu"),
               quantized: config.fetch(:embedding, :informers, :quantized, default: true),
-              max_length: config.fetch(:embedding, :informers, :max_length, default: 512)
+              max_length: config.fetch(:embedding, :informers, :max_length, default: 512),
             },
             ruby_llm: {
               model: config.fetch(:embedding, :ruby_llm, :model, default: nil),
-              provider: config.fetch(:embedding, :ruby_llm, :provider, default: nil)
-            }
-          }
+              provider: config.fetch(:embedding, :ruby_llm, :provider, default: nil),
+            },
+          },
         }
       end
 
       # Calculate success rate
-      def success_rate
+      private def success_rate
         total = @stats[:total_requests]
         return 0.0 if total.zero?
 
@@ -299,7 +296,7 @@ module BlueprintsCLI
       end
 
       # Aggregate cache statistics from all providers
-      def aggregate_cache_stats
+      private def aggregate_cache_stats
         total_cache_size = 0
         total_hit_rate = 0.0
         provider_count = 0
@@ -314,13 +311,13 @@ module BlueprintsCLI
         end
 
         {
-          total_cache_size: total_cache_size,
-          average_hit_rate: provider_count.positive? ? (total_hit_rate / provider_count).round(3) : 0.0
+          total_cache_size:,
+          average_hit_rate: provider_count.positive? ? (total_hit_rate / provider_count).round(3) : 0.0,
         }
       end
 
       # Update average response time
-      def update_response_time(duration)
+      private def update_response_time(duration)
         current_avg = @stats[:average_response_time]
         total_requests = @stats[:total_requests]
 

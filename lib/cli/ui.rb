@@ -1,27 +1,27 @@
 # typed: true
 # frozen_string_literal: true
 
-require('cli/ui/sorbet_runtime_stub') unless defined?(T)
+require("cli/ui/sorbet_runtime_stub") unless defined?(T)
 
 module CLI
   module UI
     extend T::Sig
 
-    autoload :ANSI,      'cli/ui/ansi'
-    autoload :Glyph,     'cli/ui/glyph'
-    autoload :Color,     'cli/ui/color'
-    autoload :Frame,     'cli/ui/frame'
-    autoload :OS,        'cli/ui/os'
-    autoload :Printer,   'cli/ui/printer'
-    autoload :Progress,  'cli/ui/progress'
-    autoload :Prompt,    'cli/ui/prompt'
-    autoload :Table,     'cli/ui/table'
-    autoload :Terminal,  'cli/ui/terminal'
-    autoload :Truncater, 'cli/ui/truncater'
-    autoload :Formatter, 'cli/ui/formatter'
-    autoload :Spinner,   'cli/ui/spinner'
-    autoload :Widgets,   'cli/ui/widgets'
-    autoload :Wrap,      'cli/ui/wrap'
+    autoload :ANSI,      "cli/ui/ansi"
+    autoload :Glyph,     "cli/ui/glyph"
+    autoload :Color,     "cli/ui/color"
+    autoload :Frame,     "cli/ui/frame"
+    autoload :OS,        "cli/ui/os"
+    autoload :Printer,   "cli/ui/printer"
+    autoload :Progress,  "cli/ui/progress"
+    autoload :Prompt,    "cli/ui/prompt"
+    autoload :Table,     "cli/ui/table"
+    autoload :Terminal,  "cli/ui/terminal"
+    autoload :Truncater, "cli/ui/truncater"
+    autoload :Formatter, "cli/ui/formatter"
+    autoload :Spinner,   "cli/ui/spinner"
+    autoload :Widgets,   "cli/ui/widgets"
+    autoload :Wrap,      "cli/ui/wrap"
 
     # Convenience accessor to +CLI::UI::Spinner::SpinGroup+
     SpinGroup = Spinner::SpinGroup
@@ -86,7 +86,7 @@ module CLI
       #
       sig { params(question: String, default: T::Boolean).returns(T::Boolean) }
       def confirm(question, default: true)
-        CLI::UI::Prompt.confirm(question, default: default)
+        CLI::UI::Prompt.confirm(question, default:)
       end
 
       # Convenience Method for +CLI::UI::Prompt.any_key+
@@ -96,7 +96,7 @@ module CLI
       # * +prompt+ - prompt to present
       #
       sig { params(prompt: String).returns(T.nilable(String)) }
-      def any_key(prompt = 'Press any key to continue')
+      def any_key(prompt = "Press any key to continue")
         CLI::UI::Prompt.any_key(prompt)
       end
 
@@ -127,13 +127,13 @@ module CLI
       )
         CLI::UI::Prompt.ask(
           question,
-          options: options,
-          default: default,
-          is_file: is_file,
-          allow_empty: allow_empty,
-          multiple: multiple,
-          filter_ui: filter_ui,
-          select_ui: select_ui,
+          options:,
+          default:,
+          is_file:,
+          allow_empty:,
+          multiple:,
+          filter_ui:,
+          select_ui:,
           &options_proc
         )
       end
@@ -149,7 +149,7 @@ module CLI
       #
       sig { params(input: String, truncate_to: T.nilable(Integer), enable_color: T::Boolean).returns(String) }
       def resolve_text(input, truncate_to: nil, enable_color: enable_color?)
-        formatted = CLI::UI::Formatter.new(input).format(enable_color: enable_color)
+        formatted = CLI::UI::Formatter.new(input).format(enable_color:)
         return formatted unless truncate_to
 
         CLI::UI::Truncater.call(formatted, truncate_to)
@@ -171,7 +171,7 @@ module CLI
       #
       sig { params(input: String, enable_color: T::Boolean).returns(String) }
       def fmt(input, enable_color: enable_color?)
-        CLI::UI::Formatter.new(input).format(enable_color: enable_color)
+        CLI::UI::Formatter.new(input).format(enable_color:)
       end
 
       sig { params(input: String).returns(String) }
@@ -208,12 +208,12 @@ module CLI
       )
         CLI::UI::Printer.puts(
           msg,
-          frame_color: frame_color,
-          to: to,
-          encoding: encoding,
-          format: format,
-          graceful: graceful,
-          wrap: wrap
+          frame_color:,
+          to:,
+          encoding:,
+          format:,
+          graceful:,
+          wrap:
         )
       end
 
@@ -244,17 +244,17 @@ module CLI
         timing: block_given?,
         frame_style: Frame.frame_style,
         to: $stdout,
-        &block
+        &
       )
         CLI::UI::Frame.open(
           text,
-          color: color,
-          failure_text: failure_text,
-          success_text: success_text,
-          timing: timing,
-          frame_style: frame_style,
-          to: to,
-          &block
+          color:,
+          failure_text:,
+          success_text:,
+          timing:,
+          frame_style:,
+          to:,
+          &
         )
       end
 
@@ -273,8 +273,8 @@ module CLI
           block: T.proc.params(task: Spinner::SpinGroup::Task).void
         ).returns(T::Boolean)
       end
-      def spinner(title, auto_debrief: true, to: $stdout, &block)
-        CLI::UI::Spinner.spin(title, auto_debrief: auto_debrief, to: to, &block)
+      def spinner(title, auto_debrief: true, to: $stdout, &)
+        CLI::UI::Spinner.spin(title, auto_debrief:, to:, &)
       end
 
       # Convenience Method to override frame color using +CLI::UI::Frame.with_frame_color+
@@ -305,9 +305,9 @@ module CLI
           .returns(T.type_parameter(:T))
       end
       def log_output_to(path)
-        raise 'multiple logs not allowed' if CLI::UI::StdoutRouter.duplicate_output_to
+        raise "multiple logs not allowed" if CLI::UI::StdoutRouter.duplicate_output_to
 
-        CLI::UI::StdoutRouter.duplicate_output_to = File.open(path, 'w')
+        CLI::UI::StdoutRouter.duplicate_output_to = File.open(path, "w")
         yield
       ensure
         if (file_descriptor = CLI::UI::StdoutRouter.duplicate_output_to)
@@ -394,7 +394,7 @@ module CLI
       # Create a terminal link
       sig { params(url: String, text: String, format: T::Boolean, blue_underline: T::Boolean).returns(String) }
       def link(url, text, format: true, blue_underline: format)
-        raise 'cannot use blue_underline without format' if blue_underline && !format
+        raise "cannot use blue_underline without format" if blue_underline && !format
 
         text = "{{blue:{{underline:#{text}}}}}" if blue_underline
         text = CLI::UI.fmt(text) if format
@@ -405,8 +405,8 @@ module CLI
     self.enable_color = $stdout.tty?
 
     # Shopify's CI system supports color, but not cursor control
-    self.enable_cursor = T.must($stdout.tty? && ENV['CI'].nil? && ENV['JOURNAL_STREAM'].nil?)
+    self.enable_cursor = T.must($stdout.tty? && ENV["CI"].nil? && ENV["JOURNAL_STREAM"].nil?)
   end
 end
 
-require 'cli/ui/stdout_router'
+require "cli/ui/stdout_router"

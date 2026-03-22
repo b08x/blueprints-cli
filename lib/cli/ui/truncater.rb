@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-require 'cli/ui'
+require "cli/ui"
 
 module CLI
   module UI
@@ -61,7 +61,7 @@ module CLI
                        PARSE_ANSI
                      else
                        PARSE_ROOT
-                     end
+              end
             when PARSE_ANSI
               # ANSI escape codes preeeetty much have the format of:
               # \x1b[0-9;]+[A-Za-z]
@@ -87,13 +87,11 @@ module CLI
           # the end of the string.
           return text if !truncation_index || width <= printing_width
 
-          T.must(codepoints[0...truncation_index]).pack('U*') + TRUNCATED
+          T.must(codepoints[0...truncation_index]).pack("U*") + TRUNCATED
         end
 
-        private
-
         sig { params(printable_codepoint: Integer).returns(Integer) }
-        def width(printable_codepoint)
+        private def width(printable_codepoint)
           case printable_codepoint
           when EMOJI_RANGE
             2

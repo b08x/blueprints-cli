@@ -61,7 +61,7 @@ module CLI
           end
           def push(item = nil, color: nil, style: nil)
             if color.nil? != style.nil? || item.nil? == color.nil?
-              raise ArgumentError, 'Must give one of item or color: and style:'
+              raise ArgumentError, "Must give one of item or color: and style:"
             end
 
             items.push(item || StackItem.new(T.must(color), T.must(style)))

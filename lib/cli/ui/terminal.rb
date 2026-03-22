@@ -1,8 +1,8 @@
 # typed: true
 # frozen_string_literal: true
 
-require 'cli/ui'
-require 'io/console'
+require "cli/ui"
+require "io/console"
 
 module CLI
   module UI
@@ -42,14 +42,14 @@ module CLI
             else
               winsize
             end
-          rescue StandardError
+          rescue
             [DEFAULT_HEIGHT, DEFAULT_WIDTH]
           end
         end
 
         sig { void }
         def setup_winsize_trap
-          @setup_winsize_trap ||= Signal.trap('WINCH') do
+          @setup_winsize_trap ||= Signal.trap("WINCH") do
             @winsize = nil
           end
         end

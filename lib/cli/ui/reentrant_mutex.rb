@@ -35,7 +35,7 @@ module CLI
       end
 
       def synchronize
-        raise ThreadError, 'Must be called with a block' unless block_given?
+        raise ThreadError, "Must be called with a block" unless block_given?
 
         begin
           lock
@@ -62,17 +62,15 @@ module CLI
         @count_mutex.synchronize { @counts[Thread.current] }
       end
 
-      private
-
-      def increase_count(thread)
+      private def increase_count(thread)
         @count_mutex.synchronize { @counts[thread] += 1 }
       end
 
-      def decrease_count(thread)
+      private def decrease_count(thread)
         @count_mutex.synchronize { @counts[thread] -= 1 }
       end
 
-      def delete_count(thread)
+      private def delete_count(thread)
         @count_mutex.synchronize { @counts.delete(thread) }
       end
     end

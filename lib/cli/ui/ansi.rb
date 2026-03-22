@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-require 'cli/ui'
+require "cli/ui"
 
 module CLI
   module UI
@@ -46,7 +46,7 @@ module CLI
         #
         sig { params(str: String).returns(String) }
         def strip_codes(str)
-          str.gsub(/\x1b\[[\d;]+[A-Za-z]|\x1b\][\d;]+.*?\x1b\\|\r/, '')
+          str.gsub(/\x1b\[[\d;]+[A-Za-z]|\x1b\][\d;]+.*?\x1b\\|\r/, "")
         end
 
         # Returns an ANSI control sequence
@@ -64,7 +64,7 @@ module CLI
         # https://en.wikipedia.org/wiki/ANSI_escape_code#graphics
         sig { params(params: String).returns(String) }
         def sgr(params)
-          control(params, 'm')
+          control(params, "m")
         end
 
         # Cursor Movement
@@ -77,9 +77,9 @@ module CLI
         #
         sig { params(n: Integer).returns(String) }
         def cursor_up(n = 1)
-          return '' if n.zero?
+          return "" if n.zero?
 
-          control(n.to_s, 'A')
+          control(n.to_s, "A")
         end
 
         # Move the cursor down n lines
@@ -90,9 +90,9 @@ module CLI
         #
         sig { params(n: Integer).returns(String) }
         def cursor_down(n = 1)
-          return '' if n.zero?
+          return "" if n.zero?
 
-          control(n.to_s, 'B')
+          control(n.to_s, "B")
         end
 
         # Move the cursor forward n columns
@@ -103,9 +103,9 @@ module CLI
         #
         sig { params(n: Integer).returns(String) }
         def cursor_forward(n = 1)
-          return '' if n.zero?
+          return "" if n.zero?
 
-          control(n.to_s, 'C')
+          control(n.to_s, "C")
         end
 
         # Move the cursor back n columns
@@ -116,9 +116,9 @@ module CLI
         #
         sig { params(n: Integer).returns(String) }
         def cursor_back(n = 1)
-          return '' if n.zero?
+          return "" if n.zero?
 
-          control(n.to_s, 'D')
+          control(n.to_s, "D")
         end
 
         # Move the cursor to a specific column
@@ -129,19 +129,19 @@ module CLI
         #
         sig { params(n: Integer).returns(String) }
         def cursor_horizontal_absolute(n = 1)
-          cmd = control(n.to_s, 'G')
+          cmd = control(n.to_s, "G")
           cmd += cursor_back if CLI::UI::OS.current.shift_cursor_back_on_horizontal_absolute?
           cmd
         end
 
         sig { returns(String) }
         def enter_alternate_screen
-          control('?1049', 'h')
+          control("?1049", "h")
         end
 
         sig { returns(String) }
         def exit_alternate_screen
-          control('?1049', 'l')
+          control("?1049", "l")
         end
 
         sig { returns(Regexp) }
@@ -153,28 +153,28 @@ module CLI
         #
         sig { returns(String) }
         def show_cursor
-          control('', '?25h')
+          control("", "?25h")
         end
 
         # Hide the cursor
         #
         sig { returns(String) }
         def hide_cursor
-          control('', '?25l')
+          control("", "?25l")
         end
 
         # Save the cursor position
         #
         sig { returns(String) }
         def cursor_save
-          control('', 's')
+          control("", "s")
         end
 
         # Restore the saved cursor position
         #
         sig { returns(String) }
         def cursor_restore
-          control('', 'u')
+          control("", "u")
         end
 
         # Move to the next line
@@ -204,7 +204,7 @@ module CLI
 
         sig { returns(String) }
         def clear_to_end_of_line
-          control('', 'K')
+          control("", "K")
         end
 
         sig { returns(String) }
@@ -214,7 +214,7 @@ module CLI
 
         sig { params(n: Integer).returns(String) }
         def insert_lines(n = 1)
-          control(n.to_s, 'L')
+          control(n.to_s, "L")
         end
       end
     end

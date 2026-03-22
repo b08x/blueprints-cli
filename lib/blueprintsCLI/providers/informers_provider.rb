@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'informers'
-require_relative 'embedding_provider'
+require "informers"
+require_relative "embedding_provider"
 
 module BlueprintsCLI
   module Providers
@@ -20,16 +20,16 @@ module BlueprintsCLI
     #
     class InformersProvider < EmbeddingProvider
       # Default model for embeddings
-      DEFAULT_MODEL = 'sentence-transformers/all-MiniLM-L6-v2'
+      DEFAULT_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
       # Default embedding dimensions for common models
       MODEL_DIMENSIONS = {
-        'sentence-transformers/all-MiniLM-L6-v2' => 384,
-        'sentence-transformers/all-MiniLM-L12-v2' => 384,
-        'sentence-transformers/all-mpnet-base-v2' => 768,
-        'sentence-transformers/multi-qa-MiniLM-L6-cos-v1' => 384,
-        'thenlper/gte-small' => 384,
-        'thenlper/gte-base' => 768
+        "sentence-transformers/all-MiniLM-L6-v2" => 384,
+        "sentence-transformers/all-MiniLM-L12-v2" => 384,
+        "sentence-transformers/all-mpnet-base-v2" => 768,
+        "sentence-transformers/multi-qa-MiniLM-L6-cos-v1" => 384,
+        "thenlper/gte-small" => 384,
+        "thenlper/gte-base" => 768,
       }.freeze
 
       # Initialize the Informers provider
@@ -39,8 +39,9 @@ module BlueprintsCLI
       # @param quantized [Boolean] Whether to use quantized models
       # @param max_length [Integer] Maximum input length
       # @param options [Hash] Additional options
-      def initialize(model: DEFAULT_MODEL, device: 'cpu', quantized: true, max_length: 512,
-                     **options)
+      def initialize(model: DEFAULT_MODEL, device: "cpu", quantized: true, max_length: 512,
+        **
+      )
         @model_name = model
         @device = device
         @quantized = quantized
@@ -48,7 +49,7 @@ module BlueprintsCLI
         @pipeline = nil
         @model_dimensions = nil
 
-        super(**options)
+        super(**)
 
         log("Initialized Informers provider with model: #{@model_name}", level: :info)
       end
@@ -81,7 +82,7 @@ module BlueprintsCLI
 
           log("Generated embedding for text (#{processed_text.length} chars): #{embedding.size} dimensions")
           embedding
-        rescue StandardError => e
+        rescue => e
           error_msg = "Failed to generate embedding: #{e.message}"
           log(error_msg, level: :error)
           raise EmbeddingError, error_msg
@@ -103,7 +104,7 @@ module BlueprintsCLI
           processed_texts = texts.map { |text| truncate_text(text, @max_length) }
 
           # For single text, wrap in array; for multiple, pass as-is
-          input = processed_texts.length == 1 ? processed_texts.first : processed_texts
+          input = (processed_texts.length == 1) ? processed_texts.first : processed_texts
 
           result = @pipeline.call(input)
           embeddings = extract_batch_embeddings(result, processed_texts.length)
@@ -115,7 +116,7 @@ module BlueprintsCLI
           log("Generated batch embeddings for #{processed_texts.length} texts")
 
           embeddings
-        rescue StandardError => e
+        rescue => e
           error_msg = "Failed to generate batch embeddings: #{e.message}"
           log(error_msg, level: :error)
           raise EmbeddingError, error_msg
@@ -134,11 +135,11 @@ module BlueprintsCLI
           # If unknown model, generate a test embedding to determine dimensions
           begin
             ensure_pipeline_loaded
-            test_embedding = embed('test', cache: false)
+            test_embedding = embed("test", cache: false)
             test_embedding.length
-          rescue StandardError => e
+          rescue => e
             log("Could not determine dimensions for model #{@model_name}: #{e.message}",
-                level: :warn)
+              level: :warn)
             384 # Default fallback
           end
         end
@@ -150,7 +151,7 @@ module BlueprintsCLI
       def healthy?
         ensure_pipeline_loaded
         true
-      rescue StandardError => e
+      rescue => e
         log("Health check failed: #{e.message}", level: :error)
         false
       end
@@ -160,34 +161,31 @@ module BlueprintsCLI
       # @return [Hash] Provider information
       def info
         {
-          name: 'Informers',
+          name: "Informers",
           model: @model_name,
           device: @device,
           quantized: @quantized,
-          dimensions: dimensions,
+          dimensions:,
           max_length: @max_length,
-          pipeline_loaded: !@pipeline.nil?
+          pipeline_loaded: !@pipeline.nil?,
         }
       end
 
-      private
-
-      # Ensure the Informers pipeline is loaded
-      def ensure_pipeline_loaded
+      private def ensure_pipeline_loaded
         return if @pipeline
 
         log("Loading Informers pipeline: #{@model_name}")
 
         begin
           @pipeline = Informers.pipeline(
-            'embedding',
+            "embedding",
             @model_name,
             quantized: @quantized,
             device: @device
           )
 
-          log('Successfully loaded Informers pipeline', level: :info)
-        rescue StandardError => e
+          log("Successfully loaded Informers pipeline", level: :info)
+        rescue => e
           error_msg = "Failed to load Informers pipeline: #{e.message}"
           log(error_msg, level: :error)
           raise EmbeddingError, error_msg
@@ -198,16 +196,16 @@ module BlueprintsCLI
       #
       # @param result [Object] Pipeline result
       # @return [Array<Float>] Embedding vector
-      def extract_embedding(result)
+      private def extract_embedding(result)
         case result
         when Array
           # If array of arrays, take the first one
           result.first.is_a?(Array) ? result.first : result
         when Hash
           # Look for common embedding keys
-          result[:embedding] || result['embedding'] ||
-            result[:sentence_embedding] || result['sentence_embedding'] ||
-            result[:pooler_output] || result['pooler_output'] ||
+          result[:embedding] || result["embedding"] ||
+            result[:sentence_embedding] || result["sentence_embedding"] ||
+            result[:pooler_output] || result["pooler_output"] ||
             (raise EmbeddingError, "Could not extract embedding from result: #{result.keys}")
         else
           # Assume it's the embedding directly
@@ -220,7 +218,7 @@ module BlueprintsCLI
       # @param result [Object] Pipeline batch result
       # @param expected_count [Integer] Expected number of embeddings
       # @return [Array<Array<Float>>] Array of embedding vectors
-      def extract_batch_embeddings(result, _expected_count)
+      private def extract_batch_embeddings(result, _expected_count)
         case result
         when Array
           # Check if it's a nested array (batch of embeddings)
@@ -241,25 +239,23 @@ module BlueprintsCLI
       # @param text [String] Input text
       # @param max_length [Integer] Maximum length
       # @return [String] Truncated text
-      def truncate_text(text, max_length)
+      private def truncate_text(text, max_length)
         return text if text.length <= max_length
 
         # Try to truncate at word boundaries
         words = text.split
-        truncated = ''
+        truncated = ""
 
         words.each do |word|
           break unless "#{truncated} #{word}".length <= max_length
 
-          truncated += (truncated.empty? ? '' : ' ') + word
+          truncated += (truncated.empty? ? "" : " ") + word
         end
 
         # If we couldn't fit any words, just slice the text
         truncated = text[0, max_length] if truncated.empty?
 
-        if text.length != truncated.length
-          log("Truncated text from #{text.length} to #{truncated.length} characters")
-        end
+        log("Truncated text from #{text.length} to #{truncated.length} characters") if text.length != truncated.length
         truncated
       end
 
@@ -267,7 +263,7 @@ module BlueprintsCLI
       #
       # @param vector [Array<Float>] Input vector
       # @return [Array<Float>] Normalized vector
-      def normalize_vector(vector)
+      private def normalize_vector(vector)
         magnitude = Math.sqrt(vector.sum { |x| x * x })
         return vector if magnitude.zero?
 
@@ -275,13 +271,13 @@ module BlueprintsCLI
       end
 
       # Configure the provider (called during initialization)
-      def configure
-        log('Configuring Informers provider')
+      private def configure
+        log("Configuring Informers provider")
 
         # Set device if CUDA is requested but not available
-        return unless @device == 'cuda'
+        return unless @device == "cuda"
 
-        log('CUDA device requested - ensure ONNX CUDA providers are available', level: :warn)
+        log("CUDA device requested - ensure ONNX CUDA providers are available", level: :warn)
       end
     end
 

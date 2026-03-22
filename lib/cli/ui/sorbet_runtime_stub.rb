@@ -94,7 +94,6 @@ module T
       def log_info_handler=(value); end
       def scalar_types; end
       def scalar_types=(values); end
-      # rubocop:disable Naming/InclusiveLanguage
       def sealed_violation_whitelist; end
       def sealed_violation_whitelist=(sealed_violation_whitelist); end
       # rubocop:enable Naming/InclusiveLanguage
@@ -158,12 +157,12 @@ module T
   class << self
     def const_added(name)
       super
-      raise 'When using both cli-ui and sorbet, you must require sorbet before cli-ui'
+      raise "When using both cli-ui and sorbet, you must require sorbet before cli-ui"
     end
 
     def method_added(name)
       super
-      raise 'When using both cli-ui and sorbet, you must require sorbet before cli-ui'
+      raise "When using both cli-ui and sorbet, you must require sorbet before cli-ui"
     end
   end
 end

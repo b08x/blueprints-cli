@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'ruby_llm'
-require_relative 'embedding_provider'
+require "ruby_llm"
+require_relative "embedding_provider"
 
 module BlueprintsCLI
   module Providers
@@ -24,10 +24,10 @@ module BlueprintsCLI
     class RubyLLMProvider < EmbeddingProvider
       # Default embedding dimensions for common models
       MODEL_DIMENSIONS = {
-        'text-embedding-004' => 768, # Google
-        'text-embedding-3-small' => 1536,     # OpenAI
-        'text-embedding-3-large' => 3072,     # OpenAI
-        'text-embedding-ada-002' => 1536      # OpenAI (legacy)
+        "text-embedding-004" => 768, # Google
+        "text-embedding-3-small" => 1536,     # OpenAI
+        "text-embedding-3-large" => 3072,     # OpenAI
+        "text-embedding-ada-002" => 1536, # OpenAI (legacy)
       }.freeze
 
       # Initialize the RubyLLM provider
@@ -36,13 +36,13 @@ module BlueprintsCLI
       # @param model [String] Model name for embeddings
       # @param dimensions [Integer] Override embedding dimensions
       # @param options [Hash] Additional options
-      def initialize(provider: nil, model: nil, dimensions: nil, **options)
+      def initialize(provider: nil, model: nil, dimensions: nil, **)
         @provider = provider
         @model = model
         @custom_dimensions = dimensions
         @last_error = nil
 
-        super(**options)
+        super(**)
 
         log("Initialized RubyLLM provider#{" with #{@provider}" if @provider}", level: :info)
       end
@@ -74,7 +74,7 @@ module BlueprintsCLI
           @last_error = nil
 
           embedding
-        rescue StandardError => e
+        rescue => e
           @last_error = e
           error_msg = "RubyLLM embedding failed: #{e.message}"
           log(error_msg, level: :error)
@@ -87,17 +87,17 @@ module BlueprintsCLI
       # @param texts [Array<String>] Array of texts to embed
       # @param options [Hash] Generation options
       # @return [Array<Array<Float>>] Array of embedding vectors
-      def embed_batch(texts, **options)
+      def embed_batch(texts, **)
         return [] if texts.nil? || texts.empty?
 
         begin
           # RubyLLM doesn't have native batch support, so we process individually
           # This could be optimized in the future if RubyLLM adds batch support
-          embeddings = texts.map { |text| embed(text, **options) }
+          embeddings = texts.map { |text| embed(text, **) }
 
           log("Generated batch embeddings via RubyLLM for #{texts.length} texts")
           embeddings
-        rescue StandardError => e
+        rescue => e
           @last_error = e
           error_msg = "RubyLLM batch embedding failed: #{e.message}"
           log(error_msg, level: :error)
@@ -117,9 +117,9 @@ module BlueprintsCLI
         # Try to get from RubyLLM configuration
         begin
           # Generate a test embedding to determine dimensions
-          test_embedding = embed('test', cache: false)
+          test_embedding = embed("test", cache: false)
           test_embedding.length
-        rescue StandardError => e
+        rescue => e
           log("Could not determine dimensions: #{e.message}", level: :warn)
           768 # Default fallback
         end
@@ -130,10 +130,10 @@ module BlueprintsCLI
       # @return [Boolean] True if RubyLLM is properly configured
       def healthy?
         # Try a minimal embedding to test configuration
-        embed('health check', cache: false)
+        embed("health check", cache: false)
         @last_error = nil
         true
-      rescue StandardError => e
+      rescue => e
         @last_error = e
         log("Health check failed: #{e.message}", level: :error)
         false
@@ -144,12 +144,12 @@ module BlueprintsCLI
       # @return [Hash] Provider information
       def info
         {
-          name: 'RubyLLM',
+          name: "RubyLLM",
           provider: @provider,
           model: @model,
-          dimensions: dimensions,
+          dimensions:,
           last_error: @last_error&.message,
-          healthy: healthy?
+          healthy: healthy?,
         }
       end
 
@@ -158,11 +158,8 @@ module BlueprintsCLI
       # @return [Exception, nil] Last error encountered
       attr_reader :last_error
 
-      private
-
-      # Configure the provider (called during initialization)
-      def configure
-        log('Configuring RubyLLM provider')
+      private def configure
+        log("Configuring RubyLLM provider")
 
         # Check if RubyLLM is properly configured
         begin
@@ -172,8 +169,8 @@ module BlueprintsCLI
             config.ai_api_key(provider)
           end
 
-          log('Warning: No API keys found for RubyLLM providers', level: :warn) unless has_key
-        rescue StandardError => e
+          log("Warning: No API keys found for RubyLLM providers", level: :warn) unless has_key
+        rescue => e
           log("Configuration check failed: #{e.message}", level: :warn)
         end
       end

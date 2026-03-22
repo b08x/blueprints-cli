@@ -1,9 +1,9 @@
 # typed: true
 # frozen_string_literal: true
 
-require 'cli/ui'
-require 'stringio'
-require_relative 'reentrant_mutex'
+require "cli/ui"
+require "stringio"
+require_relative "reentrant_mutex"
 
 module CLI
   module UI
@@ -47,10 +47,8 @@ module CLI
           ret
         end
 
-        private
-
         sig { params(stream: IOLike, args: T::Array[String]).returns(T::Array[String]) }
-        def prepend_id(stream, args)
+        private def prepend_id(stream, args)
           return args unless prepend_id_for_stream(stream)
 
           args.map do |a|
@@ -61,7 +59,7 @@ module CLI
         end
 
         sig { params(stream: IOLike).returns(T::Boolean) }
-        def prepend_id_for_stream(stream)
+        private def prepend_id_for_stream(stream)
           return false unless Thread.current[:cliui_output_id]
           return true if Thread.current[:cliui_output_id][:streams].include?(stream)
 
@@ -69,15 +67,15 @@ module CLI
         end
 
         sig { returns(T::Boolean) }
-        def auto_frame_inset?
+        private def auto_frame_inset?
           !Thread.current[:no_cliui_frame_inset]
         end
 
         sig { params(str: String, prefix: String).returns(String) }
-        def apply_line_prefix(str, prefix)
-          return '' if str.empty?
+        private def apply_line_prefix(str, prefix)
+          return "" if str.empty?
 
-          prefixed = +''
+          prefixed = +""
           str.force_encoding(Encoding::UTF_8).lines.each do |line|
             if @pending_newline
               prefixed << line
@@ -124,7 +122,7 @@ module CLI
                   begin
                     prev_hook = Thread.current[:cliui_output_hook]
                     Thread.current[:cliui_output_hook] = nil
-                    replay = current_capture!.stdout.gsub(ANSI.match_alternate_screen, '')
+                    replay = current_capture!.stdout.gsub(ANSI.match_alternate_screen, "")
                     CLI::UI.raw do
                       print("#{ANSI.enter_alternate_screen}#{replay}")
                     end
@@ -144,11 +142,11 @@ module CLI
           sig do
             type_parameters(:T).params(block: T.proc.returns(T.type_parameter(:T))).returns(T.type_parameter(:T))
           end
-          def stdin_synchronize(&block)
+          def stdin_synchronize(&)
             @stdin_mutex.synchronize do
               case $stdin
               when BlockingInput
-                $stdin.synchronize(&block)
+                $stdin.synchronize(&)
               else
                 yield
               end
@@ -181,10 +179,8 @@ module CLI
             end
           end
 
-          private
-
           sig { returns(T::Boolean) }
-          def outermost_uncaptured?
+          private def outermost_uncaptured?
             @stdin_mutex.one? && $stdin.is_a?(BlockingInput)
           end
         end
@@ -200,7 +196,7 @@ module CLI
         def initialize(
           with_frame_inset: true,
           merged_output: false,
-          duplicate_output_to: File.open(File::NULL, 'w'),
+          duplicate_output_to: File.open(File::NULL, "w"),
           &block
         )
           @with_frame_inset = with_frame_inset
@@ -217,7 +213,7 @@ module CLI
 
         sig { returns(T.untyped) }
         def run
-          require 'stringio'
+          require "stringio"
 
           StdoutRouter.assert_enabled!
 
@@ -226,9 +222,7 @@ module CLI
           prev_frame_inset = Thread.current[:no_cliui_frame_inset]
           prev_hook = Thread.current[:cliui_output_hook]
 
-          if Thread.current.respond_to?(:report_on_exception)
-            Thread.current.report_on_exception = false
-          end
+          Thread.current.report_on_exception = false if Thread.current.respond_to?(:report_on_exception)
 
           self.class.with_stdin_masked do
             Thread.current[:no_cliui_frame_inset] = !@with_frame_inset
@@ -308,7 +302,7 @@ module CLI
 
           READING_METHODS.each do |method|
             define_method(method) do |*args, **kwargs, &block|
-              raise(IOError, 'closed stream') unless Thread.current[:cliui_allowed_to_read]
+              raise(IOError, "closed stream") unless Thread.current[:cliui_allowed_to_read]
 
               @stream.send(method, *args, **kwargs, &block)
             end
@@ -327,7 +321,8 @@ module CLI
 
         WRITE_WITHOUT_CLI_UI = :write_without_cli_ui
 
-        NotEnabled = Class.new(StandardError)
+        class NotEnabled < StandardError
+        end
 
         sig { returns(T.nilable(IOLike)) }
         attr_accessor :duplicate_output_to
@@ -338,11 +333,11 @@ module CLI
             .returns(T.type_parameter(:T))
         end
         def with_id(on_streams:)
-          require 'securerandom'
-          id = format('%05d', rand(10**5))
+          require "securerandom"
+          id = format("%05d", rand(10 ** 5))
           Thread.current[:cliui_output_id] = {
-            id: id,
-            streams: on_streams.map { |stream| T.cast(stream, IOLike) }
+            id:,
+            streams: on_streams.map { |stream| T.cast(stream, IOLike) },
           }
           yield(id)
         ensure
@@ -398,17 +393,15 @@ module CLI
           true
         end
 
-        private
-
         sig { params(stream: IOLike).void }
-        def deactivate(stream)
+        private def deactivate(stream)
           sc = stream.singleton_class
           sc.send(:remove_method, :write)
           sc.send(:alias_method, :write, WRITE_WITHOUT_CLI_UI)
         end
 
         sig { params(stream: IOLike, streamname: Symbol).void }
-        def activate(stream, streamname)
+        private def activate(stream, streamname)
           writer = StdoutRouter::Writer.new(stream, streamname)
 
           raise if stream.respond_to?(WRITE_WITHOUT_CLI_UI)

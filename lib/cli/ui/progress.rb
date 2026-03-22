@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-require 'cli/ui'
+require "cli/ui"
 
 module CLI
   module UI
@@ -52,7 +52,7 @@ module CLI
             .returns(T.type_parameter(:T))
         end
         def progress(title = nil, width: Terminal.width)
-          bar = Progress.new(title, width: width)
+          bar = Progress.new(title, width:)
           print(CLI::UI::ANSI.hide_cursor)
           yield(bar)
         ensure
@@ -91,7 +91,7 @@ module CLI
       def tick(percent: nil, set_percent: nil)
         if percent && set_percent
           raise ArgumentError,
-                'percent and set_percent cannot both be specified'
+            "percent and set_percent cannot both be specified"
         end
 
         @percent_done += percent || 0.01
@@ -126,9 +126,9 @@ module CLI
 
         title = CLI::UI.resolve_text(@title, truncate_to: @max_width - Frame.prefix_width) if @title
         bar = CLI::UI.resolve_text([
-          FILLED_BAR + (' ' * filled),
-          UNFILLED_BAR + (' ' * unfilled),
-          CLI::UI::Color::RESET.code + suffix
+          FILLED_BAR + (" " * filled),
+          UNFILLED_BAR + (" " * unfilled),
+          CLI::UI::Color::RESET.code + suffix,
         ].join)
 
         [title, bar].compact.join("\n")

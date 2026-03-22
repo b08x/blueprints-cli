@@ -5,12 +5,12 @@ load :rack, :supervisor
 
 supervisor
 
-rack 'blueprints.localhost' do
-  scheme 'http'
-  protocol {Async::HTTP::Protocol::HTTP1}
+rack "blueprints.localhost" do
+  scheme "http"
+  protocol { Async::HTTP::Protocol::HTTP1 }
   endpoint do
-    Async::HTTP::Endpoint.for(scheme, "localhost", port: 9292, protocol: protocol)
+    Async::HTTP::Endpoint.for(scheme, "localhost", port: 9292, protocol:)
   end
-  
+
   append preload "preload.rb"
 end

@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-require 'cli/ui/frame'
+require "cli/ui/frame"
 
 module CLI
   module UI
@@ -13,12 +13,12 @@ module CLI
 
         abstract!
 
-        autoload(:Box, 'cli/ui/frame/frame_style/box')
-        autoload(:Bracket, 'cli/ui/frame/frame_style/bracket')
+        autoload(:Box, "cli/ui/frame/frame_style/box")
+        autoload(:Bracket, "cli/ui/frame/frame_style/bracket")
 
         MAP = {
           box: -> { FrameStyle::Box },
-          bracket: -> { FrameStyle::Bracket }
+          bracket: -> { FrameStyle::Bracket },
         }.freeze
 
         class << self
@@ -107,9 +107,9 @@ module CLI
 
           sig { returns(String) }
           def message
-            keys = FrameStyle::MAP.keys.map(&:inspect).join(', ')
+            keys = FrameStyle::MAP.keys.map(&:inspect).join(", ")
             "invalid frame style: #{@name.inspect} " \
-              '-- must be one of CLI::UI::Frame::FrameStyle::MAP ' \
+              "-- must be one of CLI::UI::Frame::FrameStyle::MAP " \
               "(#{keys})"
           end
         end

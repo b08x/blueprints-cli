@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require_relative 'pipeline_builder'
-require_relative '../models/cache_models'
-require_relative '../providers/embedding_provider'
-require_relative '../services/informers_embedding_service'
-require 'algorithms'
+require_relative "pipeline_builder"
+require_relative "../models/cache_models"
+require_relative "../providers/embedding_provider"
+require_relative "../services/informers_embedding_service"
+require "algorithms"
 
 module BlueprintsCLI
   module NLP
@@ -62,7 +62,7 @@ module BlueprintsCLI
 
           update_metrics(:processing_success, processing_time)
           enhanced_result
-        rescue StandardError => e
+        rescue => e
           processing_time = Time.now - start_time
           update_metrics(:processing_error, processing_time, error: e.message)
 
@@ -97,24 +97,24 @@ module BlueprintsCLI
           update_metrics(:search_success, Time.now - start_time)
 
           {
-            query: query,
-            query_analysis: query_analysis,
+            query:,
+            query_analysis:,
             results: filtered_results,
             search_stats: {
               total_found: search_results.length,
               after_ranking: ranked_results.length,
               final_count: filtered_results.length,
-              processing_time: Time.now - start_time
-            }
+              processing_time: Time.now - start_time,
+            },
           }
-        rescue StandardError => e
+        rescue => e
           update_metrics(:search_error, Time.now - start_time, error: e.message)
 
           {
-            query: query,
+            query:,
             results: [],
             error: e.message,
-            search_stats: { processing_time: Time.now - start_time }
+            search_stats: { processing_time: Time.now - start_time },
           }
         end
       end
@@ -142,7 +142,7 @@ module BlueprintsCLI
 
           update_metrics(:similarity_search, Time.now - start_time)
           refined_similarities
-        rescue StandardError => e
+        rescue => e
           update_metrics(:similarity_error, Time.now - start_time, error: e.message)
           []
         end
@@ -165,7 +165,7 @@ module BlueprintsCLI
             class_patterns: extract_class_patterns(code_content),
             variable_patterns: extract_variable_patterns(code_content),
             comment_analysis: analyze_comments(code_content),
-            complexity_metrics: calculate_code_complexity(code_content, linguistic_analysis)
+            complexity_metrics: calculate_code_complexity(code_content, linguistic_analysis),
           }
 
           # Use Trie for pattern indexing
@@ -173,7 +173,7 @@ module BlueprintsCLI
 
           update_metrics(:pattern_analysis, Time.now - start_time)
           patterns
-        rescue StandardError => e
+        rescue => e
           update_metrics(:pattern_error, Time.now - start_time, error: e.message)
           { error: e.message }
         end
@@ -186,7 +186,7 @@ module BlueprintsCLI
           cache_stats: @cache_manager.statistics,
           performance_metrics: @performance_metrics.to_h,
           search_index_stats: @search_index ? calculate_index_stats : {},
-          memory_usage: estimate_memory_usage
+          memory_usage: estimate_memory_usage,
         }
       end
 
@@ -198,7 +198,7 @@ module BlueprintsCLI
         blueprints.each do |blueprint|
           processed_result = process_blueprint(blueprint)
           update_search_index(blueprint[:id], processed_result)
-        rescue StandardError => e
+        rescue => e
           # Log error but continue processing other blueprints
           puts "Error processing blueprint #{blueprint[:id]}: #{e.message}"
         end
@@ -207,31 +207,29 @@ module BlueprintsCLI
         @search_index
       end
 
-      private
-
-      def default_config
+      private def default_config
         {
           enable_spacy: true,
           enable_linguistics: true,
           enable_caching: true,
-          spacy_model: 'en_core_web_sm',
+          spacy_model: "en_core_web_sm",
           embedding_provider: :informers,
           parallel_processing: false,
-          output_format: :detailed
+          output_format: :detailed,
         }
       end
 
-      def default_search_options
+      private def default_search_options
         {
           max_results: 20,
           relevance_threshold: 0.6,
           include_patterns: true,
           include_embeddings: false,
-          boost_exact_matches: true
+          boost_exact_matches: true,
         }
       end
 
-      def initialize_pipeline
+      private def initialize_pipeline
         builder = PipelineBuilder.new
 
         builder.with_spacy(model_name: @config[:spacy_model]) if @config[:enable_spacy]
@@ -239,52 +237,52 @@ module BlueprintsCLI
         builder.with_linguistics if @config[:enable_linguistics]
 
         builder.configure({
-                            enable_caching: @config[:enable_caching],
-                            parallel_processing: @config[:parallel_processing],
-                            output_format: @config[:output_format]
-                          })
+          enable_caching: @config[:enable_caching],
+          parallel_processing: @config[:parallel_processing],
+          output_format: @config[:output_format],
+        })
 
         @pipeline = builder.build
       end
 
-      def setup_embedding_service
+      private def setup_embedding_service
         @embedding_service = Services::InformersEmbeddingService.instance
       end
 
-      def build_search_infrastructure
+      private def build_search_infrastructure
         {
           trie: Trie.new,
           kd_tree_points: {},
           priority_rankings: PriorityQueue.new { |x, y| x[:relevance] <=> y[:relevance] },
           pattern_index: RBTreeMap.new,
-          concept_graph: build_concept_graph
+          concept_graph: build_concept_graph,
         }
       end
 
-      def build_concept_graph
+      private def build_concept_graph
         # Simple concept graph using adjacency list
         {}
       end
 
-      def extract_text_content(blueprint_data)
+      private def extract_text_content(blueprint_data)
         content_parts = []
         content_parts << blueprint_data[:name] if blueprint_data[:name]
         content_parts << blueprint_data[:description] if blueprint_data[:description]
         content_parts << blueprint_data[:code] if blueprint_data[:code]
-        content_parts << blueprint_data[:tags]&.join(' ') if blueprint_data[:tags]
+        content_parts << blueprint_data[:tags]&.join(" ") if blueprint_data[:tags]
 
-        content_parts.join(' ')
+        content_parts.join(" ")
       end
 
-      def extract_code_content(blueprint_data)
-        blueprint_data[:code] || ''
+      private def extract_code_content(blueprint_data)
+        blueprint_data[:code] || ""
       end
 
-      def generate_blueprint_id(content)
+      private def generate_blueprint_id(content)
         Digest::MD5.hexdigest(content)[0..7]
       end
 
-      def generate_embeddings(text, nlp_result)
+      private def generate_embeddings(text, nlp_result)
         # Use the embedding service with fallback
         embedding = @embedding_service.generate_embedding(text)
 
@@ -296,7 +294,7 @@ module BlueprintsCLI
         end
       end
 
-      def build_feature_vector(nlp_result)
+      private def build_feature_vector(nlp_result)
         # Create simple feature vector from NLP analysis
         features = []
 
@@ -328,7 +326,7 @@ module BlueprintsCLI
         features[0..767] # Ensure exactly 768 dimensions
       end
 
-      def extract_code_features(_text, blueprint_data)
+      private def extract_code_features(_text, blueprint_data)
         code = extract_code_content(blueprint_data)
 
         {
@@ -338,40 +336,40 @@ module BlueprintsCLI
           comment_ratio: calculate_comment_ratio(code),
           complexity_score: estimate_cyclomatic_complexity(code),
           imports: extract_imports(code),
-          patterns: detect_design_patterns(code)
+          patterns: detect_design_patterns(code),
         }
       end
 
-      def build_enhanced_analysis(blueprint_data, nlp_result, embeddings, code_features)
+      private def build_enhanced_analysis(blueprint_data, nlp_result, embeddings, code_features)
         {
           blueprint_id: blueprint_data[:id] || generate_blueprint_id(blueprint_data.to_s),
           nlp_analysis: nlp_result,
-          embeddings: embeddings,
-          code_features: code_features,
+          embeddings:,
+          code_features:,
           enhanced_metadata: {
             processing_timestamp: Time.now.iso8601,
             content_hash: Digest::MD5.hexdigest(extract_text_content(blueprint_data)),
-            analysis_version: '1.0',
+            analysis_version: "1.0",
             feature_counts: {
               keywords: nlp_result.dig(:combined_analysis, :keywords)&.length || 0,
               entities: nlp_result.dig(:combined_analysis, :entities)&.length || 0,
-              concepts: nlp_result.dig(:combined_analysis, :concepts)&.length || 0
-            }
+              concepts: nlp_result.dig(:combined_analysis, :concepts)&.length || 0,
+            },
           },
-          search_metadata: build_search_metadata(nlp_result, code_features)
+          search_metadata: build_search_metadata(nlp_result, code_features),
         }
       end
 
-      def build_search_metadata(nlp_result, code_features)
+      private def build_search_metadata(nlp_result, code_features)
         {
           searchable_terms: extract_searchable_terms(nlp_result),
           categorical_tags: extract_categorical_tags(nlp_result, code_features),
           relevance_boosters: identify_relevance_boosters(nlp_result),
-          semantic_clusters: group_semantic_clusters(nlp_result)
+          semantic_clusters: group_semantic_clusters(nlp_result),
         }
       end
 
-      def extract_searchable_terms(nlp_result)
+      private def extract_searchable_terms(nlp_result)
         terms = []
 
         # Add keywords
@@ -398,7 +396,7 @@ module BlueprintsCLI
         terms.uniq
       end
 
-      def extract_categorical_tags(nlp_result, code_features)
+      private def extract_categorical_tags(nlp_result, code_features)
         tags = []
 
         # Language-based tags
@@ -407,48 +405,48 @@ module BlueprintsCLI
         # Complexity tags
         complexity = code_features[:complexity_score] || 0
         tags << case complexity
-                when 0..3 then 'simple'
-                when 4..7 then 'moderate'
-                else 'complex'
-                end
+                when 0..3 then "simple"
+                when 4..7 then "moderate"
+                else "complex"
+        end
 
         # Content-based tags
-        tags << 'entity-rich' if nlp_result.dig(:combined_analysis, :entities)&.any?
+        tags << "entity-rich" if nlp_result.dig(:combined_analysis, :entities)&.any?
 
-        tags << 'keyword-dense' if nlp_result.dig(:combined_analysis, :keywords)&.length.to_i > 10
+        tags << "keyword-dense" if nlp_result.dig(:combined_analysis, :keywords)&.length.to_i > 10
 
         tags
       end
 
-      def identify_relevance_boosters(nlp_result)
+      private def identify_relevance_boosters(nlp_result)
         boosters = {}
 
         # High-value keywords get boost
         if nlp_result.dig(:combined_analysis, :keywords)
           high_value_keywords = nlp_result[:combined_analysis][:keywords]
-                                .select { |k| (k[:score] || 0) > 0.7 }
-                                .map { |k| k[:text] || k[:word] }
+            .select { |k| (k[:score] || 0) > 0.7 }
+            .map { |k| k[:text] || k[:word] }
           boosters[:high_value_keywords] = high_value_keywords
         end
 
         # Named entities get boost
         if nlp_result.dig(:combined_analysis, :entities)
           entities = nlp_result[:combined_analysis][:entities]
-                     .select { |e| e[:confidence] > 0.8 }
-                     .map { |e| e[:text] }
+            .select { |e| e[:confidence] > 0.8 }
+            .map { |e| e[:text] }
           boosters[:named_entities] = entities
         end
 
         boosters
       end
 
-      def group_semantic_clusters(nlp_result)
+      private def group_semantic_clusters(nlp_result)
         clusters = {}
 
         # Group concepts by semantic field
         if nlp_result[:linguistics] && nlp_result[:linguistics][:concepts]
           nlp_result[:linguistics][:concepts].each do |concept|
-            category = concept[:category] || 'general'
+            category = concept[:category] || "general"
             clusters[category] ||= []
             clusters[category] << concept[:word]
           end
@@ -457,7 +455,7 @@ module BlueprintsCLI
         clusters
       end
 
-      def update_search_index(blueprint_id, enhanced_result)
+      private def update_search_index(blueprint_id, enhanced_result)
         return unless @search_index
 
         # Index searchable terms in Trie
@@ -474,7 +472,7 @@ module BlueprintsCLI
         # Add to priority queue with relevance score
         relevance = calculate_relevance_score(enhanced_result)
         @search_index[:priority_rankings].push(
-          { blueprint_id: blueprint_id, enhanced_result: enhanced_result, relevance: relevance },
+          { blueprint_id:, enhanced_result:, relevance: },
           relevance
         )
 
@@ -486,7 +484,7 @@ module BlueprintsCLI
         end
       end
 
-      def calculate_relevance_score(enhanced_result)
+      private def calculate_relevance_score(enhanced_result)
         score = 0.0
 
         # Feature count contribution
@@ -509,37 +507,37 @@ module BlueprintsCLI
         score.clamp(0.0, 1.0)
       end
 
-      def enrich_cached_result(cached_result, blueprint_id)
+      private def enrich_cached_result(cached_result, blueprint_id)
         cached_result.merge(
-          blueprint_id: blueprint_id,
+          blueprint_id:,
           cache_hit: true,
           retrieved_at: Time.now.iso8601
         )
       end
 
-      def build_fallback_analysis(blueprint_data, error_message)
+      private def build_fallback_analysis(blueprint_data, error_message)
         {
           blueprint_id: blueprint_data[:id] || generate_blueprint_id(blueprint_data.to_s),
           error: error_message,
           fallback_analysis: {
             basic_features: extract_basic_features(blueprint_data),
-            content_hash: Digest::MD5.hexdigest(extract_text_content(blueprint_data))
+            content_hash: Digest::MD5.hexdigest(extract_text_content(blueprint_data)),
           },
-          processing_timestamp: Time.now.iso8601
+          processing_timestamp: Time.now.iso8601,
         }
       end
 
-      def extract_basic_features(blueprint_data)
+      private def extract_basic_features(blueprint_data)
         content = extract_text_content(blueprint_data)
         {
           character_count: content.length,
           word_count: content.split.length,
           line_count: content.lines.count,
-          has_code: !extract_code_content(blueprint_data).empty?
+          has_code: !extract_code_content(blueprint_data).empty?,
         }
       end
 
-      def rank_search_results(query_analysis, search_results, options)
+      private def rank_search_results(query_analysis, search_results, options)
         # Enhanced ranking using multiple factors
         scored_results = search_results.map do |result|
           score = result[:total_score] || 0.0
@@ -558,7 +556,7 @@ module BlueprintsCLI
         scored_results.sort_by { |r| -r[:final_score] }
       end
 
-      def apply_relevance_filters(ranked_results, options)
+      private def apply_relevance_filters(ranked_results, options)
         threshold = options[:relevance_threshold] || 0.0
         max_results = options[:max_results] || 20
 
@@ -566,9 +564,9 @@ module BlueprintsCLI
         filtered.first(max_results)
       end
 
-      def get_blueprint_embedding(blueprint_id)
+      private def get_blueprint_embedding(blueprint_id)
         # Try to get from cache first
-        cached_embedding = @cache_manager.get(:embedding, blueprint_id, :informers, 'default')
+        cached_embedding = @cache_manager.get(:embedding, blueprint_id, :informers, "default")
         return cached_embedding if cached_embedding
 
         # If not cached, would need to regenerate from blueprint data
@@ -576,7 +574,7 @@ module BlueprintsCLI
         nil
       end
 
-      def refine_similarity_search(target_embedding, similar_vectors, options)
+      private def refine_similarity_search(target_embedding, similar_vectors, options)
         refined = []
 
         similar_vectors.each do |distance, vector_id|
@@ -587,47 +585,47 @@ module BlueprintsCLI
 
           refined << {
             blueprint_id: vector_id,
-            similarity: similarity,
-            distance: distance
+            similarity:,
+            distance:,
           }
         end
 
         refined.sort_by { |item| -item[:similarity] }.first(options[:k])
       end
 
-      def calculate_cosine_similarity(_vector1, _vector2)
+      private def calculate_cosine_similarity(_vector1, _vector2)
         # Simplified cosine similarity - would need actual vector data
         0.8 + rand(0.2) # Placeholder
       end
 
-      def detect_programming_language(code)
-        return 'unknown' if code.empty?
+      private def detect_programming_language(code)
+        return "unknown" if code.empty?
 
         # Simple language detection based on patterns
         case code
         when /def\s+\w+.*:/, /import\s+\w+/, /from\s+\w+\s+import/
-          'python'
+          "python"
         when /function\s+\w+/, /const\s+\w+\s*=/, /let\s+\w+\s*=/
-          'javascript'
+          "javascript"
         when /def\s+\w+/, /class\s+\w+/, %r{require\s+['"][\w/]+['"]}
-          'ruby'
+          "ruby"
         when /#include\s*</, /int\s+main\s*\(/
-          'c'
+          "c"
         else
-          'unknown'
+          "unknown"
         end
       end
 
-      def calculate_comment_ratio(code)
+      private def calculate_comment_ratio(code)
         return 0.0 if code.empty?
 
         total_lines = code.lines.count
-        comment_lines = code.lines.count { |line| line.strip.start_with?('#', '//', '/*', '*') }
+        comment_lines = code.lines.count { |line| line.strip.start_with?("#", "//", "/*", "*") }
 
         comment_lines.to_f / total_lines
       end
 
-      def estimate_cyclomatic_complexity(code)
+      private def estimate_cyclomatic_complexity(code)
         # Simple cyclomatic complexity estimation
         complexity = 1 # Base complexity
 
@@ -639,7 +637,7 @@ module BlueprintsCLI
         complexity
       end
 
-      def extract_imports(code)
+      private def extract_imports(code)
         imports = []
 
         # Python imports
@@ -654,77 +652,77 @@ module BlueprintsCLI
         imports.flatten.uniq
       end
 
-      def detect_design_patterns(code)
+      private def detect_design_patterns(code)
         patterns = []
 
         # Singleton pattern
-        patterns << 'singleton' if code.include?('@@instance') || code.include?('getInstance')
+        patterns << "singleton" if code.include?("@@instance") || code.include?("getInstance")
 
         # Factory pattern
-        patterns << 'factory' if code.match?(/create\w*\(/i) || code.include?('Factory')
+        patterns << "factory" if code.match?(/create\w*\(/i) || code.include?("Factory")
 
         # Observer pattern
-        patterns << 'observer' if code.include?('notify') || code.include?('Observer')
+        patterns << "observer" if code.include?("notify") || code.include?("Observer")
 
         # Strategy pattern
-        patterns << 'strategy' if code.include?('Strategy') || code.match?(/execute\w*\(/i)
+        patterns << "strategy" if code.include?("Strategy") || code.match?(/execute\w*\(/i)
 
         patterns
       end
 
-      def extract_function_patterns(code)
+      private def extract_function_patterns(code)
         functions = code.scan(/def\s+(\w+)|function\s+(\w+)/).flatten.compact
         {
           count: functions.length,
           names: functions,
-          avg_name_length: functions.empty? ? 0 : functions.sum(&:length).to_f / functions.length
+          avg_name_length: functions.empty? ? 0 : functions.sum(&:length).to_f / functions.length,
         }
       end
 
-      def extract_class_patterns(code)
+      private def extract_class_patterns(code)
         classes = code.scan(/class\s+(\w+)/).flatten
         {
           count: classes.length,
           names: classes,
-          inheritance: code.scan(/class\s+\w+\s*<\s*(\w+)/).flatten
+          inheritance: code.scan(/class\s+\w+\s*<\s*(\w+)/).flatten,
         }
       end
 
-      def extract_variable_patterns(code)
+      private def extract_variable_patterns(code)
         # Simple variable extraction
         variables = code.scan(/(\w+)\s*=/).flatten.uniq
         {
           count: variables.length,
-          naming_convention: analyze_naming_convention(variables)
+          naming_convention: analyze_naming_convention(variables),
         }
       end
 
-      def analyze_naming_convention(variables)
-        return 'unknown' if variables.empty?
+      private def analyze_naming_convention(variables)
+        return "unknown" if variables.empty?
 
         snake_case = variables.count { |v| v.match?(/^[a-z]+(_[a-z]+)*$/) }
         camel_case = variables.count { |v| v.match?(/^[a-z]+([A-Z][a-z]*)*$/) }
 
         if snake_case > camel_case
-          'snake_case'
+          "snake_case"
         elsif camel_case > snake_case
-          'camelCase'
+          "camelCase"
         else
-          'mixed'
+          "mixed"
         end
       end
 
-      def analyze_comments(code)
-        comment_lines = code.lines.select { |line| line.strip.start_with?('#', '//', '/*', '*') }
+      private def analyze_comments(code)
+        comment_lines = code.lines.select { |line| line.strip.start_with?("#", "//", "/*", "*") }
 
         {
           count: comment_lines.length,
           avg_length: comment_lines.empty? ? 0 : comment_lines.sum(&:length).to_f / comment_lines.length,
-          has_docstrings: code.include?('"""') || code.include?("'''")
+          has_docstrings: code.include?('"""') || code.include?("'''"),
         }
       end
 
-      def calculate_code_complexity(code, linguistic_analysis)
+      private def calculate_code_complexity(code, linguistic_analysis)
         base_complexity = estimate_cyclomatic_complexity(code)
 
         # Enhance with linguistic metrics
@@ -736,11 +734,11 @@ module BlueprintsCLI
         {
           cyclomatic: base_complexity,
           linguistic: linguistic_complexity,
-          combined: (base_complexity + (linguistic_complexity * 10)) / 2.0
+          combined: (base_complexity + (linguistic_complexity * 10)) / 2.0,
         }
       end
 
-      def index_code_patterns(patterns)
+      private def index_code_patterns(patterns)
         return unless @search_index
 
         # Index patterns in Red-Black tree for ordered access
@@ -757,39 +755,39 @@ module BlueprintsCLI
         end
       end
 
-      def calculate_index_stats
+      private def calculate_index_stats
         return {} unless @search_index
 
         {
           trie_entries: @search_index[:trie].size,
           kd_tree_points: @search_index[:kd_tree_points].size,
           priority_queue_size: @search_index[:priority_rankings].size,
-          pattern_index_size: @search_index[:pattern_index].size
+          pattern_index_size: @search_index[:pattern_index].size,
         }
       end
 
-      def estimate_memory_usage
+      private def estimate_memory_usage
         # Rough memory estimation
         base_usage = 0
         base_usage += if @search_index
-                        @search_index.values.sum do |v|
-                          v.respond_to?(:size) ? v.size : 1
-                        end * 100
-                      else
-                        0
-                      end
+          @search_index.values.sum do |v|
+            v.respond_to?(:size) ? v.size : 1
+          end * 100
+        else
+          0
+        end
         base_usage += @performance_metrics.size * 50
 
         "#{base_usage}KB (estimated)"
       end
 
-      def update_metrics(operation, duration, error: nil)
+      private def update_metrics(operation, duration, error: nil)
         @performance_metrics[operation] ||= {
           count: 0,
           total_duration: 0.0,
           success_count: 0,
           avg_duration: 0.0,
-          errors: []
+          errors: [],
         }
 
         @performance_metrics[operation][:count] += 1
@@ -802,7 +800,7 @@ module BlueprintsCLI
 
         @performance_metrics[operation][:errors] << {
           message: error,
-          timestamp: Time.now.iso8601
+          timestamp: Time.now.iso8601,
         }
         # Keep only last 10 errors
         @performance_metrics[operation][:errors] =

@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-require 'io/console'
+require "io/console"
 
 module CLI
   module UI
@@ -9,8 +9,8 @@ module CLI
       class InteractiveOptions
         extend T::Sig
 
-        DONE = 'Done'
-        CHECKBOX_ICON = { false => '☐', true => '☑' }.freeze
+        DONE = "Done"
+        CHECKBOX_ICON = { false => "☐", true => "☑" }.freeze
 
         class << self
           extend T::Sig
@@ -31,11 +31,11 @@ module CLI
           #
           sig do
             params(options: T::Array[String], multiple: T::Boolean,
-                   default: T.nilable(T.any(String, T::Array[String])))
+              default: T.nilable(T.any(String, T::Array[String])))
               .returns(T.any(String, T::Array[String]))
           end
           def call(options, multiple: false, default: nil)
-            list = new(options, multiple: multiple, default: default)
+            list = new(options, multiple:, default:)
             selected = list.call
             case selected
             when Array
@@ -60,26 +60,26 @@ module CLI
         def initialize(options, multiple: false, default: nil)
           @options = options
           @active = if default && (i = options.index(default))
-                      i + 1
-                    else
-                      1
-                    end
-          @marker = '>'
+            i + 1
+          else
+            1
+          end
+          @marker = ">"
           @answer = nil
           @state = :root
           @multiple = multiple
           # Indicate that an extra line (the "metadata" line) is present and
           # the terminal output should be drawn over when processing user input
           @displaying_metadata = false
-          @filter = ''
+          @filter = ""
           # 0-indexed array representing if selected
           # @options[0] is selected if @chosen[0]
           if multiple
             @chosen = if default
-                        @options.map { |option| default.include?(option) }
-                      else
-                        Array.new(@options.size) { false }
-                      end
+              @options.map { |option| default.include?(option) }
+            else
+              Array.new(@options.size) { false }
+            end
           end
           @redraw = true
           @presented_options = T.let([], T::Array[[String, T.nilable(Integer)]])
@@ -106,10 +106,8 @@ module CLI
           end
         end
 
-        private
-
         sig { void }
-        def calculate_option_line_lengths
+        private def calculate_option_line_lengths
           @terminal_width_at_calculation_time = CLI::UI::Terminal.width
           # options will be an array of questions but each option can be multi-line
           # so to get the # of lines, you need to join then split
@@ -141,7 +139,7 @@ module CLI
         end
 
         sig { params(number_of_lines: Integer).void }
-        def reset_position(number_of_lines = num_lines)
+        private def reset_position(number_of_lines = num_lines)
           # This will put us back at the beginning of the options
           # When we redraw the options, they will be overwritten
           CLI::UI.raw do
@@ -150,10 +148,10 @@ module CLI
         end
 
         sig { params(number_of_lines: Integer).void }
-        def clear_output(number_of_lines = num_lines)
+        private def clear_output(number_of_lines = num_lines)
           CLI::UI.raw do
             # Write over all lines with whitespace
-            number_of_lines.times { puts(' ' * CLI::UI::Terminal.width) }
+            number_of_lines.times { puts(" " * CLI::UI::Terminal.width) }
           end
           reset_position(number_of_lines)
 
@@ -166,12 +164,12 @@ module CLI
         # Don't use this in place of +@displaying_metadata+, this updates too
         # quickly to be useful when drawing to the screen.
         sig { returns(T::Boolean) }
-        def display_metadata?
+        private def display_metadata?
           filtering? || selecting? || has_filter?
         end
 
         sig { returns(Integer) }
-        def num_lines
+        private def num_lines
           calculate_option_line_lengths if terminal_width_changed?
 
           option_length = presented_options.reduce(0) do |total_length, (_, option_number)|
@@ -185,7 +183,7 @@ module CLI
         end
 
         sig { returns(T::Boolean) }
-        def terminal_width_changed?
+        private def terminal_width_changed?
           @terminal_width_at_calculation_time != CLI::UI::Terminal.width
         end
 
@@ -195,7 +193,7 @@ module CLI
         CTRL_D = "\u0004"
 
         sig { void }
-        def up
+        private def up
           active_index = @filtered_options.index { |_, num| num == @active } || 0
 
           previous_visible = @filtered_options[active_index - 1]
@@ -206,7 +204,7 @@ module CLI
         end
 
         sig { void }
-        def down
+        private def down
           active_index = @filtered_options.index { |_, num| num == @active } || 0
 
           next_visible = @filtered_options[active_index + 1]
@@ -219,7 +217,7 @@ module CLI
         # n is 1-indexed selection
         # n == 0 if "Done" was selected in @multiple mode
         sig { params(n: Integer).void }
-        def select_n(n)
+        private def select_n(n)
           if @multiple
             if n.zero?
               @answer = []
@@ -246,7 +244,7 @@ module CLI
         end
 
         sig { params(n: Integer).returns(T::Boolean) }
-        def should_enter_select_mode?(n)
+        private def should_enter_select_mode?(n)
           # If we have less than 10 options, we don't need to enter select mode
           # and we can just select the option directly. This just keeps the code easier
           # by making the cases simpler to understand
@@ -260,7 +258,7 @@ module CLI
         end
 
         sig { params(char: String).void }
-        def select_bool(char)
+        private def select_bool(char)
           return unless (@options - %w[yes no]).empty?
 
           index = T.must(@options.index { |o| o.start_with?(char) })
@@ -270,24 +268,24 @@ module CLI
         end
 
         sig { params(char: String).void }
-        def build_selection(char)
+        private def build_selection(char)
           @active = (@active.to_s + char).to_i
           @redraw = true
         end
 
         sig { void }
-        def chop_selection
+        private def chop_selection
           @active = @active.to_s.chop.to_i
           @redraw = true
         end
 
         sig { params(char: String).void }
-        def update_search(char)
+        private def update_search(char)
           @redraw = true
 
           # Control+D or Backspace on empty search closes search
           if (char == CTRL_D) || (@filter.empty? && (char == BACKSPACE))
-            @filter = ''
+            @filter = ""
             @state = :root
             return
           end
@@ -300,7 +298,7 @@ module CLI
         end
 
         sig { void }
-        def select_current
+        private def select_current
           # Prevent selection of invisible options
           return unless presented_options.any? { |_, num| num == @active }
 
@@ -308,14 +306,14 @@ module CLI
         end
 
         sig { void }
-        def process_input_until_redraw_required
+        private def process_input_until_redraw_required
           @redraw = false
           wait_for_user_input until @redraw
         end
 
-        # rubocop:disable Style/WhenThen,Layout/SpaceBeforeSemicolon,Style/Semicolon
+        # rubocop:disable Style/WhenThen,Layout/SpaceBeforeSemicolon
         sig { void }
-        def wait_for_user_input
+        private def wait_for_user_input
           char = Prompt.read_char
           @last_char = char
 
@@ -328,13 +326,13 @@ module CLI
           when :root
             case char
             when ESC              ; @state = :esc
-            when 'k'              ; up
-            when 'j'              ; down
-            when 'e', ':', 'G'    ; start_line_select
-            when 'f', '/'         ; start_filter
-            when ('0'..max_digit) ; select_n(char.to_i)
-            when 'y', 'n'         ; select_bool(char)
-            when ' ', "\r", "\n"  ; select_current # <enter>
+            when "k"              ; up
+            when "j"              ; down
+            when "e", ":", "G"    ; start_line_select
+            when "f", "/"         ; start_filter
+            when ("0"..max_digit) ; select_n(char.to_i)
+            when "y", "n"         ; select_bool(char)
+            when " ", "\r", "\n"  ; select_current # <enter>
             end
           when :filter
             case char
@@ -346,74 +344,72 @@ module CLI
           when :line_select
             case char
             when ESC             ; @state = :esc
-            when 'k'             ; up   ; @state = :root
-            when 'j'             ; down ; @state = :root
-            when 'e', ':', 'G', 'q' ; stop_line_select
-            when '0'..'9'        ; build_selection(char)
+            when "k"             ; up   ; @state = :root
+            when "j"             ; down ; @state = :root
+            when "e", ":", "G", "q" ; stop_line_select
+            when "0".."9"        ; build_selection(char)
             when BACKSPACE       ; chop_selection # Pop last input on backspace
-            when ' ', "\r", "\n" ; select_current
+            when " ", "\r", "\n" ; select_current
             end
           when :esc
             case char
-            when '['      ; @state = :esc_bracket
+            when "["      ; @state = :esc_bracket
             else          ; raise Interrupt # unhandled escape sequence.
             end
           when :esc_bracket
             @state = has_filter? ? :filter : :root
             case char
-            when 'A'      ; up
-            when 'B'      ; down
-            when 'C'      ; # Ignore right key
-            when 'D'      ; # Ignore left key
+            when "A"      ; up
+            when "B"      ; down
+            when "C"      ; # Ignore right key
+            when "D"      ; # Ignore left key
             else          ; raise Interrupt # unhandled escape sequence.
             end
           end
         end
-        # rubocop:enable Style/WhenThen,Layout/SpaceBeforeSemicolon,Style/Semicolon
+        # rubocop:enable Style/WhenThen,Layout/SpaceBeforeSemicolon
 
         sig { returns(T::Boolean) }
-        def selecting?
+        private def selecting?
           @state == :line_select
         end
 
         sig { returns(T::Boolean) }
-        def filtering?
+        private def filtering?
           @state == :filter
         end
 
         sig { returns(T::Boolean) }
-        def has_filter?
+        private def has_filter?
           !@filter.empty?
         end
 
         sig { void }
-        def start_filter
+        private def start_filter
           @state = :filter
           @redraw = true
         end
 
         sig { void }
-        def start_line_select
+        private def start_line_select
           @state  = :line_select
           @active = 0
           @redraw = true
         end
 
         sig { void }
-        def stop_line_select
+        private def stop_line_select
           @state = :root
           @active = 1 if @active.zero?
           @redraw = true
         end
 
         sig { params(recalculate: T::Boolean).returns(T::Array[[String, T.nilable(Integer)]]) }
-        def presented_options(recalculate: false)
+        private def presented_options(recalculate: false)
           return @presented_options unless recalculate
 
           @presented_options = @options.zip(1..)
-          if has_filter?
-            @presented_options.select! { |option, _| option.downcase.include?(@filter.downcase) }
-          end
+          @presented_options.select! { |option, _| option.downcase.include?(@filter.downcase) } if has_filter?
 
           # Used for selection purposes
           @presented_options.push([DONE, 0]) if @multiple
@@ -450,44 +446,44 @@ module CLI
         end
 
         sig { void }
-        def ensure_visible_is_active
+        private def ensure_visible_is_active
           return if presented_options.any? { |_, num| num == @active }
 
           @active = presented_options.first&.last.to_i
         end
 
         sig { returns(Integer) }
-        def distance_from_selection_to_end
+        private def distance_from_selection_to_end
           @presented_options.count - index_of_active_option
         end
 
         sig { returns(Integer) }
-        def distance_from_start_to_selection
+        private def distance_from_start_to_selection
           index_of_active_option
         end
 
         sig { returns(Integer) }
-        def index_of_active_option
+        private def index_of_active_option
           @presented_options.index { |_, num| num == @active }.to_i
         end
 
         sig { void }
-        def ensure_last_item_is_continuation_marker
-          @presented_options.push(['...', nil]) if @presented_options.last&.last
+        private def ensure_last_item_is_continuation_marker
+          @presented_options.push(["...", nil]) if @presented_options.last&.last
         end
 
         sig { void }
-        def ensure_first_item_is_continuation_marker
-          @presented_options.unshift(['...', nil]) if @presented_options.first&.last
+        private def ensure_first_item_is_continuation_marker
+          @presented_options.unshift(["...", nil]) if @presented_options.first&.last
         end
 
         sig { returns(Integer) }
-        def max_lines
+        private def max_lines
           CLI::UI::Terminal.height - (@displaying_metadata ? 3 : 2) # Keeps a one line question visible
         end
 
         sig { void }
-        def render_options
+        private def render_options
           previously_displayed_lines = num_lines
 
           @displaying_metadata = display_metadata?
@@ -499,30 +495,24 @@ module CLI
           max_num_length = (@options.size + 1).to_s.length
 
           metadata_text = if selecting?
-                            select_text = @active
-                            if @active.zero?
-                              select_text = '{{info:e, q, or up/down anytime to exit}}'
-                            end
-                            "Select: #{select_text}"
-                          elsif filtering? || has_filter?
-                            filter_text = @filter
-                            if @filter.empty?
-                              filter_text = '{{info:Ctrl-D anytime or Backspace now to exit}}'
-                            end
-                            "Filter: #{filter_text}"
-                          end
-
-          if metadata_text
-            puts CLI::UI.fmt("  {{green:#{metadata_text}}}#{ANSI.clear_to_end_of_line}")
+            select_text = @active
+            select_text = "{{info:e, q, or up/down anytime to exit}}" if @active.zero?
+            "Select: #{select_text}"
+          elsif filtering? || has_filter?
+            filter_text = @filter
+            filter_text = "{{info:Ctrl-D anytime or Backspace now to exit}}" if @filter.empty?
+            "Filter: #{filter_text}"
           end
+
+          puts CLI::UI.fmt("  {{green:#{metadata_text}}}#{ANSI.clear_to_end_of_line}") if metadata_text
 
           options.each do |choice, num|
             is_chosen = @multiple && num && @chosen[num - 1] && num != 0
 
-            padding = ' ' * (max_num_length - num.to_s.length)
+            padding = " " * (max_num_length - num.to_s.length)
             message = "  #{num}#{num ? '.' : ' '}#{padding}"
 
-            format = '%s'
+            format = "%s"
             # If multiple, bold selected. If not multiple, do not bold any options.
             # Bolding options can cause confusion as some users may perceive bold white (default color) as selected
             # rather than the actual selected color.
@@ -535,7 +525,7 @@ module CLI
 
             if num == @active
 
-              color = filtering? || selecting? ? 'green' : 'blue'
+              color = (filtering? || selecting?) ? "green" : "blue"
               message = message.split("\n").map do |l|
                 "{{#{color}:#{@marker} #{l.strip}}}"
               end.join("\n")
@@ -546,7 +536,7 @@ module CLI
         end
 
         sig { params(format: String, choice: String).returns(String) }
-        def format_choice(format, choice)
+        private def format_choice(format, choice)
           eol = CLI::UI::ANSI.clear_to_end_of_line
           lines = choice.split("\n")
 

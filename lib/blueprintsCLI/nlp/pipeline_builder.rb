@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative 'processors/spacy_processor'
-require_relative 'processors/linguistics_processor'
-require 'algorithms'
+require_relative "processors/spacy_processor"
+require_relative "processors/linguistics_processor"
+require "algorithms"
 
 module BlueprintsCLI
   module NLP
@@ -19,7 +19,7 @@ module BlueprintsCLI
           enable_caching: true,
           cache_ttl: 3600,
           parallel_processing: false,
-          output_format: :detailed
+          output_format: :detailed,
         }
         @performance_metrics = RBTreeMap.new
         @result_cache = Trie.new
@@ -27,12 +27,12 @@ module BlueprintsCLI
       end
 
       # Add SpaCy processor to pipeline
-      def with_spacy(model_name: 'en_core_web_sm', priority: 10)
+      def with_spacy(model_name: "en_core_web_sm", priority: 10)
         processor_config = {
           type: :spacy,
-          processor: Processors::SpacyProcessor.new(model_name: model_name),
-          priority: priority,
-          enabled: true
+          processor: Processors::SpacyProcessor.new(model_name:),
+          priority:,
+          enabled: true,
         }
 
         @processors << processor_config
@@ -45,8 +45,8 @@ module BlueprintsCLI
         processor_config = {
           type: :linguistics,
           processor: Processors::LinguisticsProcessor.new,
-          priority: priority,
-          enabled: true
+          priority:,
+          enabled: true,
         }
 
         @processors << processor_config
@@ -81,7 +81,7 @@ module BlueprintsCLI
 
       # Build and return the configured pipeline
       def build
-        raise 'No processors configured' if @processors.empty?
+        raise "No processors configured" if @processors.empty?
 
         # Sort processors by priority using the priority queue
         ordered_processors = []
@@ -119,10 +119,10 @@ module BlueprintsCLI
 
           # Process through each processor
           results = if @config[:parallel_processing]
-                      process_parallel(text)
-                    else
-                      process_sequential(text)
-                    end
+            process_parallel(text)
+          else
+            process_sequential(text)
+          end
 
           # Merge and optimize results
           final_result = merge_results(results, text)
@@ -135,14 +135,14 @@ module BlueprintsCLI
           update_metrics(:pipeline_processing, duration, final_result)
 
           format_output(final_result)
-        rescue StandardError => e
+        rescue => e
           duration = Time.now - start_time
           update_metrics(:pipeline_processing, duration, nil, error: e.message)
 
           {
             error: e.message,
             partial_results: @hybrid_results,
-            processing_time: duration
+            processing_time: duration,
           }
         end
       end
@@ -156,7 +156,7 @@ module BlueprintsCLI
             total_calls: value[:count],
             avg_duration: value[:avg_duration],
             success_rate: value[:success_count].to_f / value[:count],
-            total_duration: value[:total_duration]
+            total_duration: value[:total_duration],
           }
         end
 
@@ -168,7 +168,7 @@ module BlueprintsCLI
         search_index = {
           trie: Trie.new,
           kd_tree_points: {},
-          priority_rankings: PriorityQueue.new { |x, y| x[:relevance] <=> y[:relevance] }
+          priority_rankings: PriorityQueue.new { |x, y| x[:relevance] <=> y[:relevance] },
         }
 
         processed_texts.each_with_index do |(text_id, results), _index|
@@ -194,15 +194,13 @@ module BlueprintsCLI
           # Add to priority queue with relevance score
           relevance_score = calculate_relevance_score(results)
           search_index[:priority_rankings].push(
-            { text_id: text_id, results: results, relevance: relevance_score },
+            { text_id:, results:, relevance: relevance_score },
             relevance_score
           )
         end
 
         # Build KD-tree if we have vector data
-        if search_index[:kd_tree_points].any?
-          search_index[:kd_tree] = KDTree.new(search_index[:kd_tree_points])
-        end
+        search_index[:kd_tree] = KDTree.new(search_index[:kd_tree_points]) if search_index[:kd_tree_points].any?
 
         search_index
       end
@@ -212,7 +210,7 @@ module BlueprintsCLI
         results = {
           prefix_matches: [],
           semantic_matches: [],
-          ranked_results: []
+          ranked_results: [],
         }
 
         # Prefix search using Trie
@@ -220,9 +218,9 @@ module BlueprintsCLI
         query_words.each do |word|
           if search_index[:trie].key?(word)
             results[:prefix_matches] << {
-              word: word,
+              word:,
               text_id: search_index[:trie][word],
-              match_type: 'exact'
+              match_type: "exact",
             }
           else
             # Wildcard search for partial matches
@@ -233,7 +231,7 @@ module BlueprintsCLI
               results[:prefix_matches] << {
                 word: match,
                 text_id: search_index[:trie][match],
-                match_type: 'partial'
+                match_type: "partial",
               }
             end
           end
@@ -248,9 +246,9 @@ module BlueprintsCLI
 
           nearest_neighbors.each do |distance, text_id|
             results[:semantic_matches] << {
-              text_id: text_id,
-              distance: distance,
-              similarity: 1.0 / (1.0 + distance) # Convert distance to similarity
+              text_id:,
+              distance:,
+              similarity: 1.0 / (1.0 + distance), # Convert distance to similarity
             }
           end
         end
@@ -269,9 +267,7 @@ module BlueprintsCLI
         combine_search_results(results, options)
       end
 
-      private
-
-      def process_sequential(text)
+      private def process_sequential(text)
         results = {}
 
         @processors.each do |processor_config|
@@ -284,7 +280,7 @@ module BlueprintsCLI
             result = processor.process(text)
             results[processor_type] = result
             @hybrid_results[processor_type] = result
-          rescue StandardError => e
+          rescue => e
             results[processor_type] = { error: e.message }
           end
         end
@@ -292,7 +288,7 @@ module BlueprintsCLI
         results
       end
 
-      def process_parallel(text)
+      private def process_parallel(text)
         # NOTE: In a real implementation, you'd use threads or processes
         # For now, we'll simulate parallel processing
         results = {}
@@ -307,7 +303,7 @@ module BlueprintsCLI
           Thread.new do
             result = processor.process(text)
             results[processor_type] = result
-          rescue StandardError => e
+          rescue => e
             results[processor_type] = { error: e.message }
           end
         end
@@ -318,12 +314,12 @@ module BlueprintsCLI
         results
       end
 
-      def merge_results(results, original_text)
+      private def merge_results(results, original_text)
         merged = {
-          original_text: original_text,
+          original_text:,
           processing_timestamp: Time.now.iso8601,
           processors_used: results.keys,
-          combined_analysis: {}
+          combined_analysis: {},
         }
 
         # Merge results from different processors
@@ -363,7 +359,7 @@ module BlueprintsCLI
         merged
       end
 
-      def deduplicate_and_rank_keywords(keywords)
+      private def deduplicate_and_rank_keywords(keywords)
         # Use Red-Black tree to maintain ordered unique keywords
         keyword_map = RBTreeMap.new
 
@@ -384,7 +380,7 @@ module BlueprintsCLI
         unique_keywords.first(20) # Limit to top 20
       end
 
-      def generate_semantic_vector(merged_results)
+      private def generate_semantic_vector(merged_results)
         # Simple semantic vector based on analysis features
         vector = []
 
@@ -411,7 +407,7 @@ module BlueprintsCLI
         vector
       end
 
-      def calculate_analysis_scores(merged_results)
+      private def calculate_analysis_scores(merged_results)
         scores = {}
 
         # Information density score
@@ -439,7 +435,7 @@ module BlueprintsCLI
         scores
       end
 
-      def calculate_relevance_score(results)
+      private def calculate_relevance_score(results)
         score = 0.0
 
         # Score based on extracted features
@@ -459,7 +455,7 @@ module BlueprintsCLI
         score.clamp(0.0, 1.0)
       end
 
-      def combine_search_results(results, options)
+      private def combine_search_results(results, options)
         combined = {}
         text_ids = Set.new
 
@@ -476,35 +472,35 @@ module BlueprintsCLI
           # Prefix match score
           prefix_matches = results[:prefix_matches].select { |m| m[:text_id] == text_id }
           if prefix_matches.any?
-            exact_matches = prefix_matches.count { |m| m[:match_type] == 'exact' }
-            partial_matches = prefix_matches.count { |m| m[:match_type] == 'partial' }
+            exact_matches = prefix_matches.count { |m| m[:match_type] == "exact" }
+            partial_matches = prefix_matches.count { |m| m[:match_type] == "partial" }
             score += (exact_matches * 0.5) + (partial_matches * 0.2)
-            match_types << 'lexical'
+            match_types << "lexical"
           end
 
           # Semantic match score
           semantic_match = results[:semantic_matches].find { |m| m[:text_id] == text_id }
           if semantic_match
             score += semantic_match[:similarity] * 0.4
-            match_types << 'semantic'
+            match_types << "semantic"
           end
 
           # Ranking score
           ranked_result = results[:ranked_results].find { |r| r[:text_id] == text_id }
           if ranked_result
             score += ranked_result[:relevance] * 0.3
-            match_types << 'ranked'
+            match_types << "ranked"
           end
 
           combined[text_id] = {
-            text_id: text_id,
+            text_id:,
             total_score: score,
             match_types: match_types.uniq,
             details: {
-              prefix_matches: prefix_matches,
-              semantic_match: semantic_match,
-              ranked_result: ranked_result
-            }
+              prefix_matches:,
+              semantic_match:,
+              ranked_result:,
+            },
           }
         end
 
@@ -513,50 +509,50 @@ module BlueprintsCLI
         sorted_results.first(options[:max_results] || 10)
       end
 
-      def format_output(result)
+      private def format_output(result)
         case @config[:output_format]
         when :minimal
           {
             keywords: result.dig(:combined_analysis, :keywords)&.first(5),
             entities: result.dig(:combined_analysis, :entities)&.first(3),
-            summary_scores: result[:analysis_scores]
+            summary_scores: result[:analysis_scores],
           }
         when :summary
           {
             processors_used: result[:processors_used],
             combined_analysis: result[:combined_analysis],
             analysis_scores: result[:analysis_scores],
-            processing_timestamp: result[:processing_timestamp]
+            processing_timestamp: result[:processing_timestamp],
           }
         else # :detailed
           result
         end
       end
 
-      def get_cached_result(text)
+      private def get_cached_result(text)
         return nil unless @result_cache
 
         cache_key = generate_cache_key(text)
         @result_cache[cache_key] if @result_cache.key?(cache_key)
       end
 
-      def cache_result(text, result)
+      private def cache_result(text, result)
         return unless @result_cache
 
         cache_key = generate_cache_key(text)
         @result_cache[cache_key] = result
       end
 
-      def generate_cache_key(text)
+      private def generate_cache_key(text)
         "pipeline_#{Digest::MD5.hexdigest(text[0..200])}"
       end
 
-      def update_metrics(operation, duration, _result, error: nil)
+      private def update_metrics(operation, duration, _result, error: nil)
         @metrics[operation] ||= {
           count: 0,
           total_duration: 0.0,
           success_count: 0,
-          avg_duration: 0.0
+          avg_duration: 0.0,
         }
 
         @metrics[operation][:count] += 1

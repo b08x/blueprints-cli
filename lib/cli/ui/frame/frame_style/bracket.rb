@@ -8,11 +8,11 @@ module CLI
         module Bracket
           extend FrameStyle
 
-          VERTICAL    = '┃'
-          HORIZONTAL  = '━'
-          DIVIDER     = '┣'
-          TOP_LEFT    = '┏'
-          BOTTOM_LEFT = '┗'
+          VERTICAL    = "┃"
+          HORIZONTAL  = "━"
+          DIVIDER     = "┣"
+          TOP_LEFT    = "┏"
+          BOTTOM_LEFT = "┗"
 
           class << self
             extend T::Sig
@@ -43,7 +43,7 @@ module CLI
             #
             sig { override.params(text: String, color: CLI::UI::Color).returns(String) }
             def start(text, color:)
-              edge(text, color: color, first: TOP_LEFT)
+              edge(text, color:, first: TOP_LEFT)
             end
 
             # Draws a "divider" line for the current frame style
@@ -62,7 +62,7 @@ module CLI
             #
             sig { override.params(text: String, color: CLI::UI::Color).returns(String) }
             def divider(text, color:)
-              edge(text, color: color, first: DIVIDER)
+              edge(text, color:, first: DIVIDER)
             end
 
             # Draws the "Close" line for this frame style
@@ -82,32 +82,28 @@ module CLI
             #
             sig { override.params(text: String, color: CLI::UI::Color, right_text: T.nilable(String)).returns(String) }
             def close(text, color:, right_text: nil)
-              edge(text, color: color, right_text: right_text, first: BOTTOM_LEFT)
+              edge(text, color:, right_text:, first: BOTTOM_LEFT)
             end
-
-            private
 
             sig do
               params(text: String, color: CLI::UI::Color, first: String,
-                     right_text: T.nilable(String)).returns(String)
+                right_text: T.nilable(String)).returns(String)
             end
-            def edge(text, color:, first:, right_text: nil)
+            private def edge(text, color:, first:, right_text: nil)
               color = CLI::UI.resolve_color(color)
 
-              preamble = +''
+              preamble = +""
 
               preamble << color.code if CLI::UI.enable_color?
               preamble << first << (HORIZONTAL * 2)
 
-              unless text.empty?
-                preamble << ' ' << CLI::UI.resolve_text("{{#{color.name}:#{text}}}") << ' '
-              end
+              preamble << " " << CLI::UI.resolve_text("{{#{color.name}:#{text}}}") << " " unless text.empty?
 
-              suffix = +''
+              suffix = +""
 
-              suffix << ' ' << right_text << ' ' if right_text
+              suffix << " " << right_text << " " if right_text
 
-              o = +''
+              o = +""
 
               unless CLI::UI.enable_cursor?
                 o << color.code if CLI::UI.enable_color?

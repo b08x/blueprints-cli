@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'ohm'
-require 'json'
+require "ohm"
+require "json"
 
 module BlueprintsCLI
   module Models
@@ -26,7 +26,7 @@ module BlueprintsCLI
         super
         self.created_at = Time.now.to_f.to_s unless created_at
         self.last_accessed = Time.now.to_f.to_s
-        self.access_count = '0' unless access_count
+        self.access_count = "0" unless access_count
       end
 
       # Deserialize stored data
@@ -96,20 +96,20 @@ module BlueprintsCLI
 
         cache_entry = create(
           key: "spacy_#{model_name}_#{text_hash}",
-          text_hash: text_hash,
-          model_name: model_name,
-          token_count: result[:tokens]&.length&.to_s || '0',
-          entity_count: result[:entities]&.length&.to_s || '0',
+          text_hash:,
+          model_name:,
+          token_count: result[:tokens]&.length&.to_s || "0",
+          entity_count: result[:entities]&.length&.to_s || "0",
           processing_time: processing_time.to_s,
-          ttl: '86400' # 24 hours
+          ttl: "86400" # 24 hours
         )
 
         cache_entry.set_data(result)
         cache_entry.set_metadata({
-                                   text_length: text.length,
-                                   complexity_score: calculate_complexity(result),
-                                   cached_at: Time.now.iso8601
-                                 })
+          text_length: text.length,
+          complexity_score: calculate_complexity(result),
+          cached_at: Time.now.iso8601,
+        })
 
         cache_entry.save_changes
         cache_entry
@@ -120,7 +120,7 @@ module BlueprintsCLI
         text_hash = Digest::MD5.hexdigest(text)
         key = "spacy_#{model_name}_#{text_hash}"
 
-        entry = find(key: key).first
+        entry = find(key:).first
         return nil unless entry && !entry.expired?
 
         entry.mark_accessed!
@@ -143,7 +143,7 @@ module BlueprintsCLI
           avg_token_count: entries.sum { |e| e.token_count.to_i } / entries.length,
           avg_entity_count: entries.sum { |e| e.entity_count.to_i } / entries.length,
           models_used: entries.map(&:model_name).uniq,
-          hit_rate: calculate_hit_rate(entries)
+          hit_rate: calculate_hit_rate(entries),
         }
       end
 
@@ -184,24 +184,24 @@ module BlueprintsCLI
 
         cache_entry = create(
           key: "linguistics_#{text_hash}",
-          text_hash: text_hash,
+          text_hash:,
           word_count: (result[:morphology]&.length || 0).to_s,
           morphology_count: (result[:morphology]&.length || 0).to_s,
           concept_count: (result[:concepts]&.length || 0).to_s,
           semantic_density: (result.dig(:complexity_metrics, :semantic_density) || 0.0).to_s,
           processing_time: processing_time.to_s,
-          ttl: '86400'
+          ttl: "86400"
         )
 
         cache_entry.set_data(result)
         cache_entry.set_metadata({
-                                   text_length: text.length,
-                                   vocabulary_richness: result.dig(:complexity_metrics,
-                                                                   :vocabulary_richness),
-                                   lexical_diversity: result.dig(:complexity_metrics,
-                                                                 :lexical_diversity),
-                                   cached_at: Time.now.iso8601
-                                 })
+          text_length: text.length,
+          vocabulary_richness: result.dig(:complexity_metrics,
+            :vocabulary_richness),
+          lexical_diversity: result.dig(:complexity_metrics,
+            :lexical_diversity),
+          cached_at: Time.now.iso8601,
+        })
 
         cache_entry.save_changes
         cache_entry
@@ -212,7 +212,7 @@ module BlueprintsCLI
         text_hash = Digest::MD5.hexdigest(text)
         key = "linguistics_#{text_hash}"
 
-        entry = find(key: key).first
+        entry = find(key:).first
         return nil unless entry && !entry.expired?
 
         entry.mark_accessed!
@@ -266,21 +266,21 @@ module BlueprintsCLI
 
         cache_entry = create(
           key: "embedding_#{provider}_#{model_name}_#{text_hash}",
-          text_hash: text_hash,
-          provider: provider,
-          model_name: model_name,
+          text_hash:,
+          provider:,
+          model_name:,
           vector_dimensions: vector_data.length.to_s,
           similarity_hash: calculate_similarity_hash(vector_data),
           processing_time: processing_time.to_s,
-          ttl: '604800' # 7 days
+          ttl: "604800" # 7 days
         )
 
         cache_entry.set_data(vector_data)
         cache_entry.set_metadata({
-                                   text_length: text.length,
-                                   vector_norm: calculate_vector_norm(vector_data),
-                                   cached_at: Time.now.iso8601
-                                 })
+          text_length: text.length,
+          vector_norm: calculate_vector_norm(vector_data),
+          cached_at: Time.now.iso8601,
+        })
 
         cache_entry.save_changes
         cache_entry
@@ -291,7 +291,7 @@ module BlueprintsCLI
         text_hash = Digest::MD5.hexdigest(text)
         key = "embedding_#{provider}_#{model_name}_#{text_hash}"
 
-        entry = find(key: key).first
+        entry = find(key:).first
         return nil unless entry && !entry.expired?
 
         entry.mark_accessed!
@@ -302,7 +302,7 @@ module BlueprintsCLI
       def self.find_similar(target_vector, provider, model_name, threshold = 0.8)
         target_hash = calculate_similarity_hash(target_vector)
 
-        candidates = find(provider: provider, model_name: model_name).select do |entry|
+        candidates = find(provider:, model_name:).select do |entry|
           next false if entry.expired?
 
           # Quick filter by similarity hash
@@ -320,9 +320,9 @@ module BlueprintsCLI
           next unless similarity >= threshold
 
           similar_entries << {
-            entry: entry,
+            entry:,
             vector: cached_vector,
-            similarity: similarity
+            similarity:,
           }
         end
 
@@ -331,9 +331,9 @@ module BlueprintsCLI
 
       # Build KD-tree index for fast nearest neighbor search
       def self.build_kd_tree_index(provider, model_name)
-        require 'algorithms'
+        require "algorithms"
 
-        entries = find(provider: provider, model_name: model_name).reject(&:expired?)
+        entries = find(provider:, model_name:).reject(&:expired?)
         return nil if entries.empty?
 
         # Prepare points for KD-tree (using first 2 dimensions)
@@ -352,11 +352,11 @@ module BlueprintsCLI
 
       # Calculate a hash for quick similarity filtering
       def self.calculate_similarity_hash(vector)
-        return '' unless vector.is_a?(Array)
+        return "" unless vector.is_a?(Array)
 
         # Create hash based on vector quantization
         quantized = vector.map { |v| (v * 10).round }
-        Digest::MD5.hexdigest(quantized.join(','))[0..7]
+        Digest::MD5.hexdigest(quantized.join(","))[0..7]
       end
 
       # Calculate vector norm
@@ -416,23 +416,23 @@ module BlueprintsCLI
 
         cache_entry = create(
           key: "pipeline_#{config_hash}_#{text_hash}",
-          text_hash: text_hash,
+          text_hash:,
           pipeline_config: config_hash,
-          processors_used: result[:processors_used]&.join(',') || '',
+          processors_used: result[:processors_used]&.join(",") || "",
           analysis_score: (result.dig(:analysis_scores, :quality) || 0.0).to_s,
           feature_count: count_features(result).to_s,
           processing_time: processing_time.to_s,
-          ttl: '43200' # 12 hours
+          ttl: "43200" # 12 hours
         )
 
         cache_entry.set_data(result)
         cache_entry.set_metadata({
-                                   text_length: text.length,
-                                   completeness: result.dig(:analysis_scores, :completeness),
-                                   information_density: result.dig(:analysis_scores,
-                                                                   :information_density),
-                                   cached_at: Time.now.iso8601
-                                 })
+          text_length: text.length,
+          completeness: result.dig(:analysis_scores, :completeness),
+          information_density: result.dig(:analysis_scores,
+            :information_density),
+          cached_at: Time.now.iso8601,
+        })
 
         cache_entry.save_changes
         cache_entry
@@ -444,7 +444,7 @@ module BlueprintsCLI
         config_hash = Digest::MD5.hexdigest(config.to_json)
         key = "pipeline_#{config_hash}_#{text_hash}"
 
-        entry = find(key: key).first
+        entry = find(key:).first
         return nil unless entry && !entry.expired?
 
         entry.mark_accessed!
@@ -462,7 +462,7 @@ module BlueprintsCLI
           avg_analysis_score: entries.sum { |e| e.analysis_score.to_f } / entries.length,
           avg_feature_count: entries.sum { |e| e.feature_count.to_i } / entries.length,
           processor_usage: calculate_processor_usage(entries),
-          cache_efficiency: calculate_cache_efficiency(entries)
+          cache_efficiency: calculate_cache_efficiency(entries),
         }
       end
 
@@ -477,7 +477,7 @@ module BlueprintsCLI
       def self.calculate_processor_usage(entries)
         usage = Hash.new(0)
         entries.each do |entry|
-          processors = entry.processors_used.split(',')
+          processors = entry.processors_used.split(",")
           processors.each { |processor| usage[processor] += 1 }
         end
         usage
@@ -505,16 +505,16 @@ module BlueprintsCLI
       end
 
       # Unified cache storage
-      def store(cache_type, *args)
+      def store(cache_type, *)
         case cache_type
         when :spacy
-          SpacyCache.store_result(*args)
+          SpacyCache.store_result(*)
         when :linguistics
-          LinguisticsCache.store_result(*args)
+          LinguisticsCache.store_result(*)
         when :embedding
-          EmbeddingCache.store_embedding(*args)
+          EmbeddingCache.store_embedding(*)
         when :pipeline
-          PipelineCache.store_result(*args)
+          PipelineCache.store_result(*)
         else
           raise ArgumentError, "Unknown cache type: #{cache_type}"
         end
@@ -524,17 +524,17 @@ module BlueprintsCLI
       end
 
       # Unified cache retrieval
-      def get(cache_type, *args)
+      def get(cache_type, *)
         result = case cache_type
                  when :spacy
-                   SpacyCache.get_result(*args)
+                   SpacyCache.get_result(*)
                  when :linguistics
-                   LinguisticsCache.get_result(*args)
+                   LinguisticsCache.get_result(*)
                  when :embedding
-                   EmbeddingCache.get_embedding(*args)
+                   EmbeddingCache.get_embedding(*)
                  when :pipeline
-                   PipelineCache.get_result(*args)
-                 end
+                   PipelineCache.get_result(*)
+        end
 
         update_stats(cache_type, result ? :hit : :miss)
         result
@@ -546,15 +546,15 @@ module BlueprintsCLI
           spacy: SpacyCache.statistics,
           linguistics: {
             total_entries: LinguisticsCache.all.length,
-            top_concepts: LinguisticsCache.top_concepts(5)
+            top_concepts: LinguisticsCache.top_concepts(5),
           },
           embedding: {
             total_entries: EmbeddingCache.all.length,
-            providers: EmbeddingCache.all.map(&:provider).uniq
+            providers: EmbeddingCache.all.map(&:provider).uniq,
           },
           pipeline: PipelineCache.performance_stats,
           cache_operations: @cache_stats.to_h,
-          memory_usage: calculate_memory_usage
+          memory_usage: calculate_memory_usage,
         }
       end
 
@@ -576,20 +576,18 @@ module BlueprintsCLI
         @cache_stats.clear
       end
 
-      private
-
-      def update_stats(cache_type, operation)
+      private def update_stats(cache_type, operation)
         key = "#{cache_type}_#{operation}"
         @cache_stats[key] = (@cache_stats[key] || 0) + 1
       end
 
-      def cleanup_if_needed
+      private def cleanup_if_needed
         return unless Time.now - @last_cleanup > @cleanup_interval
 
         Thread.new { cleanup_expired! }
       end
 
-      def calculate_memory_usage
+      private def calculate_memory_usage
         total_entries = 0
         total_entries += SpacyCache.all.length
         total_entries += LinguisticsCache.all.length

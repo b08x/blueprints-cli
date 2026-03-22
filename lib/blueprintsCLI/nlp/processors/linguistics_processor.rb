@@ -1,22 +1,22 @@
 # frozen_string_literal: true
 
-require_relative 'base_processor'
+require_relative "base_processor"
 
 begin
-  require 'linguistics'
+  require "linguistics"
   LINGUISTICS_AVAILABLE = true
 rescue LoadError
   LINGUISTICS_AVAILABLE = false
-  puts 'Warning: linguistics gem not available. Linguistics processor will be disabled.'
+  puts "Warning: linguistics gem not available. Linguistics processor will be disabled."
 end
 
 begin
-  require 'rwordnet'
-  require 'wordnet'
+  require "rwordnet"
+  require "wordnet"
   WORDNET_AVAILABLE = true
 rescue LoadError
   WORDNET_AVAILABLE = false
-  puts 'Warning: rwordnet gem not available. WordNet features will be disabled.'
+  puts "Warning: rwordnet gem not available. WordNet features will be disabled."
 end
 
 module BlueprintsCLI
@@ -35,13 +35,13 @@ module BlueprintsCLI
           if LINGUISTICS_AVAILABLE
             setup_linguistics
           else
-            puts 'Linguistics processor initialized in fallback mode'
+            puts "Linguistics processor initialized in fallback mode"
           end
 
           if WORDNET_AVAILABLE
             begin
               @wordnet = WordNet::WordNetDB.instance
-            rescue StandardError => e
+            rescue => e
               puts "Warning: Could not initialize WordNet: #{e.message}"
               @wordnet = nil
             end
@@ -76,7 +76,7 @@ module BlueprintsCLI
               word_forms: generate_word_forms(words),
               concepts: extract_concepts(words),
               sentiment_words: identify_sentiment_words(words),
-              complexity_metrics: calculate_linguistic_complexity(words)
+              complexity_metrics: calculate_linguistic_complexity(words),
             }
 
             # Cache the result
@@ -86,7 +86,7 @@ module BlueprintsCLI
             update_metrics(:linguistics_processing, duration, true)
 
             result
-          rescue StandardError => e
+          rescue => e
             duration = Time.now - start_time
             update_metrics(:linguistics_processing, duration, false)
 
@@ -99,7 +99,7 @@ module BlueprintsCLI
               concepts: [],
               sentiment_words: [],
               complexity_metrics: {},
-              error: e.message
+              error: e.message,
             }
           end
         end
@@ -112,13 +112,13 @@ module BlueprintsCLI
             next if word.length < 2
 
             morph_info = {
-              word: word,
+              word:,
               singular: word.en.singular,
               plural: word.en.plural,
               stem: extract_stem(word),
               is_plural: word.en.plural?,
               ordinal: word.en.ordinal,
-              cardinal: word.en.numwords
+              cardinal: word.en.numwords,
             }
 
             # Store in Red-Black tree for ordered morphological access
@@ -141,12 +141,12 @@ module BlueprintsCLI
             next unless word.match?(/\A[a-zA-Z]+\z/) # Only alphabetic words
 
             inflection_data = {
-              word: word,
+              word:,
               past_tense: generate_past_tense(word),
               present_participle: generate_present_participle(word),
               comparative: word.en.comparative,
               superlative: word.en.superlative,
-              indefinite_article: word.en.a
+              indefinite_article: word.en.a,
             }
 
             inflections << inflection_data
@@ -173,7 +173,7 @@ module BlueprintsCLI
               primary_synset = synsets.first
 
               relations = {
-                word: word,
+                word:,
                 definition: primary_synset.definition,
                 synonyms: extract_synonyms(synsets),
                 hypernyms: extract_hypernyms(primary_synset),
@@ -181,14 +181,14 @@ module BlueprintsCLI
                 meronyms: extract_meronyms(primary_synset),
                 holonyms: extract_holonyms(primary_synset),
                 antonyms: extract_antonyms(synsets),
-                semantic_field: classify_semantic_field(primary_synset)
+                semantic_field: classify_semantic_field(primary_synset),
               }
 
               semantic_data << relations
 
               # Build semantic similarity vectors for KD-tree
               build_semantic_vectors(word, relations)
-            rescue StandardError
+            rescue
               # Continue processing other words on error
               next
             end
@@ -207,16 +207,16 @@ module BlueprintsCLI
               variations: {
                 capitalized: word.capitalize,
                 titlecase: word.en.titlecase,
-                camelcase: word.gsub(/[^a-zA-Z0-9]/, '').en.camelcase,
-                underscore: word.gsub(/\s+/, '_').downcase,
-                hyphenated: word.gsub(/\s+/, '-').downcase
+                camelcase: word.gsub(/[^a-zA-Z0-9]/, "").en.camelcase,
+                underscore: word.gsub(/\s+/, "_").downcase,
+                hyphenated: word.gsub(/\s+/, "-").downcase,
               },
               linguistic_forms: {
                 singular: word.en.singular,
                 plural: word.en.plural,
                 possessive: "#{word}'s",
-                gerund: generate_gerund(word)
-              }
+                gerund: generate_gerund(word),
+              },
             }
 
             word_forms[word] = forms
@@ -243,11 +243,11 @@ module BlueprintsCLI
               category = get_lexical_category(synset)
 
               concept = {
-                word: word,
+                word:,
                 concept: synset.definition,
-                category: category,
+                category:,
                 hypernym_chain: build_hypernym_chain(synset),
-                specificity: calculate_specificity(synset)
+                specificity: calculate_specificity(synset),
               }
 
               # Score concept by specificity and frequency
@@ -256,7 +256,7 @@ module BlueprintsCLI
 
               concepts << concept
             end
-          rescue StandardError
+          rescue
             next
           end
 
@@ -265,9 +265,7 @@ module BlueprintsCLI
 
           # Extract top concepts
           top_concepts = []
-          while !@priority_queue.empty? && top_concepts.length < 15
-            top_concepts << @priority_queue.pop
-          end
+          top_concepts << @priority_queue.pop while !@priority_queue.empty? && top_concepts.length < 15
 
           top_concepts
         end
@@ -278,7 +276,7 @@ module BlueprintsCLI
 
           words.each do |word|
             sentiment_info = analyze_word_sentiment(word)
-            sentiment_words << sentiment_info if sentiment_info[:sentiment] != 'neutral'
+            sentiment_words << sentiment_info if sentiment_info[:sentiment] != "neutral"
           end
 
           sentiment_words.sort_by { |sw| -sw[:intensity] }
@@ -291,18 +289,16 @@ module BlueprintsCLI
             avg_word_length: words.sum(&:length).to_f / words.length,
             morphological_complexity: calculate_morphological_complexity(words),
             semantic_density: calculate_semantic_density(words),
-            lexical_diversity: calculate_lexical_diversity(words)
+            lexical_diversity: calculate_lexical_diversity(words),
           }
         end
 
-        private
-
-        def setup_linguistics
+        private def setup_linguistics
           # Enable English language processing
           Linguistics.use(:en) if LINGUISTICS_AVAILABLE
         end
 
-        def fallback_processing(text)
+        private def fallback_processing(text)
           words = basic_tokenize(text)
           {
             morphology: [],
@@ -314,17 +310,17 @@ module BlueprintsCLI
             complexity_metrics: {
               vocabulary_richness: calculate_basic_richness(words),
               avg_word_length: words.sum(&:length).to_f / words.length,
-              lexical_diversity: words.uniq.length.to_f / words.length
+              lexical_diversity: words.uniq.length.to_f / words.length,
             },
-            fallback: true
+            fallback: true,
           }
         end
 
-        def basic_tokenize(text)
+        private def basic_tokenize(text)
           text.downcase.scan(/\b\w+\b/).select { |word| word.length > 2 }
         end
 
-        def calculate_basic_richness(words)
+        private def calculate_basic_richness(words)
           unique_words = words.uniq.length
           total_words = words.length
           return 0.0 if total_words.zero?
@@ -332,35 +328,35 @@ module BlueprintsCLI
           unique_words.to_f / total_words
         end
 
-        def build_morphology_trie
+        private def build_morphology_trie
           # Pre-populate with common morphological patterns
           morphological_patterns = {
-            'running' => 'run',
-            'better' => 'good',
-            'best' => 'good',
-            'children' => 'child',
-            'mice' => 'mouse'
+            "running" => "run",
+            "better" => "good",
+            "best" => "good",
+            "children" => "child",
+            "mice" => "mouse",
           }
 
           morphological_patterns.each { |inflected, base| @trie_index[inflected] = base }
         end
 
-        def tokenize_advanced(text)
+        private def tokenize_advanced(text)
           # Enhanced tokenization preserving linguistic features
           words = text.downcase.scan(/\b[a-zA-Z]+\b/)
           words.select { |word| word.length > 2 }.uniq
         end
 
-        def extract_stem(word)
+        private def extract_stem(word)
           # Simple stemming algorithm - can be enhanced with Porter stemmer
-          word.gsub(/ing$|ed$|s$|ly$/, '')
+          word.gsub(/ing$|ed$|s$|ly$/, "")
         end
 
-        def generate_past_tense(word)
+        private def generate_past_tense(word)
           # Basic past tense generation
           case word
           when /[^aeiou]y$/
-            word.gsub(/y$/, 'ied')
+            word.gsub(/y$/, "ied")
           when /e$/
             "#{word}d"
           when /[^aeiou][aeiou][^aeiou]$/
@@ -370,11 +366,11 @@ module BlueprintsCLI
           end
         end
 
-        def generate_present_participle(word)
+        private def generate_present_participle(word)
           # Basic present participle generation
           case word
           when /e$/
-            word.gsub(/e$/, 'ing')
+            word.gsub(/e$/, "ing")
           when /[^aeiou][aeiou][^aeiou]$/
             "#{word}#{word[-1]}ing"
           else
@@ -382,11 +378,11 @@ module BlueprintsCLI
           end
         end
 
-        def generate_gerund(word)
+        private def generate_gerund(word)
           generate_present_participle(word)
         end
 
-        def extract_synonyms(synsets)
+        private def extract_synonyms(synsets)
           synonyms = []
           synsets.each do |synset|
             synset.words.each { |word| synonyms << word.lemma }
@@ -394,25 +390,25 @@ module BlueprintsCLI
           synonyms.uniq
         end
 
-        def extract_hypernyms(synset)
+        private def extract_hypernyms(synset)
           synset.hypernyms.map(&:words).flatten.map(&:lemma)
         end
 
-        def extract_hyponyms(synset)
+        private def extract_hyponyms(synset)
           synset.hyponyms.map(&:words).flatten.map(&:lemma)
         end
 
-        def extract_meronyms(synset)
+        private def extract_meronyms(synset)
           (synset.part_meronyms + synset.member_meronyms + synset.substance_meronyms)
             .map(&:words).flatten.map(&:lemma)
         end
 
-        def extract_holonyms(synset)
+        private def extract_holonyms(synset)
           (synset.part_holonyms + synset.member_holonyms + synset.substance_holonyms)
             .map(&:words).flatten.map(&:lemma)
         end
 
-        def extract_antonyms(synsets)
+        private def extract_antonyms(synsets)
           antonyms = []
           synsets.each do |synset|
             synset.words.each do |word|
@@ -422,44 +418,44 @@ module BlueprintsCLI
           antonyms.uniq
         end
 
-        def classify_semantic_field(synset)
+        private def classify_semantic_field(synset)
           # Basic semantic field classification
           lexfile = synset.lexical_file_name
           case lexfile
           when /noun\.person/
-            'person'
+            "person"
           when /noun\.animal/
-            'animal'
+            "animal"
           when /noun\.plant/
-            'plant'
+            "plant"
           when /noun\.object/
-            'object'
+            "object"
           when /verb\.motion/
-            'motion'
+            "motion"
           when /adj\.all/
-            'quality'
+            "quality"
           else
-            'general'
+            "general"
           end
         end
 
-        def build_semantic_vectors(word, relations)
+        private def build_semantic_vectors(word, relations)
           # Simple semantic vector based on relationship counts
           vector = [
             relations[:synonyms].length,
             relations[:hypernyms].length,
             relations[:hyponyms].length,
-            relations[:meronyms].length
+            relations[:meronyms].length,
           ]
 
           @kd_tree_data[word] = vector if vector.any?(&:positive?)
         end
 
-        def get_lexical_category(synset)
+        private def get_lexical_category(synset)
           synset.pos
         end
 
-        def build_hypernym_chain(synset, max_depth: 5)
+        private def build_hypernym_chain(synset, max_depth: 5)
           chain = []
           current = synset
           depth = 0
@@ -474,7 +470,7 @@ module BlueprintsCLI
           chain
         end
 
-        def calculate_specificity(synset)
+        private def calculate_specificity(synset)
           # Higher specificity = more hyponyms, fewer hypernyms
           hyponym_count = synset.hyponyms.length
           hypernym_count = synset.hypernyms.length
@@ -484,35 +480,47 @@ module BlueprintsCLI
           hyponym_count.to_f / (hyponym_count + hypernym_count + 1)
         end
 
-        def analyze_word_sentiment(word)
+        private def analyze_word_sentiment(word)
           # Basic sentiment analysis using WordNet
 
           synsets = @wordnet.synsets(word)
-          return { word: word, sentiment: 'neutral', intensity: 0.0 } if synsets.empty?
+          return { word:, sentiment: "neutral", intensity: 0.0 } if synsets.empty?
 
           # Simple sentiment scoring based on definition keywords
           definition = synsets.first.definition.downcase
 
-          positive_indicators = %w[good great excellent positive beneficial
-            pleasant]
-          negative_indicators = %w[bad terrible negative harmful unpleasant
-            difficult]
+          positive_indicators = %w[
+            good
+            great
+            excellent
+            positive
+            beneficial
+            pleasant
+]
+          negative_indicators = %w[
+            bad
+            terrible
+            negative
+            harmful
+            unpleasant
+            difficult
+]
 
           pos_score = positive_indicators.count { |ind| definition.include?(ind) }
           neg_score = negative_indicators.count { |ind| definition.include?(ind) }
 
           if pos_score > neg_score
-            { word: word, sentiment: 'positive', intensity: pos_score.to_f / 6.0 }
+            { word:, sentiment: "positive", intensity: pos_score.to_f / 6.0 }
           elsif neg_score > pos_score
-            { word: word, sentiment: 'negative', intensity: neg_score.to_f / 6.0 }
+            { word:, sentiment: "negative", intensity: neg_score.to_f / 6.0 }
           else
-            { word: word, sentiment: 'neutral', intensity: 0.0 }
+            { word:, sentiment: "neutral", intensity: 0.0 }
           end
-        rescue StandardError
-          { word: word, sentiment: 'neutral', intensity: 0.0 }
+        rescue
+          { word:, sentiment: "neutral", intensity: 0.0 }
         end
 
-        def calculate_inflection_complexity(inflection_data)
+        private def calculate_inflection_complexity(inflection_data)
           complexity = 0.0
 
           complexity += 0.2 if inflection_data[:past_tense] != inflection_data[:word]
@@ -523,7 +531,7 @@ module BlueprintsCLI
           complexity
         end
 
-        def calculate_vocabulary_richness(words)
+        private def calculate_vocabulary_richness(words)
           # Type-token ratio
           unique_words = words.uniq.length
           total_words = words.length
@@ -532,7 +540,7 @@ module BlueprintsCLI
           unique_words.to_f / total_words
         end
 
-        def calculate_morphological_complexity(words)
+        private def calculate_morphological_complexity(words)
           # Average morphological operations per word
           total_operations = words.sum do |word|
             operations = 0
@@ -544,19 +552,19 @@ module BlueprintsCLI
           total_operations.to_f / words.length
         end
 
-        def calculate_semantic_density(words)
+        private def calculate_semantic_density(words)
           # Proportion of words with rich semantic relationships
           words_with_semantics = words.count do |word|
             synsets = @wordnet.synsets(word)
             synsets.any? && synsets.first.hypernyms.any?
-          rescue StandardError
+          rescue
             false
           end
 
           words_with_semantics.to_f / words.length
         end
 
-        def calculate_lexical_diversity(words)
+        private def calculate_lexical_diversity(words)
           # Measure of lexical variation
           word_frequencies = words.tally
           max_frequency = word_frequencies.values.max
@@ -565,7 +573,7 @@ module BlueprintsCLI
           1.0 - (max_frequency.to_f / words.length)
         end
 
-        def generate_cache_key(text)
+        private def generate_cache_key(text)
           "linguistics_#{Digest::MD5.hexdigest(text[0..100])}"
         end
       end

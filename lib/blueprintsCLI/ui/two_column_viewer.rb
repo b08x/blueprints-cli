@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require 'tty-box'
-require 'tty-cursor'
-require 'tty-screen'
-require_relative '../cli_ui_integration'
-require_relative '../slash_command_parser'
+require "tty-box"
+require "tty-cursor"
+require "tty-screen"
+require_relative "../cli_ui_integration"
+require_relative "../slash_command_parser"
 
 module BlueprintsCLI
   module UI
@@ -12,14 +12,14 @@ module BlueprintsCLI
     # with metadata/details on the left and scrollable code on the right
     class TwoColumnViewer
       ACTIONS = {
-        'edit' => '✏️  Edit blueprint',
-        'preview' => '👀 Preview improvements',
-        'docs' => '📚 Generate documentation',
-        'export' => '💾 Export code',
-        'copy' => '📋 Copy to clipboard',
-        'analyze' => '🤖 AI analysis',
-        'back' => '⬅️  Back to list',
-        'quit' => '❌ Quit'
+        "edit" => "✏️  Edit blueprint",
+        "preview" => "👀 Preview improvements",
+        "docs" => "📚 Generate documentation",
+        "export" => "💾 Export code",
+        "copy" => "📋 Copy to clipboard",
+        "analyze" => "🤖 AI analysis",
+        "back" => "⬅️  Back to list",
+        "quit" => "❌ Quit",
       }.freeze
 
       def initialize(blueprint, with_suggestions: false)
@@ -47,20 +47,18 @@ module BlueprintsCLI
         handle_interactions
       end
 
-      private
-
-      def clear_screen
+      private def clear_screen
         print @cursor.clear_screen
         print @cursor.move_to(0, 0)
       end
 
-      def render_layout
+      private def render_layout
         render_header
         render_columns
         render_slash_menu
       end
 
-      def render_header
+      private def render_header
         title = "📋 Blueprint: #{@blueprint[:name]}"
         header_box = TTY::Box.frame(
           title,
@@ -72,14 +70,14 @@ module BlueprintsCLI
         puts header_box
       end
 
-      def render_columns
+      private def render_columns
         left_content = build_left_column_content
         right_content = build_right_column_content
 
         # Create side-by-side boxes
         left_box = TTY::Box.frame(
           left_content,
-          title: { top_left: '📋 Details' },
+          title: { top_left: "📋 Details" },
           width: @left_width,
           height: @content_height,
           style: { border: { fg: :cyan } },
@@ -90,7 +88,7 @@ module BlueprintsCLI
           right_content,
           title: {
             top_left: "💻 Code (#{@blueprint[:language]})",
-            top_right: scrollable_indicator
+            top_right: scrollable_indicator,
           },
           width: @right_width,
           height: @content_height,
@@ -105,33 +103,33 @@ module BlueprintsCLI
         max_lines = [left_lines.length, right_lines.length].max
 
         (0...max_lines).each do |i|
-          left_line = left_lines[i] || (' ' * @left_width)
-          right_line = right_lines[i] || (' ' * @right_width)
+          left_line = left_lines[i] || (" " * @left_width)
+          right_line = right_lines[i] || (" " * @right_width)
           puts "#{left_line}#{right_line}"
         end
       end
 
-      def build_left_column_content
+      private def build_left_column_content
         content_parts = []
 
         # Basic metadata
         content_parts << build_metadata_section
-        content_parts << ''
+        content_parts << ""
 
         # Language & file info (move up for visibility)
         content_parts << build_language_info_section
-        content_parts << ''
+        content_parts << ""
 
         # Description (more compact)
         content_parts << build_description_section
-        content_parts << ''
+        content_parts << ""
 
         # Categories
         content_parts << build_categories_section
 
         # AI suggestions if available
         if @blueprint[:ai_suggestions]
-          content_parts << ''
+          content_parts << ""
           content_parts << build_suggestions_section
         end
 
@@ -139,14 +137,12 @@ module BlueprintsCLI
         max_lines = @content_height - 4 # Account for padding and borders
         content_lines = content_parts.join("\n").split("\n")
 
-        if content_lines.length > max_lines
-          content_lines = content_lines[0...(max_lines - 1)] + ['... (truncated)']
-        end
+        content_lines = content_lines[0...(max_lines - 1)] + ["... (truncated)"] if content_lines.length > max_lines
 
         content_lines.join("\n")
       end
 
-      def build_metadata_section
+      private def build_metadata_section
         lines = []
         lines << "🆔 ID: #{@blueprint[:id]}"
         lines << "📅 Created: #{format_date(@blueprint[:created_at])}"
@@ -155,8 +151,8 @@ module BlueprintsCLI
         lines.join("\n")
       end
 
-      def build_description_section
-        description = @blueprint[:description] || 'No description available'
+      private def build_description_section
+        description = @blueprint[:description] || "No description available"
 
         # Truncate long descriptions to save space
         description = "#{description[0...147]}..." if description.length > 150
@@ -166,7 +162,7 @@ module BlueprintsCLI
         "📝 Description:\n#{wrapped_description}"
       end
 
-      def build_language_info_section
+      private def build_language_info_section
         lines = []
         lines << "🔤 Language: #{@blueprint[:language] || 'Unknown'}"
         lines << "📄 File Type: #{@blueprint[:file_type] || 'N/A'}"
@@ -175,24 +171,24 @@ module BlueprintsCLI
         lines.join("\n")
       end
 
-      def build_categories_section
+      private def build_categories_section
         if @blueprint[:categories]&.any?
           category_names = @blueprint[:categories].map { |cat| cat[:title] || cat[:name] }
-          categories_text = category_names.join(', ')
+          categories_text = category_names.join(", ")
           wrapped_categories = wrap_text(categories_text, @left_width - 4)
           "🏷️  Categories:\n#{wrapped_categories}"
         else
-          '🏷️  Categories: None'
+          "🏷️  Categories: None"
         end
       end
 
-      def build_suggestions_section
+      private def build_suggestions_section
         suggestions = @blueprint[:ai_suggestions]
         lines = []
-        lines << '🤖 AI Analysis:'
+        lines << "🤖 AI Analysis:"
 
         if suggestions[:improvements]
-          lines << 'Improvements:'
+          lines << "Improvements:"
           suggestions[:improvements].each do |improvement|
             wrapped = wrap_text("• #{improvement}", @left_width - 6)
             lines << wrapped
@@ -200,8 +196,8 @@ module BlueprintsCLI
         end
 
         if suggestions[:quality_assessment]
-          lines << ''
-          lines << 'Quality:'
+          lines << ""
+          lines << "Quality:"
           wrapped_quality = wrap_text(suggestions[:quality_assessment], @left_width - 4)
           lines << wrapped_quality
         end
@@ -209,7 +205,7 @@ module BlueprintsCLI
         lines.join("\n")
       end
 
-      def build_right_column_content
+      private def build_right_column_content
         visible_lines = get_visible_code_lines
         get_line_numbers(visible_lines.length)
 
@@ -232,19 +228,19 @@ module BlueprintsCLI
         formatted_lines.join("\n")
       end
 
-      def get_visible_code_lines
+      private def get_visible_code_lines
         start_line = @code_scroll_position
         end_line = [@code_scroll_position + @visible_code_lines, @code_lines.length].min
 
         @code_lines[start_line...end_line] || []
       end
 
-      def get_line_numbers(count)
+      private def get_line_numbers(count)
         start_num = @code_scroll_position + 1
         (start_num...(start_num + count)).to_a
       end
 
-      def scrollable_indicator
+      private def scrollable_indicator
         if @code_lines.length > @visible_code_lines
           total_lines = @code_lines.length
           current_line = @code_scroll_position + 1
@@ -255,12 +251,12 @@ module BlueprintsCLI
         end
       end
 
-      def render_slash_menu
-        actions_text = ACTIONS.map { |key, desc| "/#{key}: #{desc}" }.join('  |  ')
+      private def render_slash_menu
+        actions_text = ACTIONS.map { |key, desc| "/#{key}: #{desc}" }.join("  |  ")
 
         menu_box = TTY::Box.frame(
           "#{actions_text}\n\n💡 Use arrow keys to scroll code, type /command to execute actions",
-          title: { top_left: '⚡ Quick Actions' },
+          title: { top_left: "⚡ Quick Actions" },
           width: @screen_width - 2,
           style: { border: { fg: :yellow } },
           padding: 1
@@ -268,46 +264,46 @@ module BlueprintsCLI
         puts menu_box
       end
 
-      def handle_interactions
-        CLIUIIntegration.puts('{{blue:Press Enter to continue or type a slash command...}}')
+      private def handle_interactions
+        CLIUIIntegration.puts("{{blue:Press Enter to continue or type a slash command...}}")
 
         loop do
           input = gets.chomp.strip
 
           if input.empty?
             break
-          elsif input.start_with?('/')
+          elsif input.start_with?("/")
             handle_slash_command(input)
           else
-            CLIUIIntegration.puts('{{yellow:Unknown command. Use /help for available commands.}}')
+            CLIUIIntegration.puts("{{yellow:Unknown command. Use /help for available commands.}}")
           end
         end
       end
 
-      def handle_slash_command(command)
+      private def handle_slash_command(command)
         command_parts = command[1..].split
         action = command_parts.first&.downcase
 
         case action
-        when 'edit'
+        when "edit"
           handle_edit_action
-        when 'preview'
+        when "preview"
           handle_preview_action
-        when 'docs'
+        when "docs"
           handle_docs_action
-        when 'export'
+        when "export"
           handle_export_action
-        when 'copy'
+        when "copy"
           handle_copy_action
-        when 'analyze'
+        when "analyze"
           handle_analyze_action
-        when 'back'
+        when "back"
           :back
-        when 'quit', 'exit'
+        when "quit", "exit"
           :quit
-        when 'scroll'
+        when "scroll"
           handle_scroll_action(command_parts[1])
-        when 'help'
+        when "help"
           show_help
         else
           CLIUIIntegration.puts("{{red:Unknown action: #{action}}}")
@@ -315,15 +311,15 @@ module BlueprintsCLI
         end
       end
 
-      def handle_edit_action
+      private def handle_edit_action
         CLIUIIntegration.puts("{{blue:🔄 Launching edit action for blueprint #{@blueprint[:id]}...}}")
         # Integration with existing edit command
         result = BlueprintsCLI::Actions::Edit.new(id: @blueprint[:id]).call
-        CLIUIIntegration.puts(result ? '{{green:✅ Edit completed}}' : '{{red:❌ Edit failed}}')
+        CLIUIIntegration.puts(result ? "{{green:✅ Edit completed}}" : "{{red:❌ Edit failed}}")
       end
 
-      def handle_preview_action
-        CLIUIIntegration.puts('{{blue:🔄 Generating preview improvements...}}')
+      private def handle_preview_action
+        CLIUIIntegration.puts("{{blue:🔄 Generating preview improvements...}}")
         if @blueprint[:ai_suggestions]
           display_improvements_preview
         else
@@ -331,55 +327,57 @@ module BlueprintsCLI
         end
       end
 
-      def handle_docs_action
-        CLIUIIntegration.puts('{{blue:🔄 Generating documentation...}}')
+      private def handle_docs_action
+        CLIUIIntegration.puts("{{blue:🔄 Generating documentation...}}")
         begin
           # Create a temporary file with the blueprint code
-          require 'tempfile'
-          temp_file = Tempfile.new(["blueprint_#{@blueprint[:id]}",
-            @blueprint[:file_type] || '.rb'])
+          require "tempfile"
+          temp_file = Tempfile.new([
+            "blueprint_#{@blueprint[:id]}",
+            @blueprint[:file_type] || ".rb",
+])
           temp_file.write(@blueprint[:code])
           temp_file.close
 
           # Use the docs command to generate documentation
           docs_command = BlueprintsCLI::Commands::DocsCommand.new({})
-          result = docs_command.execute('generate', temp_file.path)
+          result = docs_command.execute("generate", temp_file.path)
 
-          CLIUIIntegration.puts(result ? '{{green:✅ Documentation generated}}' : '{{red:❌ Documentation generation failed}}')
-        rescue StandardError => e
+          CLIUIIntegration.puts(result ? "{{green:✅ Documentation generated}}" : "{{red:❌ Documentation generation failed}}")
+        rescue => e
           CLIUIIntegration.puts("{{red:❌ Documentation failed: #{e.message}}}")
         ensure
           temp_file&.unlink # Clean up temp file
         end
       end
 
-      def handle_export_action
-        CLIUIIntegration.puts('{{blue:🔄 Exporting blueprint...}}')
+      private def handle_export_action
+        CLIUIIntegration.puts("{{blue:🔄 Exporting blueprint...}}")
         result = BlueprintsCLI::Actions::Export.new(
           id: @blueprint[:id],
           output_path: nil
         ).call
-        CLIUIIntegration.puts(result ? '{{green:✅ Export completed}}' : '{{red:❌ Export failed}}')
+        CLIUIIntegration.puts(result ? "{{green:✅ Export completed}}" : "{{red:❌ Export failed}}")
       end
 
-      def handle_copy_action
-        if system('which pbcopy > /dev/null 2>&1') # macOS
-          IO.popen('pbcopy', 'w') { |pipe| pipe.write(@blueprint[:code]) }
-          CLIUIIntegration.puts('{{green:✅ Code copied to clipboard (macOS)}}')
-        elsif system('which wl-copy > /dev/null 2>&1') # Linux
-          IO.popen('wl-copy', 'w') { |pipe| pipe.write(@blueprint[:code]) }
-          CLIUIIntegration.puts('{{green:✅ Code copied to clipboard (Linux)}}')
-        elsif system('which xclip > /dev/null 2>&1') # Linux
-          IO.popen('xclip -selection clipboard', 'w') { |pipe| pipe.write(@blueprint[:code]) }
-          CLIUIIntegration.puts('{{green:✅ Code copied to clipboard (Linux)}}')
+      private def handle_copy_action
+        if system("which pbcopy > /dev/null 2>&1") # macOS
+          IO.popen("pbcopy", "w") { |pipe| pipe.write(@blueprint[:code]) }
+          CLIUIIntegration.puts("{{green:✅ Code copied to clipboard (macOS)}}")
+        elsif system("which wl-copy > /dev/null 2>&1") # Linux
+          IO.popen("wl-copy", "w") { |pipe| pipe.write(@blueprint[:code]) }
+          CLIUIIntegration.puts("{{green:✅ Code copied to clipboard (Linux)}}")
+        elsif system("which xclip > /dev/null 2>&1") # Linux
+          IO.popen("xclip -selection clipboard", "w") { |pipe| pipe.write(@blueprint[:code]) }
+          CLIUIIntegration.puts("{{green:✅ Code copied to clipboard (Linux)}}")
         else
-          CLIUIIntegration.puts('{{yellow:⚠️  Clipboard not available. Code printed below:}}')
+          CLIUIIntegration.puts("{{yellow:⚠️  Clipboard not available. Code printed below:}}")
           puts @blueprint[:code]
         end
       end
 
-      def handle_analyze_action
-        CLIUIIntegration.puts('{{blue:🔄 Running AI analysis...}}')
+      private def handle_analyze_action
+        CLIUIIntegration.puts("{{blue:🔄 Running AI analysis...}}")
         # Generate AI suggestions if not already available
         @blueprint[:ai_suggestions] = generate_ai_suggestions unless @blueprint[:ai_suggestions]
 
@@ -387,19 +385,19 @@ module BlueprintsCLI
         render_layout # Re-render with suggestions
       end
 
-      def handle_scroll_action(direction)
+      private def handle_scroll_action(direction)
         case direction&.downcase
-        when 'up'
+        when "up"
           @code_scroll_position = [@code_scroll_position - 5, 0].max
-        when 'down'
+        when "down"
           max_scroll = [@code_lines.length - @visible_code_lines, 0].max
           @code_scroll_position = [@code_scroll_position + 5, max_scroll].min
-        when 'top'
+        when "top"
           @code_scroll_position = 0
-        when 'bottom'
+        when "bottom"
           @code_scroll_position = [@code_lines.length - @visible_code_lines, 0].max
         else
-          CLIUIIntegration.puts('{{yellow:Usage: /scroll [up|down|top|bottom]}}')
+          CLIUIIntegration.puts("{{yellow:Usage: /scroll [up|down|top|bottom]}}")
           return
         end
 
@@ -407,7 +405,7 @@ module BlueprintsCLI
         render_layout
       end
 
-      def show_help
+      private def show_help
         help_text = <<~HELP
           🔧 Available Commands:
 
@@ -432,33 +430,33 @@ module BlueprintsCLI
       end
 
       # Helper methods
-      def format_date(timestamp)
-        return 'N/A' unless timestamp
+      private def format_date(timestamp)
+        return "N/A" unless timestamp
 
-        Time.parse(timestamp.to_s).strftime('%Y-%m-%d %H:%M')
-      rescue StandardError
+        Time.parse(timestamp.to_s).strftime("%Y-%m-%d %H:%M")
+      rescue
         timestamp.to_s
       end
 
-      def wrap_text(text, width)
-        return '' if text.nil? || text.empty?
+      private def wrap_text(text, width)
+        return "" if text.nil? || text.empty?
 
         text.gsub(/(.{1,#{width - 1}})(\s+|$)/, "\\1\n").strip
       end
 
-      def display_improvements_preview
+      private def display_improvements_preview
         suggestions = @blueprint[:ai_suggestions]
         return unless suggestions[:improvements]
 
-        CLIUIIntegration.frame('🔮 AI Improvement Suggestions', color: :magenta) do
+        CLIUIIntegration.frame("🔮 AI Improvement Suggestions", color: :magenta) do
           suggestions[:improvements].each_with_index do |improvement, index|
             CLIUIIntegration.puts("{{green:#{index + 1}.}} #{improvement}")
-            CLIUIIntegration.puts('')
+            CLIUIIntegration.puts("")
           end
         end
       end
 
-      def generate_and_display_improvements
+      private def generate_and_display_improvements
         suggestions = BlueprintsCLI::Generators::Improvement.new(
           code: @blueprint[:code],
           description: @blueprint[:description]
@@ -470,18 +468,18 @@ module BlueprintsCLI
         # Re-render to show suggestions in left panel
         clear_screen
         render_layout
-      rescue StandardError => e
+      rescue => e
         CLIUIIntegration.puts("{{red:❌ Failed to generate improvements: #{e.message}}}")
       end
 
-      def generate_ai_suggestions
+      private def generate_ai_suggestions
         suggestions = BlueprintsCLI::Generators::Improvement.new(
           code: @blueprint[:code],
           description: @blueprint[:description]
         ).generate
 
         { improvements: suggestions }
-      rescue StandardError => e
+      rescue => e
         BlueprintsCLI.logger.warn("AI suggestions failed: #{e.message}")
         nil
       end

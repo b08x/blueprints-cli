@@ -46,10 +46,10 @@ module CLI
             padded_row = row.each_with_index.map do |cell, i|
               col_size = T.must(col_sizes[i]) # guaranteed to be non-nil
               cell_size = CLI::UI::ANSI.printing_width(CLI::UI.resolve_text(cell))
-              padded_cell = cell + (' ' * (col_size - cell_size))
+              padded_cell = cell + (" " * (col_size - cell_size))
               padded_cell
             end
-            CLI::UI.puts(padded_row.join(' ' * col_spacing), to: to)
+            CLI::UI.puts(padded_row.join(" " * col_spacing), to:)
           end
         end
 
@@ -79,7 +79,7 @@ module CLI
         sig { params(table: T::Array[T::Array[String]], col_spacing: Integer).returns(T::Array[String]) }
         def capture_table(table, col_spacing: 1)
           strio = StringIO.new
-          puts_table(table, col_spacing: col_spacing, to: strio)
+          puts_table(table, col_spacing:, to: strio)
           strio.string.lines.map(&:chomp)
         end
       end

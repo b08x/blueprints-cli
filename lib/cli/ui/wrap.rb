@@ -1,9 +1,9 @@
 # typed: true
 # frozen_string_literal: true
 
-require 'cli/ui'
-require 'cli/ui/frame/frame_stack'
-require 'cli/ui/frame/frame_style'
+require "cli/ui"
+require "cli/ui/frame/frame_stack"
+require "cli/ui/frame/frame_style"
 
 module CLI
   module UI
@@ -21,12 +21,12 @@ module CLI
         width = T.let(0, Integer)
         final = []
         # Create an alternation of format codes of parameter lengths 1-20, since + and {1,n} not allowed in lookbehind
-        format_codes = (1..20).map { |n| /\x1b\[[\d;]{#{n}}m/ }.join('|')
-        codes = ''
+        format_codes = (1..20).map { |n| /\x1b\[[\d;]{#{n}}m/ }.join("|")
+        codes = ""
         @input.split(/(?=\s|\x1b\[[\d;]+m|\r)|(?<=\s|#{format_codes})/).each do |token|
           case token
           when '\x1B[0?m'
-            codes = ''
+            codes = ""
             final << token
           when /\x1b\[[\d;]+m/
             codes += token # Track in use format codes so that they are resent after frame coloring

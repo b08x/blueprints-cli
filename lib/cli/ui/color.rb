@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-require 'cli/ui'
+require "cli/ui"
 
 module CLI
   module UI
@@ -30,21 +30,21 @@ module CLI
         @name = name
       end
 
-      RED     = new('31', :red)
-      GREEN   = new('32', :green)
-      YELLOW  = new('33', :yellow)
+      RED     = new("31", :red)
+      GREEN   = new("32", :green)
+      YELLOW  = new("33", :yellow)
       # default blue is low-contrast against black in some default terminal color scheme
-      BLUE    = new('94', :blue) # 9x = high-intensity fg color x
-      MAGENTA = new('35', :magenta)
-      CYAN    = new('36', :cyan)
-      RESET   = new('0',  :reset)
-      BOLD    = new('1',  :bold)
-      WHITE   = new('97', :white)
+      BLUE    = new("94", :blue) # 9x = high-intensity fg color x
+      MAGENTA = new("35", :magenta)
+      CYAN    = new("36", :cyan)
+      RESET   = new("0",  :reset)
+      BOLD    = new("1",  :bold)
+      WHITE   = new("97", :white)
 
       # 240 is very dark gray; 255 is very light gray. 244 is somewhat dark.
-      GRAY = new('38;5;244', :gray)
+      GRAY = new("38;5;244", :gray)
       # Using color 214 from the 256-color palette for a more distinct orange
-      ORANGE = new('38;5;214', :orange)
+      ORANGE = new("38;5;214", :orange)
 
       MAP = {
         red: RED,
@@ -56,7 +56,7 @@ module CLI
         reset: RESET,
         bold: BOLD,
         gray: GRAY,
-        orange: ORANGE
+        orange: ORANGE,
       }.freeze
 
       class InvalidColorName < ArgumentError
@@ -70,7 +70,7 @@ module CLI
 
         sig { returns(String) }
         def message
-          keys = Color.available.map(&:inspect).join(',')
+          keys = Color.available.map(&:inspect).join(",")
           "invalid color: #{@name.inspect} " \
             "-- must be one of CLI::UI::Color.available (#{keys})"
         end

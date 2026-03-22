@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'algorithms'
+require "algorithms"
 
 module BlueprintsCLI
   module NLP
@@ -39,7 +39,7 @@ module BlueprintsCLI
             terms << {
               term: word,
               canonical: @trie_index[word.downcase],
-              score: calculate_term_score(word)
+              score: calculate_term_score(word),
             }
           end
 
@@ -78,9 +78,9 @@ module BlueprintsCLI
         # Cache results using Red-Black tree for ordered access
         def cache_result(key, result, metadata = {})
           cache_entry = {
-            result: result,
+            result:,
             timestamp: Time.now,
-            metadata: metadata
+            metadata:,
           }
           @cache[key] = cache_entry
 
@@ -111,7 +111,7 @@ module BlueprintsCLI
             count: 0,
             total_duration: 0.0,
             success_count: 0,
-            avg_duration: 0.0
+            avg_duration: 0.0,
           }
 
           @metrics[operation][:count] += 1
@@ -121,15 +121,12 @@ module BlueprintsCLI
             @metrics[operation][:total_duration] / @metrics[operation][:count]
         end
 
-        private
-
-        # Basic tokenization - to be enhanced by subclasses
-        def tokenize(text)
+        private def tokenize(text)
           text.downcase.scan(/\b\w+\b/)
         end
 
         # Calculate term importance score
-        def calculate_term_score(term)
+        private def calculate_term_score(term)
           # Basic scoring - can be enhanced with TF-IDF, etc.
           base_score = term.length.to_f / 10.0
           base_score += 0.5 if term.match?(/[A-Z]/) # Bonus for proper nouns

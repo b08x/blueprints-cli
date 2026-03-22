@@ -1,19 +1,19 @@
 # typed: true
 # frozen_string_literal: true
 
-require 'cli/ui'
+require "cli/ui"
 begin
-  require 'reline' # For 2.7+
+  require "reline" # For 2.7+
 rescue LoadError
-  require 'readline' # For 2.6
+  require "readline" # For 2.6
   Object.const_set(:Reline, Readline)
 end
 
 module CLI
   module UI
     module Prompt
-      autoload :InteractiveOptions,  'cli/ui/prompt/interactive_options'
-      autoload :OptionsHandler,      'cli/ui/prompt/options_handler'
+      autoload :InteractiveOptions,  "cli/ui/prompt/interactive_options"
+      autoload :OptionsHandler,      "cli/ui/prompt/options_handler"
 
       class << self
         extend T::Sig
@@ -128,32 +128,32 @@ module CLI
           has_options = !(options || block_given?).nil?
           if has_options && is_file
             raise(ArgumentError,
-                  'conflicting arguments: is_file is only useful when options are not provided')
+              "conflicting arguments: is_file is only useful when options are not provided")
           end
 
           if options && multiple && default && !(Array(default) - options).empty?
             raise(ArgumentError,
-                  'conflicting arguments: default should only include elements present in options')
+              "conflicting arguments: default should only include elements present in options")
           end
 
           if multiple && !has_options
             raise(ArgumentError,
-                  'conflicting arguments: options must be provided when multiple is true')
+              "conflicting arguments: options must be provided when multiple is true")
           end
 
           if !multiple && default.is_a?(Array)
             raise(ArgumentError,
-                  'conflicting arguments: multiple defaults may only be provided when multiple is true')
+              "conflicting arguments: multiple defaults may only be provided when multiple is true")
           end
 
           if has_options
             ask_interactive(
               question,
               options,
-              multiple: multiple,
-              default: default,
-              filter_ui: filter_ui,
-              select_ui: select_ui,
+              multiple:,
+              default:,
+              filter_ui:,
+              select_ui:,
               &options_proc
             )
           else
@@ -170,7 +170,7 @@ module CLI
         # If the user simply presses "Enter" without typing any password, this will return an empty string.
         sig { params(question: String).returns(String) }
         def ask_password(question)
-          require 'io/console'
+          require "io/console"
 
           CLI::UI::StdoutRouter::Capture.in_alternate_screen do
             $stdout.print(CLI::UI.fmt("{{?}} #{question}")) # Do not use puts_question to avoid the new line.
@@ -202,7 +202,7 @@ module CLI
         sig { params(question: String, default: T::Boolean).returns(T::Boolean) }
         def confirm(question, default: true)
           ask_interactive(question, default ? %w[yes no] : %w[no yes],
-                          filter_ui: false) == 'yes'
+            filter_ui: false) == "yes"
         end
 
         # Present the user with a message and wait for any key to be pressed, returning the pressed key.
@@ -213,7 +213,7 @@ module CLI
         #
         #   CLI::UI::Prompt.any_key('Press RETURN to continue...') # Then check if that's what they pressed
         sig { params(prompt: String).returns(T.nilable(String)) }
-        def any_key(prompt = 'Press any key to continue...')
+        def any_key(prompt = "Press any key to continue...")
           CLI::UI::StdoutRouter::Capture.in_alternate_screen do
             puts_question(prompt)
             read_char
@@ -224,8 +224,8 @@ module CLI
         sig { returns(T.nilable(String)) }
         def read_char
           CLI::UI::StdoutRouter::Capture.in_alternate_screen do
-            if $stdin.tty? && !ENV['TEST']
-              require 'io/console'
+            if $stdin.tty? && !ENV["TEST"]
+              require "io/console"
               $stdin.getch # raw mode for tty
             else
               $stdin.getc # returns nil at end of input
@@ -235,15 +235,13 @@ module CLI
           "\e"
         end
 
-        private
-
         sig do
           params(question: String, default: T.nilable(String), is_file: T::Boolean, allow_empty: T::Boolean)
             .returns(String)
         end
-        def ask_free_form(question, default, is_file, allow_empty)
+        private def ask_free_form(question, default, is_file, allow_empty)
           if default && !allow_empty
-            raise(ArgumentError, 'conflicting arguments: default enabled but allow_empty is false')
+            raise(ArgumentError, "conflicting arguments: default enabled but allow_empty is false")
           end
 
           CLI::UI::StdoutRouter::Capture.in_alternate_screen do
@@ -255,7 +253,7 @@ module CLI
 
             # Ask a free form question
             loop do
-              line = readline(is_file: is_file)
+              line = readline(is_file:)
 
               if line.empty? && default
                 write_default_over_empty_input(default)
@@ -277,28 +275,29 @@ module CLI
             select_ui: T::Boolean
           ).returns(T.any(String, T::Array[String]))
         end
-        def ask_interactive(question, options = nil, multiple: false, default: nil,
-                            filter_ui: true, select_ui: true)
+        private def ask_interactive(question, options = nil, multiple: false, default: nil,
+          filter_ui: true, select_ui: true
+        )
           if options && block_given?
             raise(ArgumentError,
-                  'conflicting arguments: options and block given')
+              "conflicting arguments: options and block given")
           end
 
           options ||= if block_given?
-                        handler = OptionsHandler.new
-                        yield handler
-                        handler.options
-                      end
+            handler = OptionsHandler.new
+            yield handler
+            handler.options
+          end
 
-          raise(ArgumentError, 'insufficient options') if options.nil? || options.empty?
+          raise(ArgumentError, "insufficient options") if options.nil? || options.empty?
 
           navigate_text = if CLI::UI::OS.current.suggest_arrow_keys?
-                            'Choose with ↑ ↓ ⏎'
-                          else
-                            "Navigate up with 'k' and down with 'j', press Enter to select"
-                          end
+            "Choose with ↑ ↓ ⏎"
+          else
+            "Navigate up with 'k' and down with 'j', press Enter to select"
+          end
 
-          instructions = (multiple ? 'Toggle options. ' : '') + navigate_text
+          instructions = (multiple ? "Toggle options. " : "") + navigate_text
           instructions += ", filter with 'f'" if filter_ui
           instructions += ", enter option with 'e'" if select_ui && (options.size > 9)
 
@@ -306,7 +305,7 @@ module CLI
 
           CLI::UI::StdoutRouter::Capture.in_alternate_screen do
             puts_question("#{question} " + instructions_color.code + "(#{instructions})" + Color::RESET.code)
-            resp = interactive_prompt(options, multiple: multiple, default: default)
+            resp = interactive_prompt(options, multiple:, default:)
 
             # Clear the line
             print(ANSI.previous_line + ANSI.clear_to_end_of_line)
@@ -318,15 +317,15 @@ module CLI
                         when Array
                           case resp.size
                           when 0
-                            '<nothing>'
+                            "<nothing>"
                           when 1..2
-                            resp.join(' and ')
+                            resp.join(" and ")
                           else
                             "#{resp.size} items"
                           end
                         else
                           resp
-                        end
+            end
             puts_question("#{question} (You chose: {{italic:#{resp_text}}})")
           end
 
@@ -340,17 +339,17 @@ module CLI
         # Useful for stubbing in tests
         sig do
           params(options: T::Array[String], multiple: T::Boolean,
-                 default: T.nilable(T.any(T::Array[String], String)))
+            default: T.nilable(T.any(T::Array[String], String)))
             .returns(T.any(T::Array[String], String))
         end
-        def interactive_prompt(options, multiple: false, default: nil)
+        private def interactive_prompt(options, multiple: false, default: nil)
           CLI::UI::StdoutRouter::Capture.in_alternate_screen do
-            InteractiveOptions.call(options, multiple: multiple, default: default)
+            InteractiveOptions.call(options, multiple:, default:)
           end
         end
 
         sig { params(default: String).void }
-        def write_default_over_empty_input(default)
+        private def write_default_over_empty_input(default)
           CLI::UI.raw do
             warn(
               "#{CLI::UI::ANSI.cursor_up(1)}\r#{CLI::UI::ANSI.cursor_forward(4)}#{default}#{CLI::UI::Color::RESET.code}"
@@ -359,27 +358,27 @@ module CLI
         end
 
         sig { params(str: String).void }
-        def puts_question(str)
+        private def puts_question(str)
           $stdout.puts(CLI::UI.fmt("{{?}} #{str}"))
         end
 
         sig { params(is_file: T::Boolean).returns(String) }
-        def readline(is_file: false)
+        private def readline(is_file: false)
           if is_file
             Reline.completion_proc = proc do |input|
-              directory = input[-1] == '/' ? input : File.dirname(input)
-              filename = input[-1] == '/' ? '' : File.basename(input)
+              directory = (input[-1] == "/") ? input : File.dirname(input)
+              filename = (input[-1] == "/") ? "" : File.basename(input)
 
               (Dir.entries(directory).select do |fp|
                 fp.start_with?(filename)
-              end - (input[-1] == '.' ? [] : ['.', '..'])).map do |fp|
-                File.join(directory, fp).delete_prefix('./')
+              end - ((input[-1] == ".") ? [] : [".", ".."])).map do |fp|
+                File.join(directory, fp).delete_prefix("./")
               end
             end
-            Reline.completion_append_character = ''
+            Reline.completion_append_character = ""
           else
             Reline.completion_proc = proc {}
-            Reline.completion_append_character = ' '
+            Reline.completion_append_character = " "
           end
 
           # because Readline is a C library, CLI::UI's hooks into $stdout don't
@@ -389,7 +388,7 @@ module CLI
           prefix = CLI::UI::Frame.prefix
           # If a prompt is interrupted on Windows it locks the colour of the terminal from that point on, so we should
           # not change the colour here.
-          prompt = prefix + CLI::UI.fmt('{{blue:> }}')
+          prompt = prefix + CLI::UI.fmt("{{blue:> }}")
           prompt += CLI::UI::Color::YELLOW.code if CLI::UI::OS.current.use_color_prompt?
 
           begin

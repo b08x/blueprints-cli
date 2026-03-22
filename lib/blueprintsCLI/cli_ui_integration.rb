@@ -2,10 +2,10 @@
 
 # Load CLI-UI with a proper namespace
 begin
-  require_relative '../cli/ui'
+  require_relative "../cli/ui"
 rescue LoadError
   # Fallback to the gem version if available
-  require 'cli/ui'
+  require "cli/ui"
 end
 
 module BlueprintsCLI
@@ -16,7 +16,7 @@ module BlueprintsCLI
     def self.initialize!
       # Configure color scheme to match BlueprintsCLI
       ::CLI::UI.enable_color = $stdout.tty?
-      ::CLI::UI.enable_cursor = $stdout.tty? && ENV['CI'].nil?
+      ::CLI::UI.enable_cursor = $stdout.tty? && ENV["CI"].nil?
 
       # Set default frame style for consistent branding
       ::CLI::UI.frame_style = :box
@@ -26,32 +26,32 @@ module BlueprintsCLI
     end
 
     # Enhanced frame wrapper that integrates with BlueprintsCLI logger
-    def self.frame(text, color: :cyan, **options, &block)
-      ::CLI::UI.frame(text, color: color, **options, &block)
+    def self.frame(text, color: :cyan, **, &)
+      ::CLI::UI.frame(text, color:, **, &)
     end
 
     # Enhanced prompt wrapper with BlueprintsCLI integration
-    def self.ask(question, **options)
-      ::CLI::UI.ask(question, **options)
+    def self.ask(question, **)
+      ::CLI::UI.ask(question, **)
     end
 
     # Enhanced select with better visual styling
-    def self.select(question, options = nil, **kwargs, &)
+    def self.select(question, options = nil, **, &)
       if block_given?
-        ::CLI::UI.ask(question, **kwargs, &)
+        ::CLI::UI.ask(question, **, &)
       else
-        ::CLI::UI.ask(question, options: options, **kwargs)
+        ::CLI::UI.ask(question, options:, **)
       end
     end
 
     # Confirm with BlueprintsCLI styling
     def self.confirm(question, default: true)
-      ::CLI::UI.confirm(question, default: default)
+      ::CLI::UI.confirm(question, default:)
     end
 
     # Display formatted text with CLI-UI formatting
-    def self.puts(text, **options)
-      ::CLI::UI.puts(text, **options)
+    def self.puts(text, **)
+      ::CLI::UI.puts(text, **)
     end
 
     # Display formatted text without frame prefix

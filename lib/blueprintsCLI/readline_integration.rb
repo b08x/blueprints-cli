@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'readline'
+require "readline"
 
 module BlueprintsCLI
   # ReadlineIntegration module provides centralized readline setup and autocomplete functionality
@@ -20,15 +20,15 @@ module BlueprintsCLI
       # Mark the autocomplete handler as readline ready
       @autocomplete_handler.readline_ready! if @autocomplete_handler.respond_to?(:readline_ready!)
 
-      safe_log_debug('Readline autocomplete initialized successfully')
+      safe_log_debug("Readline autocomplete initialized successfully")
       true
-    rescue StandardError => e
+    rescue => e
       safe_log_warn("Failed to initialize readline autocomplete: #{e.message}")
       false
     end
 
     # Get user input with readline support and history
-    def readline_input(prompt = '> ', add_to_history = true)
+    def readline_input(prompt = "> ", add_to_history = true)
       return fallback_input(prompt) unless readline_available? && @autocomplete_handler
 
       begin
@@ -36,7 +36,7 @@ module BlueprintsCLI
         input&.strip
       rescue Interrupt
         raise
-      rescue StandardError => e
+      rescue => e
         safe_log_debug("Readline input failed: #{e.message}")
         fallback_input(prompt)
       end
@@ -57,32 +57,30 @@ module BlueprintsCLI
       return unless readline_available?
 
       Readline.completion_proc = nil
-      Readline.completion_append_character = ' '
+      Readline.completion_append_character = " "
       @autocomplete_handler = nil
     end
 
-    private
-
-    def configure_completion_proc
+    private def configure_completion_proc
       Readline.completion_proc = proc do |input|
         completions = @autocomplete_handler.completions_for(input)
         BlueprintsCLI.logger.debug("Generated #{completions.size} completions for: '#{input}'")
         completions
-      rescue StandardError => e
+      rescue => e
         BlueprintsCLI.logger.debug("Completion error: #{e.message}")
         []
       end
     end
 
-    def configure_readline_settings
+    private def configure_readline_settings
       # Configure completion behavior
-      Readline.completion_append_character = ' '
+      Readline.completion_append_character = " "
 
       # Set up history file if supported
       setup_history_file if Readline.respond_to?(:HISTORY)
     end
 
-    def setup_history_management
+    private def setup_history_management
       return unless Readline.respond_to?(:HISTORY)
 
       # Limit history size to prevent memory issues
@@ -95,43 +93,37 @@ module BlueprintsCLI
       excess.times { Readline::HISTORY.shift }
     end
 
-    def setup_history_file
-      history_file = File.join(Dir.home, '.blueprintscli_history')
+    private def setup_history_file
+      history_file = File.join(Dir.home, ".blueprintscli_history")
 
       # Load existing history
-      if File.exist?(history_file)
-        File.readlines(history_file).each { |line| Readline::HISTORY << line.chomp }
-      end
+      File.readlines(history_file).each { |line| Readline::HISTORY << line.chomp } if File.exist?(history_file)
 
       # Save history on exit
       at_exit do
-        File.open(history_file, 'w') do |f|
+        File.open(history_file, "w") do |f|
           Readline::HISTORY.to_a.last(1000).each { |line| f.puts(line) }
         end
       end
-    rescue StandardError => e
+    rescue => e
       safe_log_debug("History file setup failed: #{e.message}")
     end
 
-    def fallback_input(prompt)
+    private def fallback_input(prompt)
       print prompt
       $stdin.gets&.chomp&.strip
     end
 
     # Safe logging methods that won't fail if logger isn't available
-    def safe_log_debug(message)
-      if defined?(BlueprintsCLI) && BlueprintsCLI.respond_to?(:logger)
-        BlueprintsCLI.logger.debug(message)
-      end
-    rescue StandardError
+    private def safe_log_debug(message)
+      BlueprintsCLI.logger.debug(message) if defined?(BlueprintsCLI) && BlueprintsCLI.respond_to?(:logger)
+    rescue
       # Silently ignore logging errors during initialization
     end
 
-    def safe_log_warn(message)
-      if defined?(BlueprintsCLI) && BlueprintsCLI.respond_to?(:logger)
-        BlueprintsCLI.logger.warn(message)
-      end
-    rescue StandardError
+    private def safe_log_warn(message)
+      BlueprintsCLI.logger.warn(message) if defined?(BlueprintsCLI) && BlueprintsCLI.respond_to?(:logger)
+    rescue
       # Silently ignore logging errors during initialization
     end
   end

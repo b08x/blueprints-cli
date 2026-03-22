@@ -4,13 +4,8 @@ require "tty-box"
 
 module BlueprintsCLI
   module Actions
-    ##
     # Search provides search functionality for blueprints in the system.
-    # It supports both semantic vector-based search and traditional text search,
-    # allowing developers to find relevant blueprints based on their queries.
-    #
-    # This action is typically used when users need to locate specific blueprints
-    # by name, description, code content, or semantic similarity.
+    # Supports both semantic vector-based search and traditional text search.
     #
     # @example Basic semantic search
     #   action = Search.new(query: "user authentication")
@@ -19,128 +14,110 @@ module BlueprintsCLI
     # @example Text search with custom limit
     #   action = Search.new(query: "database connection", semantic: false, limit: 5)
     #   action.call
+    #
+    # @example Injected database for testing
+    #   action = Search.new(query: "auth", db: FakeBlueprintDatabase.new)
+    #   action.call
     class Search
-      ##
-      # Initializes a new Search with search parameters.
-      #
-      # @param [String] query The search term to look for in blueprints
-      # @param [Integer] limit The maximum number of results to return (default: 10)
-      # @param [Boolean] semantic Whether to use semantic search (default: true)
-      # @return [Search] A new instance of Search
-      def initialize(query:, limit: 10, semantic: true)
+      # Maximum records fetched for in-memory text filtering.
+      # TODO: Replace with a DB-side pg_trgm / ILIKE scope for O(log n) at scale.
+      TEXT_SEARCH_FETCH_LIMIT = 200
+
+      # @param query [String] The search term to look for in blueprints
+      # @param limit [Integer] Maximum number of results to return (default: 10)
+      # @param semantic [Boolean] Whether to use semantic search (default: true)
+      # @param db [#search_blueprints, #list_blueprints] Injectable database dependency
+      def initialize(query:, limit: 10, semantic: true, db: BlueprintsCLI::BlueprintDatabase.new)
         @query = query
         @limit = limit
         @semantic = semantic
-        @db = BlueprintsCLI::BlueprintDatabase.new
+        @db = db
       end
 
-      ##
       # Executes the blueprint search based on the configured parameters.
       #
-      # This method coordinates the search process, displays results, and handles
-      # any errors that might occur during the search operation.
-      #
-      # @return [Boolean] true if the search completed successfully, false if an error occurred
+      # @return [Boolean] true if search completed successfully, false on error
       def call
-        puts "🔍 Searching for: '#{@query}'...".colorize(:blue)
+        BlueprintsCLI.logger.info("Searching for: '#{@query}'")
 
-        results = if @semantic
-          semantic_search
-        else
-          text_search
-        end
+        results = @semantic ? semantic_search : text_search
 
         if results.empty?
-          puts "📭 No blueprints found matching '#{@query}'".colorize(:yellow)
+          BlueprintsCLI.logger.info("No blueprints found matching '#{@query}'")
           return true
         end
 
-        puts "✅ Found #{results.length} matching blueprints".colorize(:green)
+        BlueprintsCLI.logger.info("Found #{results.length} matching blueprints")
         display_search_results(results)
-
         true
       rescue => e
         BlueprintsCLI.logger.failure("Error searching blueprints: #{e.message}")
-        BlueprintsCLI.logger.debug(e) if ENV["DEBUG"]
+        BlueprintsCLI.logger.debug(e.backtrace.first) if ENV["DEBUG"]
         false
       end
 
       private def semantic_search
-        # Use vector similarity search for semantic matching
         @db.search_blueprints(query: @query, limit: @limit)
       end
 
-      ##
       # Performs a traditional text-based search across blueprint fields.
+      # Searches query terms across name, description, code, and categories.
       #
-      # This method searches for the query terms in blueprint names, descriptions,
-      # code content, and categories. It implements a simple relevance scoring
-      # system to rank results.
-      #
-      # @return [Array<Hash>] An array of matching blueprint hashes
+      # @return [Array<Hash>] Matching blueprint hashes, scored and ranked
       private def text_search
-        # Fallback to simple text search in name, description, and code
-        blueprints = @db.list_blueprints(limit: 1000) # Get more for filtering
-
+        blueprints = @db.list_blueprints(limit: TEXT_SEARCH_FETCH_LIMIT)
         query_words = @query.downcase.split(/\s+/)
 
-        results = blueprints.select do |blueprint|
-          searchable_text = [
-            blueprint[:name],
-            blueprint[:description],
-            blueprint[:code],
-            blueprint[:categories].map { |c| c[:title] }.join(" "),
-          ].compact.join(" ").downcase
-
-          # Check if all query words are present
-          query_words.all? { |word| searchable_text.include?(word) }
-        end
-
-        # Sort by relevance (simple scoring)
-        results.sort_by do |blueprint|
-          score = calculate_text_relevance(blueprint, query_words)
-          -score # Negative for descending order
-        end.first(@limit)
+        blueprints
+          .select { |bp| matches_all_words?(bp, query_words) }
+          .sort_by { |bp| -calculate_text_relevance(bp, query_words) }
+          .first(@limit)
       end
 
-      ##
-      # Calculates a relevance score for a blueprint based on query word matches.
-      #
-      # This method assigns different weights to matches in different fields:
-      # - Name matches: 10 points
-      # - Description matches: 5 points
-      # - Code matches: 1 point
-      #
-      # @param [Hash] blueprint The blueprint to score
-      # @param [Array<String>] query_words The query terms to match against
-      # @return [Integer] The calculated relevance score
-      private def calculate_text_relevance(blueprint, query_words)
-        score = 0
+      # @param blueprint [Hash]
+      # @param query_words [Array<String>]
+      # @return [Boolean]
+      private def matches_all_words?(blueprint, query_words)
+        text = searchable_text(blueprint)
+        query_words.all? { |word| text.include?(word) }
+      end
 
-        # Higher weight for matches in name and description
+      # Builds a single downcased string from all searchable blueprint fields.
+      #
+      # @param blueprint [Hash]
+      # @return [String]
+      private def searchable_text(blueprint)
+        [
+          blueprint[:name],
+          blueprint[:description],
+          blueprint[:code],
+          blueprint[:categories]&.map { |c| c[:title] }&.join(" "),
+        ].compact.join(" ").downcase
+      end
+
+      # Calculates a weighted relevance score for a blueprint.
+      # Weights: name=10pts, description=5pts, code=1pt per matching word.
+      #
+      # @param blueprint [Hash]
+      # @param query_words [Array<String>]
+      # @return [Integer]
+      private def calculate_text_relevance(blueprint, query_words)
         name_text = (blueprint[:name] || "").downcase
         desc_text = (blueprint[:description] || "").downcase
-        code_text = blueprint[:code].downcase
+        code_text = (blueprint[:code] || "").downcase # nil-safe: was blueprint[:code].downcase
 
-        query_words.each do |word|
-          score += 10 if name_text.include?(word)
-          score += 5 if desc_text.include?(word)
-          score += 1 if code_text.include?(word)
+        query_words.sum do |word|
+          (name_text.include?(word) ? 10 : 0) +
+            (desc_text.include?(word) ? 5 : 0) +
+            (code_text.include?(word) ? 1 : 0)
         end
-
-        score
       end
 
-      ##
       # Displays the search results in a formatted table.
+      # TODO: Extract to a dedicated SearchResultFormatter for testability.
       #
-      # This method handles both semantic search results (with similarity scores)
-      # and traditional text search results, formatting them appropriately
-      # for console display.
-      #
-      # @param [Array<Hash>] results The search results to display
+      # @param results [Array<Hash>]
       private def display_search_results(results)
-        # Display header using TTY::Box
         header_box = TTY::Box.frame(
           "🔍 Search Results for: '#{@query}'",
           width: 120,
@@ -150,101 +127,75 @@ module BlueprintsCLI
         puts "\n#{header_box}"
 
         if @semantic && results.first&.key?(:distance)
-          # Show similarity scores for semantic search
-          printf "%-5s %-30s %-40s %-20s %-10s\n", "ID", "Name", "Description", "Categories",
-            "Score"
-          puts "-" * 120
-
-          results.each do |blueprint|
-            name = truncate_text(blueprint[:name] || "Untitled", 28)
-            description = truncate_text(blueprint[:description] || "No description", 38)
-            categories = get_category_text(blueprint[:categories])
-            similarity = calculate_similarity_percentage(blueprint[:distance])
-
-            printf "%-5s %-30s %-40s %-20s %-10s\n",
-              blueprint[:id],
-              name,
-              description,
-              categories,
-              "#{similarity}%"
-          end
+          display_semantic_results(results)
         else
-          # Standard display for text search
-          printf "%-5s %-35s %-50s %-25s\n", "ID", "Name", "Description", "Categories"
-          puts "-" * 120
-
-          results.each do |blueprint|
-            name = truncate_text(blueprint[:name] || "Untitled", 33)
-            description = truncate_text(blueprint[:description] || "No description", 48)
-            categories = get_category_text(blueprint[:categories])
-
-            printf "%-5s %-35s %-50s %-25s\n",
-              blueprint[:id],
-              name,
-              description,
-              categories
-          end
+          display_text_results(results)
         end
 
         puts "=" * 120
         puts ""
-
-        # Show usage hints
         show_usage_hints(results)
       end
 
-      ##
-      # Converts a similarity distance to a percentage.
-      #
-      # Lower distance values indicate higher similarity, so this method
-      # converts the distance to a more intuitive percentage score.
-      #
-      # @param [Float] distance The similarity distance from the semantic search
-      # @return [Float] The similarity percentage (0-100)
-      private def calculate_similarity_percentage(distance)
-        # Convert distance to percentage (lower distance = higher similarity)
-        # This is a rough approximation - adjust based on your embedding space
-        similarity = [100 - (distance * 100), 0].max
-        similarity.round(1)
+      # @param results [Array<Hash>] Semantic search results with :distance key
+      private def display_semantic_results(results)
+        printf "%-5s %-30s %-40s %-20s %-10s\n", "ID", "Name", "Description", "Categories", "Score"
+        puts "-" * 120
+
+        results.each do |bp|
+          printf "%-5s %-30s %-40s %-20s %-10s\n",
+            bp[:id],
+            truncate_text(bp[:name] || "Untitled", 28),
+            truncate_text(bp[:description] || "No description", 38),
+            get_category_text(bp[:categories]),
+            "#{calculate_similarity_percentage(bp[:distance])}%"
+        end
       end
 
-      ##
-      # Formats category information for display.
+      # @param results [Array<Hash>] Text search results
+      private def display_text_results(results)
+        printf "%-5s %-35s %-50s %-25s\n", "ID", "Name", "Description", "Categories"
+        puts "-" * 120
+
+        results.each do |bp|
+          printf "%-5s %-35s %-50s %-25s\n",
+            bp[:id],
+            truncate_text(bp[:name] || "Untitled", 33),
+            truncate_text(bp[:description] || "No description", 48),
+            get_category_text(bp[:categories])
+        end
+      end
+
+      # Converts vector distance to a similarity percentage (lower distance = more similar).
       #
-      # @param [Array<Hash>, nil] categories The categories to format
-      # @return [String] A formatted string of category names
+      # @param distance [Float]
+      # @return [Float] Percentage in range 0–100
+      private def calculate_similarity_percentage(distance)
+        [100 - (distance * 100), 0].max.round(1)
+      end
+
+      # @param categories [Array<Hash>, nil]
+      # @return [String]
       private def get_category_text(categories)
         return "None" if categories.nil? || categories.empty?
 
-        category_names = categories.map { |cat| cat[:title] }
-        text = category_names.join(", ")
-        truncate_text(text, 23)
+        truncate_text(categories.map { |cat| cat[:title] }.join(", "), 23)
       end
 
-      ##
-      # Displays helpful usage hints after search results.
-      #
-      # @param [Array<Hash>] results The search results that were displayed
+      # @param results [Array<Hash>]
       private def show_usage_hints(results)
         puts "💡 Next steps:".colorize(:cyan)
         puts "   blueprint view <id>           View full blueprint details"
         puts "   blueprint view <id> --analyze Get AI analysis and suggestions"
         puts "   blueprint edit <id>           Edit a blueprint"
         puts "   blueprint export <id>         Export blueprint code"
-
-        if results.any?
-          sample_id = results.first[:id]
-          puts "\n📋 Example: blueprint view #{sample_id}".colorize(:yellow)
-        end
+        puts "\n📋 Example: blueprint view #{results.first[:id]}".colorize(:yellow) if results.any?
         puts ""
       end
 
-      ##
-      # Truncates text to fit within a specified length.
-      #
-      # @param [String] text The text to truncate
-      # @param [Integer] length The maximum length of the text
-      # @return [String] The truncated text with ellipsis if shortened
+      # @param text [String]
+      # @param length [Integer]
+      # @return [String]
       private def truncate_text(text, length)
         return text if text.length <= length
 

@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-require 'rbconfig'
+require "rbconfig"
 
 module CLI
   module UI
@@ -10,7 +10,7 @@ module CLI
 
       sig do
         params(emoji: T::Boolean, color_prompt: T::Boolean, arrow_keys: T::Boolean,
-               shift_cursor: T::Boolean).void
+          shift_cursor: T::Boolean).void
       end
       def initialize(emoji: true, color_prompt: true, arrow_keys: true, shift_cursor: false)
         @emoji = emoji
@@ -44,19 +44,19 @@ module CLI
 
         sig { returns(OS) }
         def current
-          @current ||= case RbConfig::CONFIG['host_os']
+          @current ||= case RbConfig::CONFIG["host_os"]
                        when /darwin/
                          MAC
                        when /linux/
                          LINUX
                        else
-                         unless !RUBY_PLATFORM.include?('cygwin') && ENV['OS'] == 'Windows_NT'
+                         unless !RUBY_PLATFORM.include?("cygwin") && ENV["OS"] == "Windows_NT"
                            raise "Could not determine OS from host_os #{RbConfig::CONFIG['host_os']}"
                          end
 
                          WINDOWS
 
-                       end
+          end
         end
       end
 

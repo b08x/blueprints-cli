@@ -29,6 +29,10 @@ module BlueprintsCLI
     #   @return [Sequel::Database] The active Sequel database connection instance.
     attr_reader :db
 
+    # @!attribute [r] ollama_health_cache
+    #   @return [Hash] Cached result of Ollama health check with timestamp.
+    attr_reader :ollama_health_cache
+
     #
     # Initializes the database connection and validates the schema.
     #
@@ -47,6 +51,7 @@ module BlueprintsCLI
     def initialize(database_url: nil)
       @database_url = database_url || load_database_url
       @db = connect_to_database
+      @ollama_health_cache = { available: nil, checked_at: nil }
 
       validate_database_schema
     end
@@ -156,14 +161,17 @@ module BlueprintsCLI
     #
     def list_blueprints(limit: 100, offset: 0)
       blueprints = @db[:blueprints]
+        .eager(:categories)
         .order(Sequel.desc(:created_at))
         .limit(limit)
         .offset(offset)
         .all
 
-      # Add categories for each blueprint
+      # Convert eager-loaded associations to hash format for consistency
       blueprints.each do |blueprint|
-        blueprint[:categories] = get_blueprint_categories(blueprint[:id])
+        blueprint[:categories] = blueprint[:categories].map do |cat|
+          { id: cat.id, title: cat.title, created_at: cat.created_at, updated_at: cat.updated_at }
+        end
       end
 
       blueprints
@@ -192,18 +200,20 @@ module BlueprintsCLI
       query_embedding = generate_embedding_for_text(query)
       return [] unless query_embedding
 
-      # Perform vector similarity search using pgvector
-      results = @db.fetch(
-        "SELECT *, embedding <-> ? AS distance
-           FROM blueprints
-           ORDER BY embedding <-> ?
-           LIMIT ?",
-        query_embedding, query_embedding, limit
-      ).all
+      # Perform vector similarity search using pgvector with eager-loaded categories
+      results = @db[:blueprints]
+        .eager(:categories)
+        .where(Sequel.lit("embedding IS NOT NULL"))
+        .order(Sequel.lit("embedding <-> ?", query_embedding))
+        .limit(limit)
+        .all
 
-      # Add categories for each result
+      # Convert eager-loaded associations to hash format for consistency
       results.each do |blueprint|
-        blueprint[:categories] = get_blueprint_categories(blueprint[:id])
+        blueprint[:categories] = blueprint[:categories].map do |cat|
+          { id: cat.id, title: cat.title, created_at: cat.created_at, updated_at: cat.updated_at }
+        end
+        # Distance not exposed to caller; ordering is by similarity
       end
 
       results
@@ -333,26 +343,34 @@ module BlueprintsCLI
       }
     end
 
-    # Check if Ollama service is available for embedding generation
+    # Check if Ollama service is available for embedding generation.
+    # Results are cached for 30 seconds to avoid repeated HTTP calls.
     #
     # @return [Boolean] true if Ollama is accessible, false otherwise
     def ollama_available?
+      cache_ttl = 30 # seconds
+
+      return @ollama_health_cache[:available] if @ollama_health_cache[:available] &&
+        Time.now - @ollama_health_cache[:checked_at] < cache_ttl
+
       ollama_base = BlueprintsCLI.configuration.fetch(:ai, :rubyllm, :ollama_api_base, default: "http://localhost:11434")
 
-      # Quick health check by attempting to reach Ollama's tags endpoint
       require "net/http"
       require "timeout"
 
       uri = URI.join(ollama_base, "/api/tags")
 
-      Timeout.timeout(5) do
+      @ollama_health_cache[:available] = Timeout.timeout(5) do
         response = Net::HTTP.get_response(uri)
         response.code == "200"
       end
+      @ollama_health_cache[:checked_at] = Time.now
 
-      true
+      @ollama_health_cache[:available]
     rescue => e
       BlueprintsCLI.logger.debug("Ollama health check failed: #{e.message}")
+      @ollama_health_cache[:available] = false
+      @ollama_health_cache[:checked_at] = Time.now
       false
     end
 
@@ -431,22 +449,22 @@ module BlueprintsCLI
       failed = 0
       skipped = 0
 
-      # Find blueprints without embeddings
+      # Find blueprints without embeddings and convert to array to avoid lazy evaluation issues
       blueprints_without_embeddings = @db[:blueprints]
         .where(embedding: nil)
         .limit(batch_size)
+        .all
 
-      BlueprintsCLI.logger.info("Found #{blueprints_without_embeddings.count} blueprints needing embeddings")
+      total_found = blueprints_without_embeddings.count
+      BlueprintsCLI.logger.info("Found #{total_found} blueprints needing embeddings")
 
       blueprints_without_embeddings.each do |blueprint|
-        # Generate embedding
         embedding_result = generate_embedding(
           name: blueprint[:name],
           description: blueprint[:description]
         )
 
         if embedding_result.success?
-          # Update the blueprint with the new embedding
           @db[:blueprints]
             .where(id: blueprint[:id])
             .update(embedding: embedding_result.value!)
@@ -466,15 +484,12 @@ module BlueprintsCLI
         failed += 1
       end
 
-      summary = {
+      {
         processed:,
         failed:,
         skipped:,
-        total_found: blueprints_without_embeddings.count,
+        total_found:,
       }
-
-      BlueprintsCLI.logger.info("Embedding generation complete: #{processed} processed, #{failed} failed, #{skipped} skipped")
-      summary
     end
 
     #
@@ -485,6 +500,8 @@ module BlueprintsCLI
     # @return [Dry::Monads::Result] Success(vector_string) or Failure(reason)
     #
     private def generate_embedding_for_text(text)
+      require_relative "services/informers_embedding_service"
+
       # Ensure RubyLLM is configured
       BlueprintsCLI.configuration.configure_rubyllm!
 
@@ -494,8 +511,8 @@ module BlueprintsCLI
         return Failure(:ollama_unavailable)
       end
 
-      embedding = RubyLLM.embed(text)
-      vector = embedding.vectors
+      embedding = Services::InformersEmbeddingService.instance.embed(text)
+      vector = embedding
 
       if vector && !vector.empty?
         Success("[#{vector.join(',')}]") # Format as PostgreSQL vector
@@ -503,14 +520,9 @@ module BlueprintsCLI
         BlueprintsCLI.logger.failure("Invalid embedding dimensions received")
         Failure(:invalid_embedding)
       end
-    rescue RubyLLM::Error => e
-      # Check if this is an Ollama connectivity issue
-      if e.message.match?(/connection|refused|timeout|unreachable/i)
-        BlueprintsCLI.logger.warning("Ollama connection error - blueprint will be queued for embedding: #{e.message}")
-        return Failure(:ollama_unavailable)
-      end
-      BlueprintsCLI.logger.failure("Error generating embedding: #{e.message}")
-      Failure(e)
+    rescue Services::InformersEmbeddingService => e
+      BlueprintsCLI.logger.warning("Embedding service error - blueprint will be queued for embedding: #{e.message}")
+      Failure(:embedding_service_error)
     rescue => e
       BlueprintsCLI.logger.failure("Unexpected error in embedding generation: #{e.message}")
       Failure(e)

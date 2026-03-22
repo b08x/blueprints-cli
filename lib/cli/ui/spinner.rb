@@ -1,27 +1,27 @@
 # typed: true
 # frozen_string_literal: true
 
-require 'cli/ui'
+require "cli/ui"
 
 module CLI
   module UI
     module Spinner
       extend T::Sig
 
-      autoload :Async,      'cli/ui/spinner/async'
-      autoload :SpinGroup,  'cli/ui/spinner/spin_group'
+      autoload :Async,      "cli/ui/spinner/async"
+      autoload :SpinGroup,  "cli/ui/spinner/spin_group"
 
       PERIOD = 0.1 # seconds
       TASK_FAILED = :task_failed
 
       RUNES = if CLI::UI::OS.current.use_emoji?
-                ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'].freeze
-              else
-                ['\\', '|', '/', '-', '\\', '|', '/', '-'].freeze
-              end
+        ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"].freeze
+      else
+        ["\\", "|", "/", "-", "\\", "|", "/", "-"].freeze
+      end
 
       colors = ([CLI::UI::Color::CYAN.code] * (RUNES.size / 2).ceil) +
-               ([CLI::UI::Color::MAGENTA.code] * (RUNES.size / 2).to_i)
+        ([CLI::UI::Color::MAGENTA.code] * (RUNES.size / 2).to_i)
       GLYPHS = colors.zip(RUNES).map { |c, r| c + r + CLI::UI::Color::RESET.code }.freeze
 
       class << self
@@ -81,10 +81,10 @@ module CLI
             block: T.proc.params(task: SpinGroup::Task).void
           ).returns(T::Boolean)
         end
-        def spin(title, auto_debrief: true, to: $stdout, &block)
-          sg = SpinGroup.new(auto_debrief: auto_debrief)
-          sg.add(title, &block)
-          sg.wait(to: to)
+        def spin(title, auto_debrief: true, to: $stdout, &)
+          sg = SpinGroup.new(auto_debrief:)
+          sg.add(title, &)
+          sg.wait(to:)
         end
       end
     end

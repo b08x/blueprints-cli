@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Add dependencies here
-  spec.add_dependency "ruby_llm", "~> 1.3"
+  spec.add_dependency "ruby_llm"
   spec.add_dependency "ruby_llm-schema"
-  spec.add_dependency "thor", "~> 1.2"
+  spec.add_dependency "thor"
 end

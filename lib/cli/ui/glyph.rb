@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-require 'cli/ui'
+require "cli/ui"
 
 module CLI
   module UI
@@ -19,7 +19,7 @@ module CLI
 
         sig { returns(String) }
         def message
-          keys = Glyph.available.join(',')
+          keys = Glyph.available.join(",")
           "invalid glyph handle: #{@handle} " \
             "-- must be one of CLI::UI::Glyph.available (#{keys})"
         end
@@ -48,7 +48,7 @@ module CLI
         @handle    = handle
         @codepoint = codepoint
         @color     = color
-        @char      = CLI::UI::OS.current.use_emoji? ? Array(codepoint).pack('U*') : plain
+        @char      = CLI::UI::OS.current.use_emoji? ? Array(codepoint).pack("U*") : plain
         @to_s      = color.code + @char + Color::RESET.code
         @fmt       = "{{#{color.name}:#{@char}}}"
 
@@ -57,15 +57,15 @@ module CLI
 
       # Mapping of glyphs to terminal output
       MAP = {}.freeze
-      STAR      = new('*', 0x2b51,           '*', Color::YELLOW) # YELLOW SMALL STAR (⭑)
-      INFO      = new('i', 0x1d4be,          'i', Color::BLUE)   # BLUE MATHEMATICAL SCRIPT SMALL i (𝒾)
-      QUESTION  = new('?', 0x003f,           '?', Color::BLUE)   # BLUE QUESTION MARK (?)
-      CHECK     = new('v', 0x2713,           '√', Color::GREEN)  # GREEN CHECK MARK (✓)
-      X         = new('x', 0x2717,           'X', Color::RED)    # RED BALLOT X (✗)
-      BUG       = new('b', 0x1f41b,          '!', Color::WHITE)  # Bug emoji (🐛)
-      CHEVRON   = new('>', 0xbb,             '»', Color::YELLOW) # RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK (»)
-      HOURGLASS = new('H', 0x29d6,           'H', Color::ORANGE) # HOURGLASS (⧖)
-      WARNING   = new('!', [0x26a0, 0xfe0f], '!', Color::YELLOW) # WARNING SIGN + VARIATION SELECTOR 16 (⚠️ )
+      STAR      = new("*", 0x2b51,           "*", Color::YELLOW) # YELLOW SMALL STAR (⭑)
+      INFO      = new("i", 0x1d4be,          "i", Color::BLUE)   # BLUE MATHEMATICAL SCRIPT SMALL i (𝒾)
+      QUESTION  = new("?", 0x003f,           "?", Color::BLUE)   # BLUE QUESTION MARK (?)
+      CHECK     = new("v", 0x2713,           "√", Color::GREEN)  # GREEN CHECK MARK (✓)
+      X         = new("x", 0x2717,           "X", Color::RED)    # RED BALLOT X (✗)
+      BUG       = new("b", 0x1f41b,          "!", Color::WHITE)  # Bug emoji (🐛)
+      CHEVRON   = new(">", 0xbb,             "»", Color::YELLOW) # RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK (»)
+      HOURGLASS = new("H", 0x29d6,           "H", Color::ORANGE) # HOURGLASS (⧖)
+      WARNING   = new("!", [0x26a0, 0xfe0f], "!", Color::YELLOW) # WARNING SIGN + VARIATION SELECTOR 16 (⚠️ )
 
       class << self
         extend T::Sig

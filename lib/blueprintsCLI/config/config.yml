@@ -19,6 +19,7 @@ ai:
     default_model: z-ai/glm-4.7
     default_embedding_model: embeddinggemma:latest
     default_image_model: imagen-3.0-generate-002
+    ollama_api_base: http://tinybot:11434
     request_timeout: 120
     max_retries: 3
     retry_interval: 0.5

@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-require('cli/ui')
+require("cli/ui")
 
 module CLI
   module UI
@@ -18,8 +18,8 @@ module CLI
         ARROW = "#{Color::RESET.code}#{Color::GRAY.code}◂#{Color::RESET.code}".freeze
         COMMA = "#{Color::RESET.code}#{Color::GRAY.code},#{Color::RESET.code}".freeze
 
-        SPINNER_STOPPED = '⠿'
-        EMPTY_SET = '∅'
+        SPINNER_STOPPED = "⠿"
+        EMPTY_SET = "∅"
 
         class << self
           extend T::Sig
@@ -40,37 +40,35 @@ module CLI
           end
         end
 
-        private
-
         sig { params(num_str: String).returns(T::Boolean) }
-        def zero?(num_str)
-          num_str == '0'
+        private def zero?(num_str)
+          num_str == "0"
         end
 
         sig { params(num_str: String, rune: String, color: Color).returns(String) }
-        def colorize_if_nonzero(num_str, rune, color)
+        private def colorize_if_nonzero(num_str, rune, color)
           color = Color::GRAY if zero?(num_str)
           color.code + num_str + rune
         end
 
         sig { returns(String) }
-        def succeeded_part
+        private def succeeded_part
           colorize_if_nonzero(@succeeded, Glyph::CHECK.char, Color::GREEN)
         end
 
         sig { returns(String) }
-        def failed_part
+        private def failed_part
           colorize_if_nonzero(@failed, Glyph::X.char, Color::RED)
         end
 
         sig { returns(String) }
-        def working_part
+        private def working_part
           rune = zero?(@working) ? SPINNER_STOPPED : Spinner.current_rune
           colorize_if_nonzero(@working, rune, Color::BLUE)
         end
 
         sig { returns(String) }
-        def pending_part
+        private def pending_part
           colorize_if_nonzero(@pending, Glyph::HOURGLASS.char, Color::WHITE)
         end
       end

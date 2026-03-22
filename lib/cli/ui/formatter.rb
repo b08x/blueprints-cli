@@ -1,8 +1,8 @@
 # typed: true
 # frozen_string_literal: true
 
-require('cli/ui')
-require('strscan')
+require("cli/ui")
+require("strscan")
 
 module CLI
   module UI
@@ -16,32 +16,32 @@ module CLI
       #
       SGR_MAP = {
         # presentational
-        'red' => '31',
-        'green' => '32',
-        'yellow' => '33',
+        "red" => "31",
+        "green" => "32",
+        "yellow" => "33",
         # default blue is low-contrast against black in some default terminal color scheme
-        'blue' => '94', # 9x = high-intensity fg color x
-        'magenta' => '35',
-        'cyan' => '36',
-        'gray' => '38;5;244',
-        'orange' => '38;5;214',
-        'white' => '97',
-        'bold' => '1',
-        'italic' => '3',
-        'underline' => '4',
-        'strikethrough' => '9',
-        'reset' => '0',
+        "blue" => "94", # 9x = high-intensity fg color x
+        "magenta" => "35",
+        "cyan" => "36",
+        "gray" => "38;5;244",
+        "orange" => "38;5;214",
+        "white" => "97",
+        "bold" => "1",
+        "italic" => "3",
+        "underline" => "4",
+        "strikethrough" => "9",
+        "reset" => "0",
 
         # semantic
-        'error' => '31', # red
-        'success' => '32', # success
-        'warning' => '33', # yellow
-        'info' => '94', # bright blue
-        'command' => '36' # cyan
+        "error" => "31", # red
+        "success" => "32", # success
+        "warning" => "33", # yellow
+        "info" => "94", # bright blue
+        "command" => "36", # cyan
       }.freeze
 
-      BEGIN_EXPR = '{{'
-      END_EXPR   = '}}'
+      BEGIN_EXPR = "{{"
+      END_EXPR   = "}}"
 
       SCAN_WIDGET   = %r[@widget/(?<handle>\w+):(?<args>.*?)}}]
       SCAN_FUNCNAME = /\w+:/
@@ -105,7 +105,7 @@ module CLI
         @nodes.replace([])
         stack = parse_body(StringScanner.new(@text))
         prev_fmt = T.let(nil, T.nilable(Stack))
-        content = @nodes.each_with_object(+'') do |(text, fmt), str|
+        content = @nodes.each_with_object(+"") do |(text, fmt), str|
           text = apply_format(text, fmt, sgr_map) if prev_fmt != fmt && enable_color
           str << text
           prev_fmt = fmt
@@ -117,20 +117,18 @@ module CLI
         return content if stack == prev_fmt
 
         unless stack.empty? && (@nodes.empty? || T.must(@nodes.last)[1].empty?)
-          content << apply_format('', stack, sgr_map)
+          content << apply_format("", stack, sgr_map)
         end
         content
       end
 
-      private
-
       sig { params(text: String, fmt: Stack, sgr_map: T::Hash[String, String]).returns(String) }
-      def apply_format(text, fmt, sgr_map)
-        sgr = fmt.each_with_object(+'0') do |name, str|
+      private def apply_format(text, fmt, sgr_map)
+        sgr = fmt.each_with_object(+"0") do |name, str|
           next if name.is_a?(LITERAL_BRACES)
 
           begin
-            str << ';' << sgr_map.fetch(name)
+            str << ";" << sgr_map.fetch(name)
           rescue KeyError
             raise FormatError.new(
               "invalid format specifier: #{name}",
@@ -143,7 +141,7 @@ module CLI
       end
 
       sig { params(sc: StringScanner, stack: Stack).returns(Stack) }
-      def parse_expr(sc, stack)
+      private def parse_expr(sc, stack)
         if (match = sc.scan(SCAN_GLYPH))
           glyph_handle = T.must(match[0])
           begin
@@ -159,17 +157,17 @@ module CLI
           end
         elsif (match = sc.scan(SCAN_WIDGET))
           match_data = T.must(SCAN_WIDGET.match(match)) # Regexp.last_match doesn't work here
-          widget_handle = T.must(match_data['handle'])
+          widget_handle = T.must(match_data["handle"])
           begin
             widget = Widgets.lookup(widget_handle)
-            emit(widget.call(T.must(match_data['args'])), stack)
+            emit(widget.call(T.must(match_data["args"])), stack)
           rescue Widgets::InvalidWidgetHandle
             index = sc.pos - 2 # rewind past '}}'
             raise(FormatError.new(
-                    "invalid widget handle at index #{index}: '#{widget_handle}'",
-                    @text,
-                    index
-                  ))
+              "invalid widget handle at index #{index}: '#{widget_handle}'",
+              @text,
+              index
+            ))
           end
         elsif (match = sc.scan(SCAN_FUNCNAME))
           funcname = match.chop
@@ -179,7 +177,7 @@ module CLI
           # We could error, but it's nicer to just pass through as text.
           # We do kind of assume that the text will probably have balanced
           # pairs of {{ }} at least.
-          emit('{{', stack)
+          emit("{{", stack)
           stack.push(LITERAL_BRACES.new)
         end
         parse_body(sc, stack)
@@ -187,14 +185,14 @@ module CLI
       end
 
       sig { params(sc: StringScanner, stack: Stack).returns(Stack) }
-      def parse_body(sc, stack = [])
+      private def parse_body(sc, stack = [])
         match = sc.scan(SCAN_BODY)
         if match&.end_with?(BEGIN_EXPR)
           emit(T.must(match[DISCARD_BRACES]), stack)
           parse_expr(sc, stack)
         elsif match&.end_with?(END_EXPR)
           emit(T.must(match[DISCARD_BRACES]), stack)
-          emit('}}', stack) if stack.pop.is_a?(LITERAL_BRACES)
+          emit("}}", stack) if stack.pop.is_a?(LITERAL_BRACES)
           parse_body(sc, stack)
         elsif match
           emit(match, stack)
@@ -205,10 +203,10 @@ module CLI
       end
 
       sig { params(text: String, stack: Stack).void }
-      def emit(text, stack)
+      private def emit(text, stack)
         return if text.empty?
 
-        @nodes << [text, stack.reject { |n| n.is_a?(LITERAL_BRACES) }]
+        @nodes << [text, stack.grep_v(LITERAL_BRACES)]
       end
     end
   end

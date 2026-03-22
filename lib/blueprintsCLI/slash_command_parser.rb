@@ -6,46 +6,46 @@ module BlueprintsCLI
   class SlashCommandParser
     # Command registry with their handlers
     COMMANDS = {
-      'blueprint' => {
-        description: 'Manage code blueprints',
+      "blueprint" => {
+        description: "Manage code blueprints",
         subcommands: %w[submit list browse view edit delete search export generate config],
-        handler: :handle_blueprint_command
+        handler: :handle_blueprint_command,
       },
-      'config' => {
-        description: 'Manage configuration',
+      "config" => {
+        description: "Manage configuration",
         subcommands: %w[setup show edit validate reset help],
-        handler: :handle_config_command
+        handler: :handle_config_command,
       },
-      'docs' => {
-        description: 'Generate documentation',
+      "docs" => {
+        description: "Generate documentation",
         subcommands: %w[generate help],
-        handler: :handle_docs_command
+        handler: :handle_docs_command,
       },
-      'setup' => {
-        description: 'Run setup wizard',
+      "setup" => {
+        description: "Run setup wizard",
         subcommands: %w[wizard providers database models verify help],
-        handler: :handle_setup_command
+        handler: :handle_setup_command,
       },
-      'search' => {
-        description: 'Quick search blueprints',
+      "search" => {
+        description: "Quick search blueprints",
         subcommands: [],
-        handler: :handle_search_command
+        handler: :handle_search_command,
       },
-      'help' => {
-        description: 'Show help information',
+      "help" => {
+        description: "Show help information",
         subcommands: [],
-        handler: :handle_help_command
+        handler: :handle_help_command,
       },
-      'exit' => {
-        description: 'Exit the application',
+      "exit" => {
+        description: "Exit the application",
         subcommands: [],
-        handler: :handle_exit_command
+        handler: :handle_exit_command,
       },
-      'clear' => {
-        description: 'Clear the screen',
+      "clear" => {
+        description: "Clear the screen",
         subcommands: [],
-        handler: :handle_clear_command
-      }
+        handler: :handle_clear_command,
+      },
     }.freeze
 
     attr_reader :input, :command, :subcommand, :args, :options
@@ -61,7 +61,7 @@ module BlueprintsCLI
 
     # Check if the input is a valid slash command
     def slash_command?
-      @input.start_with?('/')
+      @input.start_with?("/")
     end
 
     # Parse the input into command components
@@ -93,7 +93,7 @@ module BlueprintsCLI
       return false unless handler_method
 
       send(handler_method)
-    rescue StandardError => e
+    rescue => e
       CLIUIIntegration.puts("{{red:Error executing command: #{e.message}}}")
       false
     end
@@ -119,9 +119,7 @@ module BlueprintsCLI
         # Complete subcommands with context-aware filtering
         subcommands = COMMANDS.dig(@command, :subcommands) || []
 
-        if @subcommand.nil? || @subcommand.empty?
-          return subcommands.map { |sub| "/#{@command} #{sub}" }
-        end
+        return subcommands.map { |sub| "/#{@command} #{sub}" } if @subcommand.nil? || @subcommand.empty?
 
         # Return all available subcommands
 
@@ -143,7 +141,7 @@ module BlueprintsCLI
 
     # Get contextual help for current completion state
     def completion_context
-      return 'Available commands' if @command.nil? || @command.empty?
+      return "Available commands" if @command.nil? || @command.empty?
 
       if COMMANDS.key?(@command)
         if @subcommand.nil? || @subcommand.empty?
@@ -152,7 +150,7 @@ module BlueprintsCLI
           "Options for #{@command} #{@subcommand}"
         end
       else
-        'Did you mean...?'
+        "Did you mean...?"
       end
     end
 
@@ -165,17 +163,15 @@ module BlueprintsCLI
       end
     end
 
-    private
-
-    def parse_args_and_options(parts)
+    private def parse_args_and_options(parts)
       parts.each do |part|
-        if part.start_with?('--')
+        if part.start_with?("--")
           # Long option
-          key_value = part[2..].split('=', 2)
+          key_value = part[2..].split("=", 2)
           key = key_value[0]
-          value = key_value.size > 1 ? key_value[1] : true
+          value = (key_value.size > 1) ? key_value[1] : true
           @options[key] = value
-        elsif part.start_with?('-')
+        elsif part.start_with?("-")
           # Short option
           @options[part[1..]] = true
         else
@@ -186,59 +182,59 @@ module BlueprintsCLI
     end
 
     # Command handlers
-    def handle_blueprint_command
+    private def handle_blueprint_command
       blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new(@options)
       if @subcommand
         blueprint_command.execute(@subcommand, *@args)
       else
-        blueprint_command.execute('help')
+        blueprint_command.execute("help")
       end
       true
     end
 
-    def handle_config_command
+    private def handle_config_command
       config_command = BlueprintsCLI::Commands::ConfigCommand.new(@options)
       if @subcommand
         config_command.execute(@subcommand, *@args)
       else
-        config_command.execute('show')
+        config_command.execute("show")
       end
       true
     end
 
-    def handle_docs_command
+    private def handle_docs_command
       docs_command = BlueprintsCLI::Commands::DocsCommand.new(@options)
       if @subcommand
         docs_command.execute(@subcommand, *@args)
       else
-        docs_command.execute('help')
+        docs_command.execute("help")
       end
       true
     end
 
-    def handle_setup_command
+    private def handle_setup_command
       setup_command = BlueprintsCLI::Commands::SetupCommand.new(@options)
       if @subcommand
         setup_command.execute(@subcommand, *@args)
       else
-        setup_command.execute('wizard')
+        setup_command.execute("wizard")
       end
       true
     end
 
-    def handle_search_command
+    private def handle_search_command
       if @args.empty?
-        CLIUIIntegration.puts('{{yellow:Usage: /search <query>}}')
+        CLIUIIntegration.puts("{{yellow:Usage: /search <query>}}")
         return false
       end
 
-      query = @args.join(' ')
+      query = @args.join(" ")
       blueprint_command = BlueprintsCLI::Commands::BlueprintCommand.new(@options)
-      blueprint_command.execute('search', query)
+      blueprint_command.execute("search", query)
       true
     end
 
-    def handle_help_command
+    private def handle_help_command
       if @args.empty?
         CLIUIIntegration.puts(help_text)
       else
@@ -247,17 +243,17 @@ module BlueprintsCLI
       true
     end
 
-    def handle_exit_command
-      CLIUIIntegration.puts('{{green:👋 Goodbye!}}')
+    private def handle_exit_command
+      CLIUIIntegration.puts("{{green:👋 Goodbye!}}")
       exit(0)
     end
 
-    def handle_clear_command
-      system('clear') || system('cls')
+    private def handle_clear_command
+      system("clear") || system("cls")
       true
     end
 
-    def command_help(cmd)
+    private def command_help(cmd)
       command_info = COMMANDS[cmd]
       help = "{{cyan:#{cmd.upcase}}} - #{command_info[:description]}\n\n"
 
@@ -273,7 +269,7 @@ module BlueprintsCLI
       help
     end
 
-    def all_commands_help
+    private def all_commands_help
       help = "{{cyan:🚀 BlueprintsCLI Slash Commands}}\n\n"
       help += "{{yellow:Available Commands:}}\n"
 
@@ -285,13 +281,13 @@ module BlueprintsCLI
       help += "  • Type {{blue:/}} and press TAB for autocomplete\n"
       help += "  • Use {{blue:/help <command>}} for detailed help\n"
       help += "  • Use {{blue:/clear}} to clear the screen\n"
-      help += '  • Use {{blue:/exit}} to quit the application'
+      help += "  • Use {{blue:/exit}} to quit the application"
 
       help
     end
 
     # Suggest similar commands using basic string similarity
-    def suggest_similar_commands
+    private def suggest_similar_commands
       return [] if @command.nil? || @command.empty?
 
       # Simple similarity based on shared prefixes and substrings

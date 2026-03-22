@@ -41,12 +41,12 @@ module BlueprintsCLI
       return [] if input.nil? || input.empty?
 
       begin
-        if input.start_with?('/')
+        if input.start_with?("/")
           slash_command_completions(input)
         else
           general_completions(input)
         end
-      rescue StandardError => e
+      rescue => e
         safe_log_debug("Autocomplete error: #{e.message}")
         safe_log_debug("Error backtrace: #{e.backtrace.first(3).join(', ')}")
         []
@@ -64,7 +64,7 @@ module BlueprintsCLI
     #   handler.readline_ready!
     def readline_ready!
       @readline_ready = true
-      safe_log_debug('AutocompleteHandler marked as readline ready')
+      safe_log_debug("AutocompleteHandler marked as readline ready")
     end
 
     ##
@@ -95,22 +95,10 @@ module BlueprintsCLI
       @blueprint_cache.clear
       @config_keys_cache = nil
       @cache_timestamp = nil
-      safe_log_debug('AutocompleteHandler cache reset')
+      safe_log_debug("AutocompleteHandler cache reset")
     end
 
-    private
-
-    ##
-    # Get completions for slash commands.
-    #
-    # This method parses the input as a slash command and generates completions
-    # based on the command and its arguments. It uses the `SlashCommandParser`
-    # to extract the command and subcommands, and then calls the appropriate
-    # helper methods to generate completions.
-    #
-    # @param input [String] The input string for which to generate completions.
-    # @return [Array<String>] An array of completion suggestions for the slash command.
-    def slash_command_completions(input)
+    private def slash_command_completions(input)
       parser = SlashCommandParser.new(input)
 
       # Get base command completions from parser
@@ -121,11 +109,11 @@ module BlueprintsCLI
       enhanced_completions = []
 
       case parser.command
-      when 'blueprint'
+      when "blueprint"
         enhanced_completions.concat(blueprint_specific_completions(parser))
-      when 'config'
+      when "config"
         enhanced_completions.concat(config_specific_completions(parser))
-      when 'docs'
+      when "docs"
         enhanced_completions.concat(docs_specific_completions(parser))
       end
 
@@ -148,26 +136,26 @@ module BlueprintsCLI
     #
     # @param parser [SlashCommandParser] The parser object containing the command and subcommand.
     # @return [Array<String>] An array of completion suggestions for the blueprint-specific command.
-    def blueprint_specific_completions(parser)
+    private def blueprint_specific_completions(parser)
       completions = []
 
       case parser.subcommand
-      when 'view', 'edit', 'delete', 'export'
+      when "view", "edit", "delete", "export"
         # Complete with blueprint IDs
         completions.concat(blueprint_id_completions(parser.input))
-      when 'submit'
+      when "submit"
         # Complete with file paths and interactive option
         completions.concat(file_path_completions(parser.input))
-        completions.push('/blueprint submit --interactive')
-      when 'search'
+        completions.push("/blueprint submit --interactive")
+      when "search"
         # Complete with previous search terms or popular queries
         completions.concat(search_term_completions(parser.input))
-      when 'list'
+      when "list"
         # Complete with format options
         completions.push(
-          '/blueprint list --format=table',
-          '/blueprint list --format=json',
-          '/blueprint list --format=summary'
+          "/blueprint list --format=table",
+          "/blueprint list --format=json",
+          "/blueprint list --format=summary"
         )
       end
 
@@ -183,11 +171,11 @@ module BlueprintsCLI
     #
     # @param parser [SlashCommandParser] The parser object containing the command and subcommand.
     # @return [Array<String>] An array of completion suggestions for the config-specific command.
-    def config_specific_completions(parser)
+    private def config_specific_completions(parser)
       completions = []
 
       case parser.subcommand
-      when 'show', 'edit'
+      when "show", "edit"
         # Complete with configuration keys
         completions.concat(config_key_completions(parser.input))
       end
@@ -204,11 +192,11 @@ module BlueprintsCLI
     #
     # @param parser [SlashCommandParser] The parser object containing the command and subcommand.
     # @return [Array<String>] An array of completion suggestions for the docs-specific command.
-    def docs_specific_completions(parser)
+    private def docs_specific_completions(parser)
       completions = []
 
       case parser.subcommand
-      when 'generate'
+      when "generate"
         # Complete with Ruby file paths
         completions.concat(ruby_file_completions(parser.input))
       end
@@ -228,7 +216,7 @@ module BlueprintsCLI
     # @example
     #   blueprint_id_completions('/blueprint view 1')
     #   # => ['/blueprint view 1234', '/blueprint view 1235']
-    def blueprint_id_completions(input)
+    private def blueprint_id_completions(input)
       blueprint_ids = cached_blueprint_ids
       prefix = extract_id_prefix(input)
 
@@ -252,30 +240,30 @@ module BlueprintsCLI
     # @example
     #   file_path_completions('/blueprint submit ./my_')
     #   # => ['/blueprint submit ./my_blueprint.rb', '/blueprint submit ./my_other_file.txt']
-    def file_path_completions(input)
+    private def file_path_completions(input)
       # Extract the partial path from the input
       parts = input.split
       return [] if parts.size < 3
 
-      partial_path = parts[2..].join(' ')
+      partial_path = parts[2..].join(" ")
       directory = File.dirname(partial_path)
       filename_prefix = File.basename(partial_path)
 
       begin
-        dir_to_scan = directory == '.' ? Dir.pwd : directory
+        dir_to_scan = (directory == ".") ? Dir.pwd : directory
         return [] unless Dir.exist?(dir_to_scan)
 
         entries = Dir.entries(dir_to_scan)
-                     .reject { |entry| entry.start_with?('.') }
-                     .select { |entry| entry.start_with?(filename_prefix) }
-                     .first(10)
+          .reject { |entry| entry.start_with?(".") }
+          .select { |entry| entry.start_with?(filename_prefix) }
+          .first(10)
 
-        base_command = parts[0..1].join(' ')
+        base_command = parts[0..1].join(" ")
         entries.map do |entry|
           full_path = File.join(directory, entry)
           "#{base_command} #{full_path}"
         end
-      rescue StandardError
+      rescue
         []
       end
     end
@@ -292,24 +280,77 @@ module BlueprintsCLI
     # @example
     #   search_term_completions('/blueprint search rub')
     #   # => ['/blueprint search ruby', '/blueprint search rspec']
-    def search_term_completions(input)
+    private def search_term_completions(input)
       # Enhanced with language-specific terms and popular search terms
       common_terms = %w[
-        ruby rails javascript python react node api rest graphql database
-        ansible terraform docker kubernetes yaml json class function
-        sinatra flask django express fastapi vue angular
-        css scss sass html erb haml markdown sql migration
-        redis postgresql mongodb elasticsearch nginx apache
-        aws azure gcp deployment infrastructure automation
-        testing rspec jest mocha cucumber selenium capybara
-        gem npm pip composer bundler webpack babel typescript
+        ruby
+        rails
+        javascript
+        python
+        react
+        node
+        api
+        rest
+        graphql
+        database
+        ansible
+        terraform
+        docker
+        kubernetes
+        yaml
+        json
+        class
+        function
+        sinatra
+        flask
+        django
+        express
+        fastapi
+        vue
+        angular
+        css
+        scss
+        sass
+        html
+        erb
+        haml
+        markdown
+        sql
+        migration
+        redis
+        postgresql
+        mongodb
+        elasticsearch
+        nginx
+        apache
+        aws
+        azure
+        gcp
+        deployment
+        infrastructure
+        automation
+        testing
+        rspec
+        jest
+        mocha
+        cucumber
+        selenium
+        capybara
+        gem
+        npm
+        pip
+        composer
+        bundler
+        webpack
+        babel
+        typescript
       ]
       parts = input.split
 
       return [] if parts.size < 2
 
       partial_term = parts.last
-      base_command = parts[0..-2].join(' ')
+      base_command = parts[0..-2].join(" ")
 
       matching_terms = common_terms.select { |term| term.start_with?(partial_term.downcase) }
       matching_terms.first(8).map { |term| "#{base_command} #{term}" }
@@ -327,14 +368,14 @@ module BlueprintsCLI
     # @example
     #   config_key_completions('/config show log')
     #   # => ['/config show logger.level', '/config show logger.file_logging']
-    def config_key_completions(input)
+    private def config_key_completions(input)
       config_keys = cached_config_keys
       parts = input.split
 
       return [] if parts.size < 3
 
       partial_key = parts.last
-      base_command = parts[0..-2].join(' ')
+      base_command = parts[0..-2].join(" ")
 
       matching_keys = config_keys.select { |key| key.start_with?(partial_key) }
       matching_keys.first(5).map { |key| "#{base_command} #{key}" }
@@ -352,29 +393,29 @@ module BlueprintsCLI
     # @example
     #   ruby_file_completions('/docs generate ./my_')
     #   # => ['/docs generate ./my_class.rb', '/docs generate ./my_module.rb']
-    def ruby_file_completions(input)
+    private def ruby_file_completions(input)
       parts = input.split
       return [] if parts.size < 3
 
-      partial_path = parts[2..].join(' ')
+      partial_path = parts[2..].join(" ")
       directory = File.dirname(partial_path)
       filename_prefix = File.basename(partial_path)
 
       begin
-        dir_to_scan = directory == '.' ? Dir.pwd : directory
+        dir_to_scan = (directory == ".") ? Dir.pwd : directory
         return [] unless Dir.exist?(dir_to_scan)
 
         ruby_files = Dir.entries(dir_to_scan)
-                        .select { |entry| entry.end_with?('.rb') }
-                        .select { |entry| entry.start_with?(filename_prefix) }
-                        .first(10)
+          .select { |entry| entry.end_with?(".rb") }
+          .select { |entry| entry.start_with?(filename_prefix) }
+          .first(10)
 
-        base_command = parts[0..1].join(' ')
+        base_command = parts[0..1].join(" ")
         ruby_files.map do |file|
           full_path = File.join(directory, file)
           "#{base_command} #{full_path}"
         end
-      rescue StandardError
+      rescue
         []
       end
     end
@@ -393,12 +434,12 @@ module BlueprintsCLI
     # @example
     #   general_completions('se')
     #   # => ['search', 'setup']
-    def general_completions(input)
+    private def general_completions(input)
       # For non-slash commands, provide general suggestions
       suggestions = []
 
       # Suggest slash commands if input could be part of one
-      suggestions << '/' if input.length == 1 && '/'.start_with?(input)
+      suggestions << "/" if input.length == 1 && "/".start_with?(input)
 
       # Suggest common actions
       common_actions = %w[search list help config setup]
@@ -416,26 +457,26 @@ module BlueprintsCLI
     # caches them, and returns them.
     #
     # @return [Array<String>] An array of cached blueprint IDs. Returns an empty array if there is an error fetching IDs.
-    def cached_blueprint_ids
+    private def cached_blueprint_ids
       return @blueprint_cache[:ids] if cache_valid?
 
       begin
         # Fetch blueprint IDs from database
-        require_relative 'database'
+        require_relative "database"
         db = BlueprintsCLI::BlueprintDatabase.new
 
         blueprints = db.all_blueprints
         ids = blueprints.map { |bp| bp[:id] }.sort
 
         @blueprint_cache = {
-          ids: ids,
+          ids:,
           timestamp: Time.now,
-          count: blueprints.size
+          count: blueprints.size,
         }
 
         safe_log_debug("Cached #{ids.size} blueprint IDs")
         ids
-      rescue StandardError => e
+      rescue => e
         safe_log_warn("Failed to fetch blueprint IDs: #{e.message}")
         safe_log_debug("Database error details: #{e.backtrace.first(2).join(', ')}")
 
@@ -451,7 +492,7 @@ module BlueprintsCLI
     # it initializes the cache with a list of available configuration keys.
     #
     # @return [Array<String>] An array of cached configuration keys.
-    def cached_config_keys
+    private def cached_config_keys
       return @config_keys_cache if @config_keys_cache
 
       # Get available configuration keys
@@ -480,7 +521,7 @@ module BlueprintsCLI
     # less than 60 seconds old.
     #
     # @return [Boolean] True if the cache is valid, false otherwise.
-    def cache_valid?
+    private def cache_valid?
       @blueprint_cache[:timestamp] &&
         (Time.now - @blueprint_cache[:timestamp]) < 60 # Cache for 60 seconds
     end
@@ -499,13 +540,13 @@ module BlueprintsCLI
     # @example
     #   extract_id_prefix('/blueprint view abc')
     #   # => ''
-    def extract_id_prefix(input)
+    private def extract_id_prefix(input)
       # Extract the partial ID from the end of the input
       parts = input.split
-      return '' if parts.size < 3
+      return "" if parts.size < 3
 
       last_part = parts.last
-      last_part.match?(/^\d/) ? last_part : ''
+      last_part.match?(/^\d/) ? last_part : ""
     end
 
     ##
@@ -516,11 +557,9 @@ module BlueprintsCLI
     #
     # @param message [String] The message to log.
     # @return [void]
-    def safe_log_debug(message)
-      if defined?(BlueprintsCLI) && BlueprintsCLI.respond_to?(:logger)
-        BlueprintsCLI.logger.debug(message)
-      end
-    rescue StandardError
+    private def safe_log_debug(message)
+      BlueprintsCLI.logger.debug(message) if defined?(BlueprintsCLI) && BlueprintsCLI.respond_to?(:logger)
+    rescue
       # Silently ignore logging errors during initialization
     end
 
@@ -532,11 +571,9 @@ module BlueprintsCLI
     #
     # @param message [String] The message to log.
     # @return [void]
-    def safe_log_warn(message)
-      if defined?(BlueprintsCLI) && BlueprintsCLI.respond_to?(:logger)
-        BlueprintsCLI.logger.warn(message)
-      end
-    rescue StandardError
+    private def safe_log_warn(message)
+      BlueprintsCLI.logger.warn(message) if defined?(BlueprintsCLI) && BlueprintsCLI.respond_to?(:logger)
+    rescue
       # Silently ignore logging errors during initialization
     end
   end

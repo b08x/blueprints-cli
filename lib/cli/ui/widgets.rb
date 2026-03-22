@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-require('cli/ui')
+require("cli/ui")
 
 module CLI
   module UI
@@ -23,8 +23,8 @@ module CLI
 
       MAP = {}.freeze
 
-      autoload(:Base, 'cli/ui/widgets/base')
-      autoload(:Status, 'cli/ui/widgets/status')
+      autoload(:Base, "cli/ui/widgets/base")
+      autoload(:Status, "cli/ui/widgets/status")
 
       class << self
         extend T::Sig
@@ -57,7 +57,7 @@ module CLI
         end
       end
 
-      register('status') { Widgets::Status }
+      register("status") { Widgets::Status }
 
       class InvalidWidgetHandle < ArgumentError
         extend T::Sig
@@ -70,7 +70,7 @@ module CLI
 
         sig { returns(String) }
         def message
-          keys = Widgets.available.join(',')
+          keys = Widgets.available.join(",")
           "invalid widget handle: #{@handle} " \
             "-- must be one of CLI::UI::Widgets.available (#{keys})"
         end
